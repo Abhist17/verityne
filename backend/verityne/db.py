@@ -111,7 +111,11 @@ class FaceEmbedding(Base):
 
 
 class AssetHash(Base):
-    """Perceptual hashes. Catches the same 'KYC kit' image resubmitted under new identities."""
+    """Asset hashes. Catches the same 'KYC kit' image resubmitted under new identities.
+
+    Both hashes are stored: ``content_hash`` is exact and carries the "same file"
+    claim, ``phash`` is perceptual and only ever a weak near-duplicate hint.
+    """
 
     __tablename__ = "asset_hashes"
 
@@ -119,6 +123,7 @@ class AssetHash(Base):
     submission_id: Mapped[str] = mapped_column(ForeignKey("submissions.id", ondelete="CASCADE"), index=True)
     kind: Mapped[str] = mapped_column(String(16), default="selfie")
     phash: Mapped[str] = mapped_column(String(32), index=True)
+    content_hash: Mapped[str] = mapped_column(String(64), index=True, default="")
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_utcnow)
 
     submission = relationship("Submission", back_populates="hashes")
@@ -140,6 +145,25 @@ Index("ix_verdict_score_time", Verdict.final_score, Verdict.created_at)
 
 def init_db() -> None:
     Base.metadata.create_all(engine)
+    _migrate()
+
+
+def _migrate() -> None:
+    """Add columns that create_all() will not add to an existing table.
+
+    There is no Alembic here on purpose - the schema is small and the only
+    migrations so far are additive. Each step is idempotent, so this is safe to
+    run on every boot.
+    """
+    from sqlalchemy import inspect, text
+
+    insp = inspect(engine)
+    if "asset_hashes" not in insp.get_table_names():
+        return
+    cols = {c["name"] for c in insp.get_columns("asset_hashes")}
+    if "content_hash" not in cols:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE asset_hashes ADD COLUMN content_hash VARCHAR(64) DEFAULT ''"))
 
 
 @contextmanager

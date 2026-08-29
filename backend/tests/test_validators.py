@@ -64,3 +64,52 @@ class TestOcrRepair:
 
     def test_extracts_dob(self):
         assert find_fields("Date of Birth 19/02/1974")["dob"] == "19/02/1974"
+
+
+class TestAssetLinkage:
+    """A perceptual hash cannot carry an identity claim.
+
+    Synthetic ID cards share a template, so two cards belonging to different
+    people land within a few bits of each other. Before this was split, any such
+    collision produced a 0.6-0.9 linkage score, and because the pipeline takes
+    max(fusion, linkage) that single-handedly rejected genuine merchants whose
+    five detectors all read clean.
+    """
+
+    def test_exact_match_carries_the_kit_claim(self):
+        from verityne.linkage import linkage_signal
+
+        score, reasons = linkage_signal([], [{"submission_id": "a", "kind": "selfie", "hamming": 0, "match": "exact"}])
+        assert score >= 0.6
+        assert "exact same image file" in reasons[0]
+
+    def test_near_match_cannot_reject_on_its_own(self):
+        from verityne.config import MerchantPolicy
+        from verityne.linkage import linkage_signal
+
+        near = [{"submission_id": str(i), "kind": "id_document", "hamming": 2, "match": "near"} for i in range(5)]
+        score, reasons = linkage_signal([], near)
+        assert score < MerchantPolicy().min_risk_for_reject
+        assert "near-identical" in reasons[0]
+        assert "exact same image file" not in reasons[0]
+
+    def test_near_match_is_not_labelled_a_reused_kit(self):
+        from verityne.explain import classify_attack
+
+        link = {"asset_links": [{"submission_id": "a", "kind": "id_document", "hamming": 2, "match": "near"}]}
+        assert classify_attack({}, link) != "reused_kyc_kit"
+
+    def test_content_hash_separates_template_documents(self):
+        import numpy as np
+
+        from verityne.utils.hashing import content_hash, hamming, phash
+
+        rng = np.random.default_rng(0)
+        card = rng.integers(0, 255, (200, 320, 3), dtype=np.uint8)
+        other = card.copy()
+        other[20:60, 20:60] = rng.integers(0, 255, (40, 40, 3), dtype=np.uint8)  # a different portrait
+
+        # The perceptual hash calls them the same picture; the content hash does not.
+        assert hamming(phash(card), phash(other)) <= 8
+        assert content_hash(card) != content_hash(other)
+        assert content_hash(card) == content_hash(card.copy())

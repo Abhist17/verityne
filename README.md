@@ -399,6 +399,13 @@ Three deliberate choices keep the numbers honest:
 - **The corpus is synthetic.** Everything above measures separability on data we
   generated. It is a lower bound on how much work production deployment is, not
   a substitute for it.
+- **These numbers do not include cross-submission linkage.** The evaluation
+  harness scores detectors and fusion offline, one packet at a time, with no
+  audit log to link against. The live `POST /verify` path adds linkage on top
+  and takes `max(fusion, linkage)`, so a linkage hit can move a verdict that
+  nothing in this report accounts for. Linkage is measured in the Gauntlet
+  instead, which runs the full API path — on the current fixtures it costs no
+  fraud recall (9/10 caught) and auto-rejects no genuine merchant.
 
 ---
 
@@ -527,6 +534,7 @@ typecheck and production build.
 | `/metrics` returns empty | `eval/metrics.json` is committed, but a `make clean-data` removes it. Re-run `make evaluate` (or the whole `make pipeline`). |
 | Dashboard shows "failed to fetch" | `NEXT_PUBLIC_API_URL` points somewhere the browser can't reach, or the origin isn't in `VERITYNE_CORS`. |
 | Gauntlet page is empty | Fixtures aren't loaded: `make gauntlet`. |
+| Everything gets rejected as a "reused KYC kit" | The linkage index has accumulated repeat submissions of the same files, which is what re-scoring the corpus during testing looks like. `make clean` drops the database, then `make gauntlet` re-seeds. Note that an *exact* pixel match is a real signal — a near-match no longer rejects on its own. |
 | CUDA out of memory | `VERITYNE_DEVICE=cpu`, or lower `VERITYNE_MAX_VIDEO_FRAMES`. |
 
 ---

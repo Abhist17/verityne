@@ -29,7 +29,7 @@ from .detectors.fingerprint import identify as identify_generator
 from .explain import classify_attack, narrate, rank_reasons
 from .schemas import DetectorOutput, VerifyResponse
 from .utils.artifacts import save_thumbnail
-from .utils.hashing import phash
+from .utils.hashing import content_hash, phash
 from .utils.jsonsafe import to_jsonable
 
 log = logging.getLogger("verityne.pipeline")
@@ -63,7 +63,7 @@ def _persist_biometrics(session: Session, submission_id: str, merchant_id: str,
     session.query(AssetHash).filter(AssetHash.submission_id == submission_id).delete()
     session.flush()
 
-    hashes: Dict[str, str] = {}
+    hashes: Dict[str, Dict[str, str]] = {}
     for kind, cache_key in (("selfie", "selfie_face"), ("id_photo", "id_face")):
         vec_key = "selfie_embedding" if kind == "selfie" else "id_embedding"
         vec = payload.cache.get(vec_key)
@@ -78,9 +78,9 @@ def _persist_biometrics(session: Session, submission_id: str, merchant_id: str,
         rgb = payload.cache.get(cache_key)
         if rgb is not None:
             try:
-                h = phash(rgb)
-                hashes[kind] = h
-                session.add(AssetHash(submission_id=submission_id, kind=kind, phash=h))
+                ph, ch = phash(rgb), content_hash(rgb)
+                hashes[kind] = {"phash": ph, "content_hash": ch}
+                session.add(AssetHash(submission_id=submission_id, kind=kind, phash=ph, content_hash=ch))
             except Exception:
                 pass
     return hashes

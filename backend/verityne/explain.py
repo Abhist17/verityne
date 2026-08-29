@@ -51,7 +51,10 @@ def classify_attack(breakdown: Dict[str, DetectorOutput], linkage: Optional[Dict
     doc = _score(breakdown, "id_forensics")
     meta = _score(breakdown, "metadata_exif")
 
-    if linkage.get("asset_links"):
+    # Only an exact pixel match earns the kit label. A perceptual near-match is
+    # what two documents sharing a template look like, and naming that a reused
+    # kit would put a fraud pattern on a genuine merchant.
+    if any(m.get("match") == "exact" for m in linkage.get("asset_links", []) or []):
         return "reused_kyc_kit"
     if any(m.get("name_differs") for m in linkage.get("face_links", [])):
         return "onboarding_ring"
@@ -171,10 +174,17 @@ def narrate(
     if generator:
         extra += f" Spectral fingerprinting attributes the synthetic imagery to {generator}."
     if linkage:
+        links = linkage.get("asset_links", []) or []
         n_face = len(linkage.get("face_links", []) or [])
-        n_asset = len(linkage.get("asset_links", []) or [])
-        if n_face or n_asset:
-            extra += f" Cross-submission lookup found {n_face} face match(es) and {n_asset} identical asset(s) in prior submissions."
+        n_exact = sum(1 for m in links if m.get("match") == "exact")
+        n_near = len(links) - n_exact
+        if n_face or links:
+            parts = [f"{n_face} face match(es)"]
+            if n_exact:
+                parts.append(f"{n_exact} identical asset(s)")
+            if n_near:
+                parts.append(f"{n_near} near-identical asset(s)")
+            extra += f" Cross-submission lookup found {', '.join(parts)} in prior submissions."
 
     caveat = ""
     errored = [DETECTOR_LABELS[n] for n, d in breakdown.items() if d.status == "error"]

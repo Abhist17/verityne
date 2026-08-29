@@ -1,6 +1,19 @@
-"""Perceptual hashing. Catches the same 'KYC kit' asset resubmitted under a new name."""
+"""Asset hashing. Catches the same 'KYC kit' image resubmitted under a new name.
+
+Two hashes, because they support two different claims:
+
+* ``content_hash`` is a SHA-256 over the decoded pixels. It is exact. Two images
+  share one only if they are literally the same picture, so it is what backs the
+  statement "the exact same image file was used". Stripping EXIF or changing the
+  container does not move it; re-encoding does.
+* ``phash`` is perceptual and tolerant, which makes it useful for spotting a
+  near-duplicate and useless for asserting identity. Synthetic ID cards drawn
+  from one template collide at a Hamming distance of 2 despite belonging to
+  different people, so a phash hit is a hint to look closer, never proof.
+"""
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import Optional
 
@@ -9,6 +22,15 @@ import numpy as np
 from PIL import Image
 
 from .images import to_pil
+
+
+def content_hash(rgb: np.ndarray) -> str:
+    """Exact SHA-256 of the decoded pixels. Same picture in, same digest out."""
+    arr = np.ascontiguousarray(rgb)
+    h = hashlib.sha256()
+    h.update(str(arr.shape).encode())
+    h.update(arr.tobytes())
+    return h.hexdigest()
 
 
 def phash(rgb: np.ndarray) -> str:

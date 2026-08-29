@@ -22,7 +22,10 @@ from .utils.hashing import hamming
 
 #: Above this cosine similarity two selfies are the same person.
 SAME_PERSON = 0.75
-#: Perceptual-hash distance at or below which two files are the same picture.
+#: Perceptual-hash distance at or below which two files *look* alike. This is a
+#: similarity bound, not an identity one: ID cards drawn from a shared template
+#: land inside it while belonging to different people, so a hit here is a hint,
+#: never proof. Exactness is what ``content_hash`` is for.
 SAME_IMAGE_BITS = 8
 #: Cap on how much history we scan, so linkage stays inside the latency budget.
 SCAN_LIMIT = 5000
@@ -87,8 +90,15 @@ def find_face_links(
     return matches
 
 
-def find_asset_links(session: Session, submission_id: str, hashes: Dict[str, str]) -> List[Dict]:
-    """Prior submissions that reused the exact same image file."""
+def find_asset_links(session: Session, submission_id: str, hashes: Dict[str, Dict[str, str]]) -> List[Dict]:
+    """Prior submissions sharing an asset with this one.
+
+    Every match is labelled ``exact`` or ``near``. An exact match means the
+    decoded pixels are byte-identical - the same picture, whatever the file
+    around it was doing. A near match only means two images look alike to a
+    64-bit perceptual hash, which templated documents do by construction.
+    Callers must not treat the two as interchangeable.
+    """
     if not hashes:
         return []
     rows = (
@@ -102,22 +112,28 @@ def find_asset_links(session: Session, submission_id: str, hashes: Dict[str, str
         .all()
     )
     out: List[Dict] = []
-    for kind, h in hashes.items():
-        if not h:
-            continue
+    for kind, digests in hashes.items():
+        ph, ch = digests.get("phash"), digests.get("content_hash")
         for row in rows:
             if row.kind != kind:
                 continue
-            dist = hamming(h, row.phash)
+            if ch and row.content_hash and row.content_hash == ch:
+                out.append({"submission_id": row.submission_id, "kind": kind, "hamming": 0, "match": "exact"})
+                continue
+            if not ph:
+                continue
+            dist = hamming(ph, row.phash)
             if dist <= SAME_IMAGE_BITS:
-                out.append({"submission_id": row.submission_id, "kind": kind, "hamming": dist})
-    # Keep the closest match per prior submission.
+                out.append({"submission_id": row.submission_id, "kind": kind, "hamming": dist, "match": "near"})
+    # Keep the strongest match per prior submission: exact beats near, then closest.
     best: Dict[str, Dict] = {}
     for m in out:
         prev = best.get(m["submission_id"])
-        if prev is None or m["hamming"] < prev["hamming"]:
+        if prev is None or (m["match"] == "exact" and prev["match"] == "near") or (
+            m["match"] == prev["match"] and m["hamming"] < prev["hamming"]
+        ):
             best[m["submission_id"]] = m
-    return sorted(best.values(), key=lambda m: m["hamming"])[:15]
+    return sorted(best.values(), key=lambda m: (m["match"] != "exact", m["hamming"]))[:15]
 
 
 def linkage_signal(face_links: List[Dict], asset_links: List[Dict]) -> Tuple[float, List[str]]:
@@ -138,11 +154,23 @@ def linkage_signal(face_links: List[Dict], asset_links: List[Dict]) -> Tuple[flo
         score = max(score, 0.30)
         reasons.append(f"This face matches {len(face_links)} earlier submission(s) under the same name (possible duplicate application)")
 
-    if asset_links:
-        score = max(score, min(0.9, 0.6 + 0.1 * len(asset_links)))
+    exact = [m for m in asset_links if m.get("match") == "exact"]
+    near = [m for m in asset_links if m.get("match") != "exact"]
+    if exact:
+        # Byte-identical pixels across identities is the KYC-kit signature, and
+        # the one asset claim strong enough to carry a rejection on its own.
+        score = max(score, min(0.9, 0.6 + 0.1 * len(exact)))
         reasons.append(
-            f"The exact same image file was used in {len(asset_links)} earlier submission(s) - "
+            f"The exact same image file was used in {len(exact)} earlier submission(s) - "
             "consistent with a purchased, pre-made KYC kit"
+        )
+    elif near:
+        # Looks alike, is not provably the same. Worth an analyst's attention;
+        # not worth overruling five detectors that all read the packet as clean.
+        score = max(score, 0.35)
+        reasons.append(
+            f"A visually near-identical image appeared in {len(near)} earlier submission(s) - "
+            "could be a reused asset, or two documents sharing a template"
         )
     return score, reasons
 
