@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { api, fmtPct, type VerifyResponse } from "@/lib/api";
 import { DropZone } from "@/components/DropZone";
+import { LiveFaceMatch } from "@/components/LiveFaceMatch";
 import { DetectorPanel, PipelineRunning } from "@/components/DetectorPanel";
 import { ErrorBox, ScoreDial, Spinner, VerdictBadge } from "@/components/ui";
 
@@ -128,6 +129,18 @@ export default function LiveVerifyPage() {
           <button onClick={run} disabled={running} className="btn-primary w-full py-2.5">
             {running ? <Spinner label="Verifying…" /> : "Run verification"}
           </button>
+
+          {/* Live capture. Separate from the pipeline above on purpose: this
+              answers only "is this the person on the card", in real time, and
+              stores nothing. The full verdict still comes from /verify. */}
+          <div className="card-pad">
+            <div className="label">Live face match</div>
+            <p className="mb-3 mt-1 text-[11px] leading-relaxed text-slate-500">
+              Match your camera against the uploaded ID portrait, live. This is the identity
+              check alone — it does not produce a verdict.
+            </p>
+            <LiveFaceMatch reference={idDoc} />
+          </div>
 
           {samples.length > 0 && (
             <div className="card-pad">

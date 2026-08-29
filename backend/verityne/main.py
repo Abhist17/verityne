@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from .api import routes_gauntlet, routes_metrics, routes_ops, routes_verify
+from .api import routes_gauntlet, routes_live, routes_metrics, routes_ops, routes_verify
 from .config import HEATMAP_DIR, UPLOAD_DIR, get_policy, resolve_device
 from .db import init_db
 
@@ -78,6 +78,7 @@ async def unhandled(request: Request, exc: Exception):
 app.include_router(routes_verify.router, tags=["verification"])
 app.include_router(routes_gauntlet.router, tags=["gauntlet"])
 app.include_router(routes_metrics.router, tags=["metrics"])
+app.include_router(routes_live.router, tags=["live"])
 app.include_router(routes_ops.router, tags=["ops"])
 
 app.mount("/static/heatmaps", StaticFiles(directory=str(HEATMAP_DIR)), name="heatmaps")
@@ -100,5 +101,5 @@ def root():
     return {
         "name": "Verityne",
         "docs": "/docs",
-        "endpoints": ["/verify", "/batch-verify", "/gauntlet/stream", "/metrics", "/attacks", "/review-queue"],
+        "endpoints": ["/verify", "/face-match/live", "/batch-verify", "/gauntlet/stream", "/metrics", "/attacks", "/review-queue"],
     }

@@ -27,6 +27,19 @@ datasets/corpus/
 datasets/redteam/
 datasets/manifest.json
 
+# --- downloaded research datasets (rebuild with `make data-real`) ----------
+# LFW, MIDV-2020 and Celeb-DF are fetched from their sources, not vendored.
+# Celeb-DF in particular is covered by a licence agreement that is granted to a
+# named requester, so redistributing it through this repo is not ours to do.
+datasets/lfw/
+datasets/midv2020/
+datasets/celebdf/
+
+# --- personal documents, never committed ----------------------------------
+# Your own ID used for a live demo lives here. It is your data, it stays on your
+# machine, and nothing in the pipeline reads it for training.
+storage/private/
+
 # eval/*.json is committed on purpose: it is the evidence behind the README's
 # numbers. Only the 1 MB raw per-detector score cache is excluded.
 eval/scores.json

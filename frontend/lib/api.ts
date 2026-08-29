@@ -34,6 +34,19 @@ export interface VerifyResponse {
   policy: Record<string, any>;
 }
 
+export interface FaceMatchResult {
+  similarity: number | null;
+  match: boolean | null;
+  threshold: number;
+  threshold_source: string;
+  selfie_face_found: boolean;
+  reference_face_found: boolean;
+  margin: number | null;
+  confidence: "strong" | "borderline" | "weak";
+  detail: string;
+  latency_ms: number;
+}
+
 export interface GauntletResult {
   submission_id: string;
   name: string;
@@ -80,6 +93,12 @@ export const api = {
 
   verify: (form: FormData) =>
     request<VerifyResponse>("/verify", { method: "POST", body: form }),
+
+  faceMatchLive: (form: FormData) =>
+    request<FaceMatchResult>("/face-match/live", { method: "POST", body: form }),
+
+  faceMatchThreshold: () =>
+    request<{ low: number; high: number; fitted_on: string }>("/face-match/threshold"),
 
   submissions: (params: Record<string, string | number> = {}) => {
     const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]));
