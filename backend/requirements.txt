@@ -6,12 +6,16 @@
 #
 # opencv is pinned to 4.x on purpose: OpenCV 5 removed cv2.CascadeClassifier,
 # which the face-detection fallback needs when MTCNN is unavailable.
+#
+# facenet-pytorch is NOT here. It declares torch<2.3, numpy<2 and Pillow<10.3,
+# none of which hold any more, and pip refuses to resolve the set. The code
+# runs fine against current versions, so it installs separately with --no-deps
+# from requirements-nodeps.txt. Install this file first; that one second.
 
 huggingface-hub>=0.26
 accelerate==1.14.0
 diffusers==0.40.0
 easyocr==1.7.2
-facenet-pytorch==2.6.0
 fastapi==0.141.1
 httpx==0.28.1
 ImageHash==4.3.2

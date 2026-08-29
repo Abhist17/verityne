@@ -1,0 +1,26 @@
+# Build context hygiene. Without this, `docker compose build` uploads the model
+# cache and the generated corpus — several GB of files the image never needs,
+# because both are bind-mounted at runtime by docker-compose.yml.
+
+.git
+.gitignore
+.venv
+**/__pycache__
+**/*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+frontend/node_modules
+frontend/.next
+frontend/out
+
+# Mounted as volumes at runtime, never baked into an image.
+storage
+datasets
+
+.env
+.env.local
+*.log
+README.md
+.github

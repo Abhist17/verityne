@@ -1,0 +1,13 @@
+# Installed with --no-deps, after requirements.txt.
+#
+# facenet-pytorch 2.6.0 pins torch<2.3.0, numpy<2.0.0 and Pillow<10.3.0. Those
+# bounds are stale, not real: the InceptionResnetV1 and MTCNN code paths this
+# project uses work unchanged on torch 2.6 / numpy 2.5 / Pillow 12, which is
+# what the corpus was scored with. Leaving the package in requirements.txt makes
+# pip fail with ResolutionImpossible, so it is installed here without its
+# declared dependency set.
+#
+# Its actual runtime imports — numpy, Pillow, requests, torch, torchvision,
+# tqdm — are all satisfied by requirements.txt (requests via diffusers, tqdm via
+# huggingface-hub). If a future version fixes the pins, move this line back.
+facenet-pytorch==2.6.0

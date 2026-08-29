@@ -24,6 +24,8 @@ setup-backend: ## create the venv and install Python dependencies
 	$(PIP) install -q --upgrade pip wheel setuptools
 	$(PIP) install -q torch torchvision --index-url https://download.pytorch.org/whl/cu124
 	$(PIP) install -q -r backend/requirements.txt
+	# facenet-pytorch's declared pins are stale; see requirements-nodeps.txt.
+	$(PIP) install -q --no-deps -r backend/requirements-nodeps.txt
 	@echo "backend ready"
 
 setup-frontend: ## install dashboard dependencies

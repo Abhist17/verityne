@@ -9,12 +9,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1 PYTHONPATH=/app/backend HF_HOME=/app/storage/models/hf
 
-COPY backend/requirements.txt /app/backend/requirements.txt
+COPY backend/requirements.txt backend/requirements-nodeps.txt /app/backend/
 # CPU wheels in the container: the image stays ~2GB instead of ~7GB, and the
 # detectors are small enough to run acceptably on CPU. Mount a GPU and swap the
 # index URL if you want CUDA.
 RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu \
-    && pip install --no-cache-dir -r /app/backend/requirements.txt
+    && pip install --no-cache-dir -r /app/backend/requirements.txt \
+    && pip install --no-cache-dir --no-deps -r /app/backend/requirements-nodeps.txt
 
 COPY backend /app/backend
 RUN mkdir -p /app/storage/uploads /app/storage/heatmaps /app/storage/models /app/datasets /app/eval

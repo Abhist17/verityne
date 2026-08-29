@@ -97,6 +97,19 @@ cannot hallucinate. The pretrained CNN is an ensemble member, not the system.
 The first run downloads model weights (FaceNet, the deepfake transformer,
 EasyOCR) into `storage/models/hf`. Everything after that is offline.
 
+Python dependencies install in **two** steps, and `make setup` does both:
+
+```bash
+pip install -r backend/requirements.txt
+pip install --no-deps -r backend/requirements-nodeps.txt
+```
+
+The second file holds `facenet-pytorch` alone. It pins `torch<2.3`, `numpy<2`
+and `Pillow<10.3` — bounds that no longer hold and that the code does not
+actually need — so leaving it in the first file makes pip fail outright with
+`ResolutionImpossible`. Splitting it keeps the honest resolution for everything
+else instead of unpinning the whole file to work around one stale package.
+
 ```bash
 make setup                      # venv + npm install
 make pipeline                   # corpus → benchmark → calibrate → score → train → evaluate
@@ -507,7 +520,8 @@ typecheck and production build.
 
 | Symptom | Cause / fix |
 | --- | --- |
-| `torch==2.6.0+cu124` won't install | You have no CUDA. Drop the local tag: `pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu`, then `pip install -r backend/requirements.txt` for the rest. |
+| `torch==2.6.0+cu124` won't install | You have no CUDA. Drop the local tag: `pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu`, then run the two requirements steps below. |
+| `ResolutionImpossible` mentioning `facenet-pytorch` and `numpy` | You installed `requirements-nodeps.txt` with dependency resolution on. facenet-pytorch declares `torch<2.3`, `numpy<2` and `Pillow<10.3`; those bounds are stale, not real. Install it second and with `--no-deps` — `make setup` already does. |
 | First request takes 60 s+ | Model weights downloading. Set `VERITYNE_WARMUP=1` so the cost is paid at boot, and check `GET /health` for `models`. |
 | `cv2.CascadeClassifier` missing | OpenCV 5 removed it and the face-detection fallback needs it. Stay on `opencv-python-headless==4.11.x`. |
 | `/metrics` returns empty | `eval/metrics.json` is committed, but a `make clean-data` removes it. Re-run `make evaluate` (or the whole `make pipeline`). |
@@ -537,6 +551,8 @@ backend/
     main.py           FastAPI app, CORS, timing middleware, static mounts
   scripts/            dataset generation, benchmarking, calibration, training, evaluation
   tests/              37 tests over the deterministic surface
+  requirements.txt          resolvable pins
+  requirements-nodeps.txt   facenet-pytorch, installed second with --no-deps
 frontend/
   app/                Live Verify, Gauntlet, Metrics, Attack Gallery, Review Queue
   components/         DropZone, DetectorPanel, Nav, shared UI primitives
@@ -546,6 +562,7 @@ eval/                 metrics.json, model_benchmark.json, calibration.json,
 datasets/             generated corpus (git-ignored, rebuild with `make dataset`)
 storage/              uploads, heatmaps, model cache, SQLite (git-ignored)
 .github/workflows/    CI: backend tests + dashboard typecheck and build
+.dockerignore         keeps the 4 GB model cache out of the build context
 ```
 
 ---

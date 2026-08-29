@@ -30,6 +30,7 @@ jobs:
             --index-url https://download.pytorch.org/whl/cpu
           grep -vE '^(torch|torchvision)==' backend/requirements.txt > /tmp/req-ci.txt
           pip install -r /tmp/req-ci.txt pytest
+          pip install --no-deps -r backend/requirements-nodeps.txt
 
       - name: Run pytest
         env:
