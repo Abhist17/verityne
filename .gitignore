@@ -34,6 +34,12 @@ datasets/manifest.json
 datasets/lfw/
 datasets/midv2020/
 datasets/celebdf/
+datasets/faceforensics/
+datasets/dfdc/
+
+# Derived from MIDV-2020, so it inherits that dataset's terms and is rebuilt
+# with `make real-docs` rather than committed.
+datasets/real_docs/
 
 # --- personal documents, never committed ----------------------------------
 # Your own ID used for a live demo lives here. It is your data, it stays on your

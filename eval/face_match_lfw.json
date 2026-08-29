@@ -1,0 +1,91 @@
+{
+  "dataset": "LFW (deep-funneled), official 10-fold pair protocol from pairs.txt",
+  "source": "13,233 photographs of 5,749 real people; every pair is two distinct photographs",
+  "embedder": "facenet-pytorch InceptionResnetV1 (vggface2) \u2014 the same model and MTCNN crop the API uses",
+  "n_pairs_scored": 6000,
+  "n_pairs_total": 6000,
+  "n_photos_embedded": 7701,
+  "face_detection_rate": 1.0,
+  "roc_auc": 0.9901,
+  "accuracy_10fold": {
+    "mean": 0.982,
+    "std": 0.004,
+    "per_fold": [
+      0.9783,
+      0.9867,
+      0.9833,
+      0.9817,
+      0.9867,
+      0.9817,
+      0.9867,
+      0.9817,
+      0.9733,
+      0.98
+    ],
+    "protocol": "threshold chosen on nine folds, scored on the held-out tenth"
+  },
+  "threshold": {
+    "mean_over_folds": 0.4065,
+    "per_fold": [
+      0.4028,
+      0.4028,
+      0.4028,
+      0.4406,
+      0.4028,
+      0.4028,
+      0.4028,
+      0.4028,
+      0.4028,
+      0.4028
+    ]
+  },
+  "operating_points": {
+    "far_1pct": {
+      "threshold": 0.4058,
+      "tar": 0.974,
+      "far": 0.01
+    },
+    "far_0.1pct": {
+      "threshold": 0.5197,
+      "tar": 0.9513,
+      "far": 0.001
+    }
+  },
+  "as_shipped": {
+    "linkage.SAME_PERSON": {
+      "threshold": 0.5197,
+      "tar": 0.9513,
+      "far": 0.001,
+      "accuracy": 0.9752
+    },
+    "face_match_band.low": {
+      "threshold": 0.7835,
+      "tar": 0.5207,
+      "far": 0.0,
+      "accuracy": 0.7603,
+      "source": "95 genuine / 18 mismatch / 11 duplicate pairs (train split)"
+    }
+  },
+  "similarity": {
+    "same_person": {
+      "n": 3000,
+      "mean": 0.7578,
+      "p05": 0.5232,
+      "p50": 0.7878,
+      "p95": 0.9131
+    },
+    "different_person": {
+      "n": 3000,
+      "mean": 0.0334,
+      "p05": -0.2112,
+      "p50": 0.03,
+      "p95": 0.2871
+    }
+  },
+  "fits": [
+    "linkage.SAME_PERSON \u2014 is this the same person as an earlier submission",
+    "the low end of the face-match band \u2014 is the selfie the person on the document"
+  ],
+  "does_not_fit": "The high end of the band, which catches a selfie copied from the printed ID portrait. That needs selfie-vs-document pairs and LFW contains no documents, so that bound still comes from the corpus calibration.",
+  "caveat": "LFW photographs are web images of public figures, not phone selfies against a printed card. The identity question is the same one; the capture conditions are not. Treat this as a lower bound that is at least measured on real pairs."
+}

@@ -25,14 +25,31 @@ router = APIRouter()
 
 REPORT_PATH = EVAL_ROOT / "metrics.json"
 
+#: Reports measured on data this project did not generate. Each is optional:
+#: the face-match one needs LFW, the document one needs MIDV-2020, and the video
+#: one needs a dataset that is gated behind a signed request form. The endpoint
+#: reports which are present rather than pretending a missing one is a zero.
+REAL_DATA_REPORTS = {
+    "face_match": (EVAL_ROOT / "face_match_lfw.json",
+                   "LFW — 6,000 pairs of real photographs of real people"),
+    "id_documents": (EVAL_ROOT / "real_docs.json",
+                     "MIDV-2020 — identity documents physically printed, photographed and scanned"),
+    "liveness_video": (EVAL_ROOT / "real_video.json",
+                       "recorded deepfake video (FaceForensics++ / Celeb-DF / DFDC)"),
+}
 
-def _load_report() -> Optional[dict]:
-    if not REPORT_PATH.exists():
+
+def _load_json(path) -> Optional[dict]:
+    if not path.exists():
         return None
     try:
-        return json.loads(REPORT_PATH.read_text())
+        return json.loads(path.read_text())
     except Exception:
         return None
+
+
+def _load_report() -> Optional[dict]:
+    return _load_json(REPORT_PATH)
 
 
 @router.get("/metrics", summary="Held-out evaluation report + live operational stats")
@@ -49,6 +66,38 @@ def metrics(session: Session = Depends(db_session)):
             "training. Live stats are computed from the audit log of this instance."
         ),
     }
+
+
+@router.get("/metrics/real", summary="Detector results measured on real, third-party data")
+def metrics_real(full: bool = Query(False, description="include the per-item rows, not just the summary")):
+    """The counterpart to `/metrics`, measured on data this project did not generate.
+
+    `/metrics` reports the held-out split of a corpus we built: real faces, but
+    documents we rendered and liveness clips we animated from stills. That
+    measures separability, and it is a lower bound on the work of deploying
+    this, not a substitute for it.
+
+    This endpoint reports the same detectors on data from elsewhere — real
+    photographs of real people, and identity documents that somebody else
+    printed, photographed and scanned. Each report is independent and any of
+    them may be absent, so `available` says which actually ran rather than
+    letting a missing file read as a result.
+    """
+    out: Dict[str, object] = {"available": [], "missing": [], "reports": {}}
+    for name, (path, source) in REAL_DATA_REPORTS.items():
+        data = _load_json(path)
+        if data is None:
+            out["missing"].append({"name": name, "source": source, "expected_at": path.name})
+            continue
+        if not full:
+            data = {k: v for k, v in data.items() if k != "rows"}
+        out["available"].append(name)
+        out["reports"][name] = {"source": source, **data}
+    out["note"] = (
+        "Absence here means the dataset was not on disk when the evaluation last ran — "
+        "not that the detector scored zero. See the README section 'Measured on real data'."
+    )
+    return out
 
 
 def _live_stats(session: Session) -> Dict:

@@ -21,7 +21,22 @@ from .db import AssetHash, FaceEmbedding, Submission, Verdict
 from .utils.hashing import hamming
 
 #: Above this cosine similarity two selfies are the same person.
-SAME_PERSON = 0.75
+#:
+#: Fitted on LFW's official 10-fold protocol — 6,000 pairs of real photographs of
+#: real people — by ``scripts/calibrate_face_match_lfw.py``; the full report is
+#: ``eval/face_match_lfw.json``. This is the FAR=0.1% operating point, not the
+#: accuracy-optimal one, because a linkage hit accuses somebody of applying twice
+#: under two names: the false-accept budget should be strict even at some cost to
+#: recall. At this threshold that costs little — 95.1% of true same-person pairs
+#: still link.
+#:
+#: It was 0.75, hard-coded. Graded on those same 6,000 real pairs, 0.75 linked
+#: only 63.3% of true same-person pairs: it was silently missing more than a
+#: third of the repeat applicants it exists to find. The corpus could not have
+#: revealed that — its genuine pairs derive from one source photograph each, so
+#: their similarity runs far above what two real photographs of one person score
+#: (LFW same-person mean 0.758, 5th percentile 0.523).
+SAME_PERSON = 0.5197
 #: Perceptual-hash distance at or below which two files *look* alike. This is a
 #: similarity bound, not an identity one: ID cards drawn from a shared template
 #: land inside it while belonging to different people, so a hit here is a hint,

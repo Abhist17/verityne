@@ -13,20 +13,20 @@
   ],
   "kind": "logreg",
   "train_rows": 194,
-  "cv_auc": 0.8914,
-  "lr_auc": 0.8914,
-  "xgb_auc": 0.857,
+  "cv_auc": 0.8811,
+  "lr_auc": 0.8811,
+  "xgb_auc": 0.8708,
   "weights": {
-    "selfie_deepfake_score": 0.071,
-    "selfie_deepfake_conf": 0.431,
-    "liveness_video_score": 0.4375,
-    "liveness_video_conf": -0.9227,
-    "id_forensics_score": 0.8821,
+    "selfie_deepfake_score": -0.0474,
+    "selfie_deepfake_conf": 0.503,
+    "liveness_video_score": 0.3048,
+    "liveness_video_conf": -0.1818,
+    "id_forensics_score": 0.8846,
     "id_forensics_conf": -0.0,
-    "face_match_score": 0.8874,
-    "face_match_conf": 0.906,
-    "metadata_exif_score": 1.7321,
-    "metadata_exif_conf": 0.1567
+    "face_match_score": 0.8596,
+    "face_match_conf": 0.8649,
+    "metadata_exif_score": 1.6381,
+    "metadata_exif_conf": 0.2718
   },
   "note": "Cross-validated AUC on the training split. The headline number lives in eval/metrics.json and is computed on identity-disjoint held-out data."
 }

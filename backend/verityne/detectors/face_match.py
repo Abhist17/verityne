@@ -25,11 +25,23 @@ from ..utils.images import crop_face, detect_faces, largest_face, load_rgb
 from .base import Detector, SubmissionPayload, clamp
 from .models import cosine, face_embedder
 
-#: Fallback band, used only until `scripts/calibrate.py` has fitted real ones.
-#: Hard-coding these was the first thing that went wrong in development: the
-#: right values depend on the embedding model, the image pipeline and the card
-#: print quality, so they are fitted on the training split and loaded here.
-DEFAULT_LOW, DEFAULT_HIGH = 0.38, 0.92
+#: Fallback band, used only until a calibration file exists.
+#:
+#: The two bounds are fitted by different scripts on different data, because they
+#: are different questions. ``low`` — is this the same person — is fitted by
+#: ``scripts/calibrate_face_match_lfw.py`` on LFW's 6,000 real photo-vs-photo
+#: pairs, where the pipeline scores 98.2% ± 0.4%. ``high`` — is this "selfie"
+#: just a copy of the printed card portrait — needs selfie-vs-document pairs,
+#: which LFW has none of, so it still comes from ``scripts/calibrate.py`` on the
+#: corpus and carries that corpus's caveat.
+#:
+#: The default below is LFW's, and the previous corpus-fitted 0.7835 is why this
+#: matters: on real pairs that value accepted only 52% of genuine same-person
+#: matches, i.e. it would have called nearly half of honest applicants
+#: impersonators. It was not a wrong arithmetic — it was fitted on genuine pairs
+#: that all derive from a single source photograph, which is not what a selfie
+#: and a card portrait look like.
+DEFAULT_LOW, DEFAULT_HIGH = 0.4065, 0.9878
 BAND_PATH = MODEL_ROOT / "face_match_band.json"
 
 
