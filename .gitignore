@@ -1,0 +1,36 @@
+# --- python ----------------------------------------------------------------
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- node / next -----------------------------------------------------------
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# --- secrets ---------------------------------------------------------------
+.env
+.env.local
+
+# --- runtime state (regenerated; never source of truth) ---------------------
+storage/uploads/*
+storage/heatmaps/*
+storage/models/
+storage/*.db
+
+# --- generated corpus (rebuild with `make dataset`) ------------------------
+datasets/corpus/
+datasets/redteam/
+datasets/manifest.json
+
+# eval/*.json is committed on purpose: it is the evidence behind the README's
+# numbers. Only the 1 MB raw per-detector score cache is excluded.
+eval/scores.json
+
+# --- misc ------------------------------------------------------------------
+.DS_Store
+*.log
