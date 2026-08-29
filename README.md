@@ -382,15 +382,21 @@ neither population.
 
 | | ms |
 | --- | --- |
-| p50 | 6,361 |
-| p90 | 7,414 |
-| p99 | 9,169 |
+| p50 | 12,336 |
+| p90 | 16,045 |
+| p99 | 18,172 |
 
-Measured in batch mode with detectors running **sequentially**. The API runs
-stage one concurrently: a live `POST /verify` against the corpus measured
-**2,137 ms** end to end on a CUDA GPU. Per-detector medians: ID forensics 4,980
-ms (OCR dominates), liveness 1,074 ms, selfie deepfake 275 ms, face match 52 ms,
-metadata 30 ms.
+Measured in batch mode with detectors running **sequentially**, four packets at
+a time, and — for this particular run — while the real-document evaluation was
+sharing the same GPU. Treat it as a throughput figure under contention, not as
+per-request latency.
+
+The API runs stage one concurrently and one request at a time: a live
+`POST /verify` against the corpus measured **2,137 ms** end to end on a CUDA
+GPU, and that is the number that describes what a caller waits for.
+Per-detector medians from this batch run: ID forensics 10,141 ms (OCR
+dominates), liveness 1,727 ms, selfie deepfake 455 ms, face match 86 ms,
+metadata 41 ms.
 
 ### Bias audit
 
