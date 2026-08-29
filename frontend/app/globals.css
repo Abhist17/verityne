@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+
+body {
+  @apply bg-ink-950 text-slate-200 antialiased;
+  background-image:
+    radial-gradient(900px 500px at 12% -8%, rgba(91, 140, 255, 0.10), transparent 60%),
+    radial-gradient(700px 420px at 92% 4%, rgba(45, 212, 167, 0.07), transparent 60%);
+  background-attachment: fixed;
+}
+
+@layer components {
+  .card { @apply rounded-xl border border-edge bg-ink-900/70 backdrop-blur-sm; }
+  .card-pad { @apply card p-5; }
+  .label { @apply text-[11px] font-medium uppercase tracking-[0.13em] text-slate-500; }
+  .stat { @apply font-mono text-2xl font-semibold tabular-nums text-slate-100; }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-edge bg-ink-800
+           px-4 py-2 text-sm font-medium text-slate-200 transition
+           hover:border-accent/60 hover:bg-ink-700 disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply btn border-accent/50 bg-accent/15 text-accent hover:border-accent hover:bg-accent/25;
+  }
+  .chip { @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium; }
+  .scroll-x { @apply overflow-x-auto; scrollbar-width: thin; }
+}
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: #0b0e16; }
+::-webkit-scrollbar-thumb { background: #2a3142; border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: #3a4258; }
