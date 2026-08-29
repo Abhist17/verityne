@@ -1,0 +1,108 @@
+"""Central configuration. Paths, thresholds, and per-merchant policy loading."""
+from __future__ import annotations
+
+import os
+from functools import lru_cache
+from pathlib import Path
+from typing import Any, Dict
+
+import yaml
+from pydantic import BaseModel, Field
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+BACKEND_ROOT = REPO_ROOT / "backend"
+STORAGE_ROOT = Path(os.getenv("VERITYNE_STORAGE", REPO_ROOT / "storage"))
+DATASET_ROOT = Path(os.getenv("VERITYNE_DATASETS", REPO_ROOT / "datasets"))
+EVAL_ROOT = Path(os.getenv("VERITYNE_EVAL", REPO_ROOT / "eval"))
+MODEL_ROOT = STORAGE_ROOT / "models"
+
+UPLOAD_DIR = STORAGE_ROOT / "uploads"
+HEATMAP_DIR = STORAGE_ROOT / "heatmaps"
+
+for _d in (STORAGE_ROOT, UPLOAD_DIR, HEATMAP_DIR, MODEL_ROOT, DATASET_ROOT, EVAL_ROOT):
+    _d.mkdir(parents=True, exist_ok=True)
+
+DATABASE_URL = os.getenv("VERITYNE_DB", f"sqlite:///{STORAGE_ROOT / 'verityne.db'}")
+API_KEY = os.getenv("VERITYNE_API_KEY", "verityne-demo-key")
+SLACK_WEBHOOK_URL = os.getenv("VERITYNE_SLACK_WEBHOOK", "")
+DEVICE = os.getenv("VERITYNE_DEVICE", "auto")
+
+MAX_UPLOAD_BYTES = int(os.getenv("VERITYNE_MAX_UPLOAD_MB", "40")) * 1024 * 1024
+MAX_VIDEO_FRAMES = int(os.getenv("VERITYNE_MAX_VIDEO_FRAMES", "24"))
+VIDEO_FRAME_STRIDE = int(os.getenv("VERITYNE_FRAME_STRIDE", "5"))
+
+DETECTOR_NAMES = [
+    "selfie_deepfake",
+    "liveness_video",
+    "id_forensics",
+    "face_match",
+    "metadata_exif",
+]
+
+# Human-facing labels used by the dashboard and the NL explainer.
+DETECTOR_LABELS = {
+    "selfie_deepfake": "Selfie Deepfake Detector",
+    "liveness_video": "Liveness Video Analyzer",
+    "id_forensics": "ID Document Forensics",
+    "face_match": "Face Match (Selfie vs ID)",
+    "metadata_exif": "Metadata / EXIF Auditor",
+}
+
+
+class MerchantPolicy(BaseModel):
+    """One merchant's risk tolerance. Loaded from policy.yaml, overridable per request."""
+
+    merchant_id: str = "default"
+    min_risk_for_reject: float = 0.75
+    min_risk_for_review: float = 0.40
+    require_liveness: bool = True
+    require_id_document: bool = True
+    abstain_band: float = Field(
+        0.05, description="Half-width around a threshold where we route to human review instead of deciding."
+    )
+    webhook_min_score: float = 0.90
+    audit_retention_days: int = 365
+    # Business inputs for the cost-of-friction model. Merchant-tunable on purpose:
+    # these are assumptions, not measurements, and the dashboard exposes them as sliders.
+    avg_fraud_loss_inr: float = 85000.0
+    merchant_ltv_inr: float = 42000.0
+    false_reject_abandon_prob: float = 0.35
+
+    @property
+    def review_band(self) -> tuple[float, float]:
+        return (self.min_risk_for_review, self.min_risk_for_reject)
+
+
+DEFAULT_POLICY_PATH = Path(__file__).parent / "policy.yaml"
+
+
+@lru_cache(maxsize=1)
+def _load_policy_file() -> Dict[str, Any]:
+    if not DEFAULT_POLICY_PATH.exists():
+        return {}
+    with DEFAULT_POLICY_PATH.open() as fh:
+        return yaml.safe_load(fh) or {}
+
+
+def get_policy(merchant_id: str = "default") -> MerchantPolicy:
+    """Resolve a merchant's policy: file defaults, overlaid with any per-merchant block."""
+    raw = _load_policy_file()
+    base = dict(raw.get("default", {}))
+    base.update(raw.get("merchants", {}).get(merchant_id, {}))
+    base["merchant_id"] = merchant_id
+    return MerchantPolicy(**base)
+
+
+def reload_policy() -> None:
+    _load_policy_file.cache_clear()
+
+
+def resolve_device() -> str:
+    if DEVICE != "auto":
+        return DEVICE
+    try:
+        import torch
+
+        return "cuda" if torch.cuda.is_available() else "cpu"
+    except Exception:
+        return "cpu"

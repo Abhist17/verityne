@@ -1,0 +1,28 @@
+# Verityne merchant policy. One file, hot-reloadable via POST /admin/reload-policy.
+# `default` applies to every merchant; anything under `merchants:` overlays it.
+default:
+  min_risk_for_reject: 0.75
+  min_risk_for_review: 0.40
+  require_liveness: true
+  require_id_document: true
+  abstain_band: 0.05
+  webhook_min_score: 0.90
+  audit_retention_days: 365
+  # Cost model inputs (INR). Assumptions, surfaced as sliders in the dashboard.
+  avg_fraud_loss_inr: 85000
+  merchant_ltv_inr: 42000
+  false_reject_abandon_prob: 0.35
+
+merchants:
+  # A high-risk vertical: tighten both thresholds, accept more friction.
+  crypto_exchange_01:
+    min_risk_for_reject: 0.60
+    min_risk_for_review: 0.25
+    avg_fraud_loss_inr: 250000
+  # A low-value, high-volume marketplace: friction is expensive, loosen up.
+  gig_marketplace_02:
+    min_risk_for_reject: 0.88
+    min_risk_for_review: 0.55
+    require_liveness: false
+    avg_fraud_loss_inr: 12000
+    merchant_ltv_inr: 9000
