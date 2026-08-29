@@ -13,8 +13,15 @@ COPY backend/requirements.txt backend/requirements-nodeps.txt /app/backend/
 # CPU wheels in the container: the image stays ~2GB instead of ~7GB, and the
 # detectors are small enough to run acceptably on CPU. Mount a GPU and swap the
 # index URL if you want CUDA.
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu \
-    && pip install --no-cache-dir -r /app/backend/requirements.txt \
+#
+# requirements.txt pins torch with a +cu124 local tag that exists only on the
+# CUDA index, so those two lines are dropped here and the same versions come
+# from the CPU index — the same trick CI uses, for the same reason.
+# facenet-pytorch goes last and without deps; see requirements-nodeps.txt.
+RUN pip install --no-cache-dir torch==2.6.0 torchvision==0.21.0 \
+      --index-url https://download.pytorch.org/whl/cpu \
+    && grep -vE '^(torch|torchvision)==' /app/backend/requirements.txt > /tmp/req.txt \
+    && pip install --no-cache-dir -r /tmp/req.txt \
     && pip install --no-cache-dir --no-deps -r /app/backend/requirements-nodeps.txt
 
 COPY backend /app/backend
