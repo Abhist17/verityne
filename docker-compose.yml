@@ -1,0 +1,61 @@
+# docker compose up  →  dashboard on :3000, API on :8000
+#
+# SQLite is the default and needs no service. Postgres is included for the
+# "this is how it deploys" story: set VERITYNE_DB on the backend to switch,
+# the schema is identical.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      VERITYNE_API_KEY: ${VERITYNE_API_KEY:-verityne-demo-key}
+      VERITYNE_DB: ${VERITYNE_DB:-sqlite:////app/storage/verityne.db}
+      VERITYNE_STORAGE: /app/storage
+      VERITYNE_DATASETS: /app/datasets
+      VERITYNE_EVAL: /app/eval
+      VERITYNE_DEVICE: cpu
+      VERITYNE_CORS: http://localhost:3000
+      VERITYNE_SLACK_WEBHOOK: ${VERITYNE_SLACK_WEBHOOK:-}
+      HF_HOME: /app/storage/models/hf
+    volumes:
+      - ./storage:/app/storage
+      - ./datasets:/app/datasets
+      - ./eval:/app/eval
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8000
+      NEXT_PUBLIC_API_KEY: ${VERITYNE_API_KEY:-verityne-demo-key}
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+  # Optional. Start with:  docker compose --profile postgres up
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_USER: verityne
+      POSTGRES_PASSWORD: verityne
+      POSTGRES_DB: verityne
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verityne"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
