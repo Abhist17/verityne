@@ -1,0 +1,39 @@
+{
+  "n_images": 194,
+  "n_synthetic": 18,
+  "results": [
+    {
+      "model": "spectral_heuristic",
+      "auc": 0.4056,
+      "ms_per_image": 2.81,
+      "kind": "classical"
+    },
+    {
+      "model": "prithivMLmods/Deep-Fake-Detector-v2-Model",
+      "auc": 0.6089,
+      "ms_per_image": 7.99,
+      "mean_real": 0.4612,
+      "mean_fake": 0.548,
+      "labels": {
+        "0": "Realism",
+        "1": "Deepfake"
+      },
+      "fake_index": 1,
+      "kind": "neural"
+    },
+    {
+      "model": "dima806/deepfake_vs_real_image_detection",
+      "auc": 0.416,
+      "ms_per_image": 7.55,
+      "mean_real": 0.6792,
+      "mean_fake": 0.5472,
+      "labels": {
+        "0": "Real",
+        "1": "Fake"
+      },
+      "fake_index": 1,
+      "kind": "neural"
+    }
+  ],
+  "selected": "prithivMLmods/Deep-Fake-Detector-v2-Model"
+}

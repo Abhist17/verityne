@@ -1,0 +1,32 @@
+{
+  "feature_names": [
+    "selfie_deepfake_score",
+    "selfie_deepfake_conf",
+    "liveness_video_score",
+    "liveness_video_conf",
+    "id_forensics_score",
+    "id_forensics_conf",
+    "face_match_score",
+    "face_match_conf",
+    "metadata_exif_score",
+    "metadata_exif_conf"
+  ],
+  "kind": "logreg",
+  "train_rows": 194,
+  "cv_auc": 0.8914,
+  "lr_auc": 0.8914,
+  "xgb_auc": 0.857,
+  "weights": {
+    "selfie_deepfake_score": 0.071,
+    "selfie_deepfake_conf": 0.431,
+    "liveness_video_score": 0.4375,
+    "liveness_video_conf": -0.9227,
+    "id_forensics_score": 0.8821,
+    "id_forensics_conf": -0.0,
+    "face_match_score": 0.8874,
+    "face_match_conf": 0.906,
+    "metadata_exif_score": 1.7321,
+    "metadata_exif_conf": 0.1567
+  },
+  "note": "Cross-validated AUC on the training split. The headline number lives in eval/metrics.json and is computed on identity-disjoint held-out data."
+}
