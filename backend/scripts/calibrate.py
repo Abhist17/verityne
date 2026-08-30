@@ -61,7 +61,47 @@ def _best_split(low_group: np.ndarray, high_group: np.ndarray) -> float:
     return best_t
 
 
-def calibrate_face_band(entries: List[Dict]) -> Optional[Dict]:
+def preserve_better_low_bound(out: Dict, existing: Dict) -> Dict:
+    """Keep an LFW-fitted lower bound rather than regressing it to this corpus.
+
+    The two bounds of the face-match band do not have equally good sources. The
+    *upper* one is corpus-derived by design - LFW has no identity documents, so
+    there is nothing better to fit it on. The *lower* one is an identity
+    threshold, and `calibrate_face_match_lfw.py` fits it on 6,000 pairs of real
+    photographs of real people.
+
+    That distinction matters because this corpus cannot fit the lower bound
+    honestly: its genuine pairs derive from one source photograph each and sit
+    near cosine 0.94, far above what two real photographs of one person score.
+    Fitting on them produced a threshold of about 0.83, which on LFW rejects
+    close to half of genuine applicants - the defect written up in the README.
+
+    `make pipeline` re-runs this script, and writing a fresh dict here quietly
+    reinstated exactly that threshold over the LFW one, with no warning and no
+    test failing. Anyone following the documented order (`make pipeline`, then
+    `make real`) recovered by accident. So: if a better-sourced low bound is on
+    disk, it stays, and the corpus value is recorded beside it rather than
+    thrown away.
+    """
+    if not existing.get("lfw"):
+        return out
+    merged = {**out}
+    merged["corpus_fitted_low"] = out["low"]
+    merged["corpus_fitted_on"] = out["fitted_on"]
+    merged["high_fitted_on"] = out["fitted_on"]
+    for key in ("low", "same_person", "far_1pct_threshold", "far_0.1pct_threshold",
+                "low_previously", "lfw", "fitted_on"):
+        if key in existing:
+            merged[key] = existing[key]
+    log.warning(
+        "keeping the LFW-fitted low bound %.4f; this corpus would have set %.4f, "
+        "which LFW showed rejects nearly half of genuine real pairs",
+        merged["low"], out["low"],
+    )
+    return merged
+
+
+def calibrate_face_band(entries: List[Dict], force_corpus_low: bool = False) -> Optional[Dict]:
     emb = face_embedder()
     if emb is None:
         log.warning("no face embedder; skipping band calibration")
@@ -143,7 +183,17 @@ def calibrate_face_band(entries: List[Dict]) -> Optional[Dict]:
             "the image-provenance check in the metadata auditor instead. Re-fit both on production pairs."
         ),
     }
-    (MODEL_ROOT / "face_match_band.json").write_text(json.dumps(out, indent=2))
+    band_path = MODEL_ROOT / "face_match_band.json"
+    existing = {}
+    if band_path.exists():
+        try:
+            existing = json.loads(band_path.read_text())
+        except Exception:  # noqa: BLE001
+            existing = {}
+    if not force_corpus_low:
+        out = preserve_better_low_bound(out, existing)
+
+    band_path.write_text(json.dumps(out, indent=2))
     log.info("face-match band: low=%.3f high=%.3f  %s", out["low"], out["high"], out["fitted_on"])
     for k, v in out["distributions"].items():
         log.info("  %-10s n=%-4s mean=%s p05=%s p95=%s", k, v["n"], v["mean"], v["p05"], v["p95"])
@@ -229,6 +279,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--skip-face-band", action="store_true")
     ap.add_argument("--skip-spectral", action="store_true")
+    ap.add_argument("--force-corpus-low", action="store_true",
+                    help="re-fit the face-band lower bound from this corpus even when an "
+                         "LFW-fitted one is on disk (it is worse; see preserve_better_low_bound)")
     args = ap.parse_args()
 
     if not MANIFEST.exists():
@@ -240,7 +293,7 @@ def main() -> None:
 
     report: Dict[str, object] = {"train_packets": len(entries)}
     if not args.skip_face_band:
-        report["face_band"] = calibrate_face_band(entries)
+        report["face_band"] = calibrate_face_band(entries, force_corpus_low=args.force_corpus_low)
     if not args.skip_spectral:
         report["spectral"] = fit_spectral_heads(entries)
 

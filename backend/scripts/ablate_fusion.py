@@ -34,7 +34,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
 sys.path.insert(0, str(SCRIPT_DIR.parent))
 
-from verityne.config import DATASET_ROOT, DETECTOR_NAMES, EVAL_ROOT  # noqa: E402
+from verityne.config import DATASET_ROOT, DETECTOR_NAMES, EVAL_ROOT, PHYSICALLY_FRAUD_ONLY  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("ablate")
@@ -111,8 +111,14 @@ def leak_audit(manifest: List[Dict]) -> Dict:
             rows[value] = {"genuine": real, "fraud": fake, "p_fraud": p_fraud}
             # One-sided and not a rounding artefact of two or three packets.
             if total >= 10 and p_fraud in (0.0, 1.0):
+                # Some values are one-sided because reality is: no camera writes a
+                # diffusion tag. Those are reported, so the reader can check the
+                # reasoning, but they are not defects and must not fail a build.
+                justification = PHYSICALLY_FRAUD_ONLY.get(value)
                 leaked.append({"value": value, "p_fraud": p_fraud, "n": total,
-                               "class": "fraud" if p_fraud == 1.0 else "genuine"})
+                               "class": "fraud" if p_fraud == 1.0 else "genuine",
+                               "expected": justification is not None,
+                               "justification": justification})
         n_leaked = sum(r["genuine"] + r["fraud"] for v, r in rows.items()
                        if any(l["value"] == v for l in leaked))
         out[field] = {
@@ -140,6 +146,8 @@ def main() -> None:
         raise SystemExit("need both a train and a test split in scores.json")
     log.info("ablating on %d train / %d held-out rows", len(train), len(test))
 
+    audit = leak_audit(json.loads(args.manifest.read_text()))
+
     full = fit_and_score(train, test, drop=None)
     log.info("full model held-out AUC %.4f", full["roc_auc"])
 
@@ -165,18 +173,30 @@ def main() -> None:
         "full_model": full,
         "per_detector": per_detector,
         "most_load_bearing": ranked[0][0],
-        "corpus_leak_audit": leak_audit(json.loads(args.manifest.read_text())),
+        "corpus_leak_audit": audit,
+        "corpus_clean": not any(
+            not l["expected"] for d in audit.values() for l in d["one_sided_values"]
+        ),
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=2))
     log.info("wrote %s", args.out)
 
-    leaks = [(f, d) for f, d in report["corpus_leak_audit"].items() if d["one_sided_values"]]
-    if leaks:
-        log.warning("corpus fields with one-sided values (a label written into the artefact):")
-        for field, d in leaks:
-            for l in d["one_sided_values"]:
-                log.warning("  %s=%s appears on %d packets, all %s", field, l["value"], l["n"], l["class"])
+    defects = [(f, l) for f, d in report["corpus_leak_audit"].items()
+               for l in d["one_sided_values"] if not l["expected"]]
+    expected = [(f, l) for f, d in report["corpus_leak_audit"].items()
+                for l in d["one_sided_values"] if l["expected"]]
+    for field, l in expected:
+        log.info("one-sided by construction: %s=%s (%d packets) - %s",
+                 field, l["value"], l["n"], l["justification"])
+    if defects:
+        log.error("corpus leak - a label written into the artefact:")
+        for field, l in defects:
+            log.error("  %s=%s appears on %d packets, all %s", field, l["value"], l["n"], l["class"])
+        raise SystemExit(
+            f"{len(defects)} corpus value(s) identify the class outright; every AUC above is "
+            "inflated by an unknown amount until that is fixed"
+        )
 
 
 if __name__ == "__main__":

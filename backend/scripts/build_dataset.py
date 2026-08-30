@@ -11,8 +11,11 @@ Three design decisions keep the resulting numbers honest:
   * **Identity-disjoint splits.** Train and test are split by face identity, not
     by row. A model cannot memorise a face in training and be graded on it.
   * **No class-correlated shortcuts.** Genuine and fake assets pass through the
-    same capture simulation, and EXIF presence is deliberately mixed across both
-    classes. Otherwise a detector learns "PNG means fake" and the AUC is a lie.
+    same capture simulation, and EXIF is deliberately mixed across both classes
+    in content as well as presence. Otherwise a detector learns "PNG means fake"
+    and the AUC is a lie. `audit_exif_balance` refuses to write a manifest that
+    breaks this, because for most of this project's life it was broken and
+    silent - see `eval/ablation.json`.
   * **Every fake is labelled by attack type and generator**, so the report can
     break performance down per attack instead of hiding a weak detector behind a
     strong one.
@@ -42,7 +45,7 @@ import piexif  # noqa: E402
 
 from faces import generate_sd_faces, load_real_faces, procedural_fake_face, swap_face  # noqa: E402
 from idcards import Identity, build_card, make_identity  # noqa: E402
-from verityne.config import DATASET_ROOT  # noqa: E402
+from verityne.config import DATASET_ROOT, PHYSICALLY_FRAUD_ONLY  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("build_dataset")
@@ -166,18 +169,72 @@ def write_image(img: Image.Image, path: Path, exif_mode: str, rng: random.Random
 
 
 def pick_exif_mode(is_fake: bool, attack: Optional[str], rng: random.Random) -> str:
-    """Mixed on purpose.
+    """Mixed on purpose - in content, not only in presence.
 
     Genuine submissions frequently arrive with stripped EXIF (a messaging app
     re-encoded them), and a competent fraudster can forge plausible EXIF. If the
     corpus made EXIF a perfect class signal the metadata detector would look
     superhuman and the fusion model would learn nothing real.
+
+    An earlier version of this function guarded that for EXIF *presence* and
+    left it wide open for EXIF *content*. `none` was well mixed - 20% of genuine
+    against 24% of fraud - while `stale`, `edited` and `generated` were drawn for
+    fraudulent packets only. 52 of 150 fake packets therefore carried a mode that
+    identified them outright, and `metadata_exif` read that answer key straight
+    into a 0.874 AUC and half the fused model's above-chance performance
+    (`eval/ablation.json`). The docstring above this one was already saying not
+    to do that.
+
+    So `stale` and `edited` are now drawn for both classes. That is not a
+    concession to make the numbers look worse; it is what a KYC queue receives.
+    A genuine merchant uploading a photo from their gallery has a months-old
+    `DateTimeOriginal`, and one who cropped or brightened the shot first has an
+    editor in `Software`. Fraud is still enriched in both - a reused asset really
+    is more likely to be stale - so the detector keeps a signal to learn. It no
+    longer gets the label for free.
     """
     if attack == "stale_or_edited_media":
         return rng.choice(["stale", "edited", "generated"])
     if not is_fake:
-        return rng.choices(["fresh", "plain", "none"], weights=[0.55, 0.25, 0.20])[0]
-    return rng.choices(["fresh", "plain", "none", "stale", "edited"], weights=[0.34, 0.20, 0.24, 0.12, 0.10])[0]
+        return rng.choices(
+            ["fresh", "plain", "none", "stale", "edited"],
+            weights=[0.40, 0.18, 0.20, 0.14, 0.08],
+        )[0]
+    return rng.choices(
+        ["fresh", "plain", "none", "stale", "edited"],
+        weights=[0.30, 0.18, 0.22, 0.16, 0.14],
+    )[0]
+
+
+def audit_exif_balance(entries: List[Dict]) -> List[str]:
+    """Refuse to ship a corpus whose metadata gives the label away.
+
+    Returns a list of complaints, empty when the corpus is clean. Any EXIF mode
+    that lands on one class only - on enough packets that it is not a rounding
+    artefact - is a label written into the artefact, and every number computed
+    downstream of it is inflated by an unknown amount. This ran as a post-hoc
+    script once and found a defect that had been shipping for the whole project;
+    it belongs in the build.
+    """
+    complaints: List[str] = []
+    for field in ("selfie_exif", "id_exif"):
+        table: Dict[str, Dict[str, int]] = {}
+        for e in entries:
+            mode = (e.get(field) or {}).get("exif_mode")
+            if mode is None:
+                continue
+            table.setdefault(mode, {"real": 0, "fake": 0})[e["label"]] += 1
+        for mode, counts in sorted(table.items()):
+            total = counts["real"] + counts["fake"]
+            if total < 10 or mode in PHYSICALLY_FRAUD_ONLY:
+                continue
+            if counts["real"] == 0 or counts["fake"] == 0:
+                only = "fraudulent" if counts["real"] == 0 else "genuine"
+                complaints.append(
+                    f"{field}={mode} appears on {total} packets, all {only} - "
+                    f"a detector reading it reads the label, not the evidence"
+                )
+    return complaints
 
 
 # ----------------------------------------------------------------------------------
@@ -420,6 +477,17 @@ def main() -> None:
         manifest.append(entry)
         if (i + 1) % 20 == 0:
             log.info("built %d/%d packets", i + 1, len(plan))
+
+    complaints = audit_exif_balance(manifest)
+    if complaints:
+        # Loud, and before the manifest is written. A corpus that gives the label
+        # away in its metadata produces confident numbers that mean nothing, and
+        # the last time this happened it went unnoticed for the whole project.
+        for c in complaints:
+            log.error("corpus leak: %s", c)
+        raise SystemExit(
+            f"refusing to write {MANIFEST}: {len(complaints)} EXIF mode(s) identify the class outright"
+        )
 
     MANIFEST.write_text(json.dumps(manifest, indent=2))
     by_attack: Dict[str, int] = {}

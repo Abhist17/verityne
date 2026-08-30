@@ -6,7 +6,7 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import clsx from "clsx";
-import { api, fmtInr, fmtPct } from "@/lib/api";
+import { api, fmtInr, fmtPct, type Ablation } from "@/lib/api";
 import { Empty, ErrorBox, Spinner, StatTile } from "@/components/ui";
 
 const SERIES_COLORS = ["#5b8cff", "#2dd4a7", "#f5b53d", "#c084fc", "#fb7185"];
@@ -33,6 +33,7 @@ function Section({ title, hint, children }: { title: string; hint?: React.ReactN
 export default function MetricsPage() {
   const [data, setData] = useState<any>(null);
   const [cost, setCost] = useState<any>(null);
+  const [ablation, setAblation] = useState<Ablation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [costError, setCostError] = useState<string | null>(null);
 
@@ -42,6 +43,7 @@ export default function MetricsPage() {
   const [baseRate, setBaseRate] = useState(0.03);
 
   useEffect(() => { api.metrics().then(setData).catch((e) => setError(e.message)); }, []);
+  useEffect(() => { api.ablation().then(setAblation).catch(() => setAblation(null)); }, []);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -201,6 +203,111 @@ export default function MetricsPage() {
           )}
         </Section>
       </div>
+
+      {ablation && (
+        <Section
+          title="What the headline number is made of"
+          hint="Fusion refit with one detector muted at a time, scored on the same held-out split. A single AUC cannot tell you whether five detectors earned it or one did."
+        >
+          <div className="scroll-x">
+            <table className="w-full min-w-[560px] text-left text-xs">
+              <thead className="text-[10px] uppercase tracking-wider text-slate-500">
+                <tr>
+                  <th className="pb-2 font-medium">Detector muted</th>
+                  <th className="pb-2 text-right font-medium">Held-out AUC</th>
+                  <th className="pb-2 text-right font-medium">Change</th>
+                  <th className="pb-2 font-medium pl-6">Share of above-chance AUC</th>
+                </tr>
+              </thead>
+              <tbody className="font-mono">
+                <tr className="border-t border-edge/60">
+                  <td className="py-2 pr-3 font-sans text-slate-400">— none (full model)</td>
+                  <td className="py-2 text-right tabular-nums text-slate-200">{ablation.full_model.roc_auc.toFixed(3)}</td>
+                  <td className="py-2 text-right text-slate-600">—</td>
+                  <td className="pl-6" />
+                </tr>
+                {ablation.ranked.map((r) => {
+                  const share = r.share_of_headline_auc_above_chance;
+                  const helps = r.auc_drop > 0;
+                  return (
+                    <tr key={r.detector} className="border-t border-edge/60">
+                      <td className="py-2 pr-3 font-sans text-slate-300">{r.detector.replace(/_/g, " ")}</td>
+                      <td className="py-2 text-right tabular-nums text-slate-300">{r.roc_auc.toFixed(3)}</td>
+                      <td className={clsx("py-2 text-right tabular-nums", helps ? "text-reject" : "text-pass")}>
+                        {r.auc_drop >= 0 ? "−" : "+"}{Math.abs(r.auc_drop).toFixed(3)}
+                      </td>
+                      <td className="py-2 pl-6">
+                        <div className="flex items-center gap-2">
+                          <div className="h-1.5 w-32 overflow-hidden rounded-full bg-ink-800">
+                            <div
+                              className={clsx("h-full rounded-full", helps ? "bg-reject" : "bg-pass")}
+                              style={{ width: `${Math.min(100, Math.abs(share) * 100)}%` }}
+                            />
+                          </div>
+                          <span className={clsx("tabular-nums text-[11px]", helps ? "text-slate-300" : "text-pass")}>
+                            {share >= 0 ? "" : "−"}{Math.abs(share * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+            A <span className="text-pass">negative</span> share means muting that detector made the
+            model <em>better</em> — it was contributing noise, not signal.
+          </p>
+
+          <div className="mt-4 border-t border-edge pt-3">
+            <div className="label">Corpus leak audit</div>
+            {ablation.corpus_clean ? (
+              <p className="mt-2 text-[11px] leading-relaxed text-pass">
+                No generator setting lands on one class only without a physical reason to. Every
+                detector above is reading the packet rather than a label written into the file.
+              </p>
+            ) : (
+              <>
+                <p className="mt-2 text-[11px] leading-relaxed text-reject">
+                  {ablation.leaks.length} corpus value{ablation.leaks.length === 1 ? "" : "s"} appear
+                  on one class only. A detector reading one of these is reading the answer key, and
+                  every number above it is inflated by an unknown amount.
+                </p>
+                <div className="mt-2 grid gap-1 font-mono text-[11px] sm:grid-cols-2">
+                  {ablation.leaks.map((l) => (
+                    <div key={`${l.field}-${l.value}`} className="flex justify-between gap-2 rounded border border-reject/30 bg-reject/8 px-2 py-1">
+                      <span className="truncate text-slate-400">{l.field}={l.value}</span>
+                      <span className="text-reject">{l.n} packets, all {l.class}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            {ablation.one_sided_but_expected?.length > 0 && (
+              <div className="mt-3">
+                <p className="text-[11px] leading-relaxed text-slate-500">
+                  One-sided by construction, and allowed to be:
+                </p>
+                <div className="mt-1 grid gap-1 font-mono text-[11px] sm:grid-cols-2">
+                  {ablation.one_sided_but_expected.map((l) => (
+                    <div key={`${l.field}-${l.value}`} className="rounded border border-edge bg-ink-850 px-2 py-1">
+                      <div className="flex justify-between gap-2">
+                        <span className="truncate text-slate-400">{l.field}={l.value}</span>
+                        <span className="text-slate-500">{l.n} packets</span>
+                      </div>
+                      {l.justification && (
+                        <div className="mt-0.5 font-sans text-[10px] leading-snug text-slate-600">{l.justification}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <Section title="Recall by attack type"

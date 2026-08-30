@@ -34,6 +34,36 @@ export interface VerifyResponse {
   policy: Record<string, any>;
 }
 
+export interface AblationRow {
+  detector: string;
+  roc_auc: number;
+  auc_drop: number;
+  share_of_headline_auc_above_chance: number;
+}
+
+export interface AblationLeak {
+  field: string;
+  value: string;
+  p_fraud: number;
+  n: number;
+  class: string;
+  expected?: boolean;
+  justification?: string | null;
+}
+
+export interface Ablation {
+  protocol: string;
+  n_train: number;
+  n_test: number;
+  full_model: { roc_auc: number };
+  ranked: AblationRow[];
+  leaks: AblationLeak[];
+  one_sided_but_expected: AblationLeak[];
+  corpus_clean: boolean;
+  most_load_bearing: string;
+  note: string;
+}
+
 export interface FaceMatchResult {
   similarity: number | null;
   match: boolean | null;
@@ -112,6 +142,8 @@ export const api = {
   gauntletManifest: () => request<any>("/gauntlet"),
 
   metrics: () => request<any>("/metrics"),
+
+  ablation: () => request<Ablation>("/metrics/ablation"),
 
   costCurve: (p: Record<string, number>) => {
     const qs = new URLSearchParams(Object.entries(p).map(([k, v]) => [k, String(v)]));

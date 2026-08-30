@@ -1,0 +1,203 @@
+{
+  "_what_this_is": "The ablation as it read on the LEAKED corpus, kept as the evidence for the finding in the README section 'What the headline AUC is actually made of'. build_dataset.py drew the EXIF modes stale/edited/generated for fraudulent packets only, so metadata_exif was reading a label rather than the packet. Superseded by ablation.json, which is measured on the corrected corpus. Kept because a claim about a bug needs the measurement that found it, not a description of it.",
+  "protocol": "Fusion refit on the training split with one detector's score and confidence columns zeroed, then scored on the identity-disjoint held-out split. Same estimator and calibration as train_fusion.py ships.",
+  "n_train": 194,
+  "n_test": 106,
+  "full_model": {
+    "roc_auc": 0.913,
+    "score_mean_genuine": 0.3183,
+    "score_mean_fraud": 0.7813,
+    "recall_at_0.75": 0.6471,
+    "false_reject_at_0.75": 0.0545
+  },
+  "per_detector": {
+    "selfie_deepfake": {
+      "roc_auc": 0.9287,
+      "score_mean_genuine": 0.3182,
+      "score_mean_fraud": 0.7852,
+      "recall_at_0.75": 0.6078,
+      "false_reject_at_0.75": 0.0364,
+      "auc_drop": -0.0157,
+      "share_of_headline_auc_above_chance": -0.038
+    },
+    "liveness_video": {
+      "roc_auc": 0.9262,
+      "score_mean_genuine": 0.3222,
+      "score_mean_fraud": 0.7953,
+      "recall_at_0.75": 0.6667,
+      "false_reject_at_0.75": 0.0545,
+      "auc_drop": -0.0132,
+      "share_of_headline_auc_above_chance": -0.032
+    },
+    "id_forensics": {
+      "roc_auc": 0.9027,
+      "score_mean_genuine": 0.3288,
+      "score_mean_fraud": 0.7456,
+      "recall_at_0.75": 0.4902,
+      "false_reject_at_0.75": 0.0364,
+      "auc_drop": 0.0103,
+      "share_of_headline_auc_above_chance": 0.0249
+    },
+    "face_match": {
+      "roc_auc": 0.8581,
+      "score_mean_genuine": 0.3752,
+      "score_mean_fraud": 0.6951,
+      "recall_at_0.75": 0.4902,
+      "false_reject_at_0.75": 0.0545,
+      "auc_drop": 0.0549,
+      "share_of_headline_auc_above_chance": 0.1329
+    },
+    "metadata_exif": {
+      "roc_auc": 0.7087,
+      "score_mean_genuine": 0.4483,
+      "score_mean_fraud": 0.5986,
+      "recall_at_0.75": 0.3137,
+      "false_reject_at_0.75": 0.0,
+      "auc_drop": 0.2043,
+      "share_of_headline_auc_above_chance": 0.4947
+    }
+  },
+  "most_load_bearing": "metadata_exif",
+  "corpus_leak_audit": {
+    "selfie_exif_mode": {
+      "values": {
+        "edited": {
+          "genuine": 0,
+          "fraud": 16,
+          "p_fraud": 1.0
+        },
+        "fresh": {
+          "genuine": 79,
+          "fraud": 31,
+          "p_fraud": 0.2818
+        },
+        "generated": {
+          "genuine": 0,
+          "fraud": 10,
+          "p_fraud": 1.0
+        },
+        "none": {
+          "genuine": 37,
+          "fraud": 52,
+          "p_fraud": 0.5843
+        },
+        "plain": {
+          "genuine": 34,
+          "fraud": 15,
+          "p_fraud": 0.3061
+        },
+        "stale": {
+          "genuine": 0,
+          "fraud": 26,
+          "p_fraud": 1.0
+        }
+      },
+      "one_sided_values": [
+        {
+          "value": "edited",
+          "p_fraud": 1.0,
+          "n": 16,
+          "class": "fraud"
+        },
+        {
+          "value": "generated",
+          "p_fraud": 1.0,
+          "n": 10,
+          "class": "fraud"
+        },
+        {
+          "value": "stale",
+          "p_fraud": 1.0,
+          "n": 26,
+          "class": "fraud"
+        }
+      ],
+      "packets_carrying_a_one_sided_value": 52,
+      "share_of_corpus": 0.1733
+    },
+    "id_exif_mode": {
+      "values": {
+        "edited": {
+          "genuine": 0,
+          "fraud": 15,
+          "p_fraud": 1.0
+        },
+        "fresh": {
+          "genuine": 87,
+          "fraud": 54,
+          "p_fraud": 0.383
+        },
+        "generated": {
+          "genuine": 0,
+          "fraud": 6,
+          "p_fraud": 1.0
+        },
+        "none": {
+          "genuine": 27,
+          "fraud": 30,
+          "p_fraud": 0.5263
+        },
+        "plain": {
+          "genuine": 36,
+          "fraud": 25,
+          "p_fraud": 0.4098
+        },
+        "stale": {
+          "genuine": 0,
+          "fraud": 20,
+          "p_fraud": 1.0
+        }
+      },
+      "one_sided_values": [
+        {
+          "value": "edited",
+          "p_fraud": 1.0,
+          "n": 15,
+          "class": "fraud"
+        },
+        {
+          "value": "stale",
+          "p_fraud": 1.0,
+          "n": 20,
+          "class": "fraud"
+        }
+      ],
+      "packets_carrying_a_one_sided_value": 35,
+      "share_of_corpus": 0.1167
+    },
+    "doc_type": {
+      "values": {
+        "Aadhaar": {
+          "genuine": 56,
+          "fraud": 45,
+          "p_fraud": 0.4455
+        },
+        "PAN": {
+          "genuine": 94,
+          "fraud": 105,
+          "p_fraud": 0.5276
+        }
+      },
+      "one_sided_values": [],
+      "packets_carrying_a_one_sided_value": 0,
+      "share_of_corpus": 0.0
+    },
+    "capture_mode": {
+      "values": {
+        "photo": {
+          "genuine": 79,
+          "fraud": 89,
+          "p_fraud": 0.5298
+        },
+        "scan": {
+          "genuine": 71,
+          "fraud": 61,
+          "p_fraud": 0.4621
+        }
+      },
+      "one_sided_values": [],
+      "packets_carrying_a_one_sided_value": 0,
+      "share_of_corpus": 0.0
+    }
+  }
+}

@@ -345,7 +345,9 @@ to catch attacks aimed at a different part of the packet.
 A single fused number does not say which detector earned it, and an ensemble can
 be one feature wearing five. `make ablate` refits fusion on the training split
 with one detector's columns zeroed, scores the same held-out split, and reports
-the drop — `eval/ablation.json`.
+the drop. The table below is the run that found the defect, kept as
+`eval/ablation_leaked_corpus.json`; `eval/ablation.json` is the same measurement
+on the corrected corpus.
 
 | Detector muted | Held-out AUC | Change | Share of the model's above-chance AUC |
 | --- | --- | --- | --- |
@@ -395,9 +397,14 @@ corpus, a metadata reader with a CNN bolted to the side as ballast.
 
 Both findings come from the same 40-line script, and neither is visible in
 `eval/metrics.json`, which reports one aggregate that both defects hide inside.
-`ablate_fusion.py` also audits the manifest directly for any categorical whose
-value appears on one class only, so the corpus cannot quietly reacquire this
-defect: `make ablate` fails loudly when it finds one.
+Two guards now stand where nothing did. `build_dataset.py` refuses to write a
+manifest in which any EXIF mode lands on one class only, so the corpus cannot be
+built broken; and `ablate_fusion.py` audits the manifest independently and exits
+non-zero on the same condition, so it cannot be shipped broken either. One value
+is exempt, with its reason recorded in `config.PHYSICALLY_FRAUD_ONLY`: no camera
+writes a diffusion model's name into `Software`, so `generated` being fraud-only
+is a fact about cameras rather than an artefact of the script. Both guards read
+that same allowlist, and a test asserts they agree.
 
 The corpus generator has since been corrected and the numbers above are the
 *leaked* ones, kept here because they are the finding. What the system is worth

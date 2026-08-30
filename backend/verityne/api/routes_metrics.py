@@ -24,6 +24,7 @@ from .deps import db_session
 router = APIRouter()
 
 REPORT_PATH = EVAL_ROOT / "metrics.json"
+ABLATION_PATH = EVAL_ROOT / "ablation.json"
 
 #: Reports measured on data this project did not generate. Each is optional:
 #: the face-match one needs LFW, the document one needs MIDV-2020, and the video
@@ -64,6 +65,60 @@ def metrics(session: Session = Depends(db_session)):
         "note": (
             "Evaluation numbers come from a held-out split that the fusion model never saw during "
             "training. Live stats are computed from the audit log of this instance."
+        ),
+    }
+
+
+@router.get("/metrics/ablation", summary="What each detector is worth, and whether the corpus leaks its labels")
+def metrics_ablation():
+    """The headline AUC, taken apart.
+
+    `/metrics` reports one fused number. It cannot tell you whether five
+    detectors earned it or one did, and the difference decides whether the
+    system degrades gracefully when a signal goes missing or falls over. This
+    serves `eval/ablation.json`: fusion refit with each detector muted in turn,
+    scored on the same held-out split.
+
+    It also carries the corpus leak audit, because an ablation is only
+    meaningful if the features are measuring the packet rather than reading a
+    label the generator wrote into it. That check is the reason this endpoint
+    exists — it found `metadata_exif` reading an answer key worth half the
+    model's above-chance AUC.
+    """
+    data = _load_json(ABLATION_PATH)
+    if data is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"{ABLATION_PATH.name} not found — run `make ablate` (or `make pipeline`)",
+        )
+    one_sided = [
+        {"field": field, **entry}
+        for field, audit in (data.get("corpus_leak_audit") or {}).items()
+        for entry in audit.get("one_sided_values", [])
+    ]
+    # A value one-sided for a stated physical reason is reported, not counted
+    # against the corpus. Everything else is a label written into the artefact.
+    # Reports predating the distinction carry no `expected` key; treat those as
+    # defects rather than silently clearing them.
+    leaks = [l for l in one_sided if not l.get("expected")]
+    expected = [l for l in one_sided if l.get("expected")]
+    ranked = sorted(
+        ((name, d) for name, d in (data.get("per_detector") or {}).items()),
+        key=lambda kv: -kv[1].get("auc_drop", 0),
+    )
+    return {
+        **data,
+        "ranked": [{"detector": n, **d} for n, d in ranked],
+        "leaks": leaks,
+        "one_sided_but_expected": expected,
+        "corpus_clean": not leaks,
+        "note": (
+            "auc_drop is how much held-out AUC the fused model loses when that detector is "
+            "muted. A negative drop means the detector was making the model worse. "
+            "leaks lists corpus values that appear on one class only without a physical "
+            "reason to — where any is present, every number downstream of it is inflated by "
+            "an unknown amount. one_sided_but_expected lists the ones that are one-sided "
+            "because reality is, each with its justification."
         ),
     }
 

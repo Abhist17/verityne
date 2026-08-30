@@ -31,6 +31,18 @@ MAX_UPLOAD_BYTES = int(os.getenv("VERITYNE_MAX_UPLOAD_MB", "40")) * 1024 * 1024
 MAX_VIDEO_FRAMES = int(os.getenv("VERITYNE_MAX_VIDEO_FRAMES", "24"))
 VIDEO_FRAME_STRIDE = int(os.getenv("VERITYNE_FRAME_STRIDE", "5"))
 
+#: EXIF modes a genuine capture can physically never carry, with the reason.
+#: `build_dataset.audit_exif_balance` and `scripts/ablate_fusion.leak_audit` both
+#: consult this, so "allowed to be one-sided" has exactly one definition. A camera
+#: cannot stamp a diffusion model's name into `Software`, so that mode being
+#: fraud-only is a fact about cameras. Nothing else belongs here: every other mode
+#: describes something that happens to honest people constantly, and the last time
+#: one of them was fraud-only it was worth half the fused model's AUC
+#: (`eval/ablation.json`).
+PHYSICALLY_FRAUD_ONLY = {
+    "generated": "no camera writes a diffusion model's name into the Software tag",
+}
+
 DETECTOR_NAMES = [
     "selfie_deepfake",
     "liveness_video",
