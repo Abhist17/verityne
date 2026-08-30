@@ -496,7 +496,7 @@ MTCNN crop and the same FaceNet weights the API uses.
 | ROC-AUC | **0.9901** |
 | Fitted threshold | 0.4065 |
 | TAR @ FAR 1% | 0.974 (threshold 0.4058) |
-| TAR @ FAR 0.1% | 0.9513 (threshold 0.5197) |
+| TAR @ FAR 0.1% | 0.9513 (threshold 0.5198) |
 | MTCNN detection rate | 100% of 7,701 photographs |
 
 Then the same 6,000 real pairs were used to grade the constants the code was
@@ -517,7 +517,7 @@ photographs of one person" are one photograph re-captured twice, which score
 on average, and 0.523 at the 5th percentile. The corpus could not have exposed
 this, because the corpus is what caused it.
 
-`linkage.SAME_PERSON` is now **0.5197** — the FAR=0.1% point rather than the
+`linkage.SAME_PERSON` is now **0.5198** — the FAR=0.1% point rather than the
 accuracy-optimal one, because a linkage hit accuses somebody of applying twice
 under two names, so the false-accept budget should be strict. It costs little:
 95.1% of true same-person pairs still link, against 63.3% before.

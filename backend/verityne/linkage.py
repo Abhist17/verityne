@@ -36,7 +36,7 @@ from .utils.hashing import hamming
 #: revealed that — its genuine pairs derive from one source photograph each, so
 #: their similarity runs far above what two real photographs of one person score
 #: (LFW same-person mean 0.758, 5th percentile 0.523).
-SAME_PERSON = 0.5197
+SAME_PERSON = 0.5198
 #: Perceptual-hash distance at or below which two files *look* alike. This is a
 #: similarity bound, not an identity one: ID cards drawn from a shared template
 #: land inside it while belonging to different people, so a hit here is a hint,

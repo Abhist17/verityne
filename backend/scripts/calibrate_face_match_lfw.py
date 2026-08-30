@@ -235,6 +235,34 @@ def score_threshold(sims: np.ndarray, labels: np.ndarray, thr: float) -> Dict[st
     }
 
 
+#: The values this repository shipped before it was calibrated on real pairs.
+#:
+#: Graded on every run so the claim in the README - that these were missing a
+#: third of true links, and would have called half of honest applicants
+#: impostors - keeps evidence behind it. Once the constants are corrected,
+#: ``as_shipped`` grades the *new* ones and the old numbers would otherwise have
+#: nothing in the committed reports to support them.
+SUPERSEDED = {
+    "linkage.SAME_PERSON": 0.75,
+    "face_match_band.low": 0.7835,
+}
+
+
+def superseded(sims: np.ndarray, labels: np.ndarray) -> Dict[str, object]:
+    """Grade the pre-calibration constants, for the record."""
+    out: Dict[str, object] = {
+        name: score_threshold(sims, labels, thr) for name, thr in SUPERSEDED.items()
+    }
+    out["note"] = (
+        "What this repo used before calibrating on LFW. linkage.SAME_PERSON was a "
+        "hard-coded guess; face_match_band.low was fitted on corpus pairs that derive "
+        "from one source photograph per identity and so score far higher than two real "
+        "photographs of one person. Kept here so the README's before/after table has "
+        "evidence behind it after the constants moved."
+    )
+    return out
+
+
 def as_shipped(sims: np.ndarray, labels: np.ndarray) -> Dict[str, object]:
     """Grade the constants the code currently ships against this real-pair set.
 
@@ -357,6 +385,7 @@ def main() -> None:
         },
         "operating_points": {"far_1pct": far1, "far_0.1pct": far01},
         "as_shipped": as_shipped(sims, labels),
+        "superseded": superseded(sims, labels),
         "similarity": {
             "same_person": _dist(sims[labels == 1]),
             "different_person": _dist(sims[labels == 0]),
@@ -415,9 +444,13 @@ def main() -> None:
     print(f"fitted identity threshold {mean_thr:.4f}")
     print(f"at FAR=1%:   threshold {far1['threshold']}  TAR {far1['tar']}")
     print(f"at FAR=0.1%: threshold {far01['threshold']}  TAR {far01['tar']}")
-    if report["as_shipped"]:
-        print("\nwhat the currently shipped constants do on these real pairs:")
-        for name, r in report["as_shipped"].items():
+    for title, block in (("currently shipped", report["as_shipped"]),
+                         ("superseded (pre-calibration)", report["superseded"])):
+        rows = {k: v for k, v in block.items() if isinstance(v, dict)}
+        if not rows:
+            continue
+        print(f"\nwhat the {title} constants do on these real pairs:")
+        for name, r in rows.items():
             print(f"  {name:24s} thr {r['threshold']:.4f}  TAR {r['tar']:.4f}  "
                   f"FAR {r['far']:.4f}  acc {r['accuracy']:.4f}")
 

@@ -43,12 +43,12 @@
     "far_1pct": {
       "threshold": 0.4058,
       "tar": 0.974,
-      "far": 0.01
+      "far": 0.0097
     },
     "far_0.1pct": {
-      "threshold": 0.5197,
+      "threshold": 0.5198,
       "tar": 0.9513,
-      "far": 0.001
+      "far": 0.0007
     }
   },
   "as_shipped": {
@@ -59,12 +59,27 @@
       "accuracy": 0.9752
     },
     "face_match_band.low": {
+      "threshold": 0.4065,
+      "tar": 0.974,
+      "far": 0.0097,
+      "accuracy": 0.9822,
+      "source": "low: LFW 10-fold, 6000 real pairs, accuracy 0.9820\u00b10.0040; high: corpus calibration (see high_fitted_on)"
+    }
+  },
+  "superseded": {
+    "linkage.SAME_PERSON": {
+      "threshold": 0.75,
+      "tar": 0.6333,
+      "far": 0.0,
+      "accuracy": 0.8167
+    },
+    "face_match_band.low": {
       "threshold": 0.7835,
       "tar": 0.5207,
       "far": 0.0,
-      "accuracy": 0.7603,
-      "source": "95 genuine / 18 mismatch / 11 duplicate pairs (train split)"
-    }
+      "accuracy": 0.7603
+    },
+    "note": "What this repo used before calibrating on LFW. linkage.SAME_PERSON was a hard-coded guess; face_match_band.low was fitted on corpus pairs that derive from one source photograph per identity and so score far higher than two real photographs of one person. Kept here so the README's before/after table has evidence behind it after the constants moved."
   },
   "similarity": {
     "same_person": {
