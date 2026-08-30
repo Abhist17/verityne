@@ -5,7 +5,7 @@
   "n_genuine": 55,
   "fusion_model": "logreg",
   "fusion": {
-    "roc_auc": 0.9137,
+    "roc_auc": 0.9111,
     "roc": [
       {
         "fpr": 0.0,
@@ -14,113 +14,108 @@
       },
       {
         "fpr": 0.0,
-        "tpr": 0.2745,
+        "tpr": 0.4706,
         "threshold": 1.0
       },
       {
-        "fpr": 0.0,
-        "tpr": 0.4314,
-        "threshold": 0.9524
+        "fpr": 0.0182,
+        "tpr": 0.549,
+        "threshold": 0.9
       },
       {
-        "fpr": 0.0364,
-        "tpr": 0.5882,
-        "threshold": 0.9474
-      },
-      {
-        "fpr": 0.0364,
-        "tpr": 0.6471,
-        "threshold": 0.787
+        "fpr": 0.0545,
+        "tpr": 0.7059,
+        "threshold": 0.8667
       },
       {
         "fpr": 0.1273,
-        "tpr": 0.7647,
-        "threshold": 0.7333
-      },
-      {
-        "fpr": 0.1455,
-        "tpr": 0.8039,
+        "tpr": 0.7843,
         "threshold": 0.6667
       },
       {
-        "fpr": 0.2909,
+        "fpr": 0.1636,
+        "tpr": 0.7843,
+        "threshold": 0.625
+      },
+      {
+        "fpr": 0.1818,
+        "tpr": 0.8039,
+        "threshold": 0.6
+      },
+      {
+        "fpr": 0.1818,
+        "tpr": 0.8627,
+        "threshold": 0.4684
+      },
+      {
+        "fpr": 0.2,
+        "tpr": 0.8627,
+        "threshold": 0.4637
+      },
+      {
+        "fpr": 0.2545,
         "tpr": 0.9216,
-        "threshold": 0.5
+        "threshold": 0.4545
+      },
+      {
+        "fpr": 0.2727,
+        "tpr": 0.9216,
+        "threshold": 0.3912
       },
       {
         "fpr": 0.3091,
         "tpr": 0.9216,
-        "threshold": 0.378
+        "threshold": 0.3333
       },
       {
-        "fpr": 0.4182,
-        "tpr": 0.9412,
-        "threshold": 0.3
+        "fpr": 0.3818,
+        "tpr": 0.9216,
+        "threshold": 0.1676
       },
       {
-        "fpr": 0.4182,
-        "tpr": 0.9608,
-        "threshold": 0.2841
-      },
-      {
-        "fpr": 0.4545,
-        "tpr": 0.9608,
-        "threshold": 0.2193
-      },
-      {
-        "fpr": 0.5636,
-        "tpr": 0.9608,
-        "threshold": 0.2143
-      },
-      {
-        "fpr": 0.7273,
-        "tpr": 1.0,
-        "threshold": 0.1154
-      },
-      {
-        "fpr": 0.7455,
-        "tpr": 1.0,
-        "threshold": 0.093
+        "fpr": 0.6909,
+        "tpr": 0.9804,
+        "threshold": 0.1579
       },
       {
         "fpr": 0.9818,
         "tpr": 1.0,
-        "threshold": 0.087
+        "threshold": 0.069
       },
       {
         "fpr": 1.0,
         "tpr": 1.0,
-        "threshold": 0.0103
+        "threshold": 0.0
       }
     ],
     "at_reject_threshold": {
       "threshold": 0.75,
-      "tp": 33,
-      "fp": 2,
-      "fn": 18,
-      "tn": 53,
-      "precision": 0.9429,
-      "recall": 0.6471,
-      "f1": 0.7674,
-      "false_accept_rate": 0.3529,
-      "false_reject_rate": 0.0364,
-      "accuracy": 0.8113
+      "tp": 36,
+      "fp": 3,
+      "fn": 15,
+      "tn": 52,
+      "precision": 0.9231,
+      "recall": 0.7059,
+      "f1": 0.8,
+      "false_accept_rate": 0.2941,
+      "false_reject_rate": 0.0545,
+      "accuracy": 0.8302
     },
     "at_review_threshold": {
       "threshold": 0.4,
       "tp": 47,
-      "fp": 16,
+      "fp": 14,
       "fn": 4,
-      "tn": 39,
-      "precision": 0.746,
+      "tn": 41,
+      "precision": 0.7705,
       "recall": 0.9216,
-      "f1": 0.8246,
+      "f1": 0.8393,
       "false_accept_rate": 0.0784,
-      "false_reject_rate": 0.2909,
-      "accuracy": 0.8113
+      "false_reject_rate": 0.2545,
+      "accuracy": 0.8302
     },
-    "score_mean_genuine": 0.2989,
-    "score_mean_fraud": 0.81
+    "score_mean_genuine": 0.2664,
+    "score_mean_fraud": 0.8087
   },
   "per_detector": {
     "selfie_deepfake": {
@@ -1393,59 +1388,59 @@
   "per_attack_type": {
     "face_swap_liveness": {
       "n": 5,
-      "mean_score": 0.7256,
+      "mean_score": 0.74,
       "caught_at_review": 1.0,
       "caught_at_reject": 0.4,
-      "auc_vs_genuine": 0.8891
+      "auc_vs_genuine": 0.92
     },
     "generated_selfie": {
       "n": 9,
-      "mean_score": 0.9836,
+      "mean_score": 1.0,
       "caught_at_review": 1.0,
       "caught_at_reject": 1.0,
-      "auc_vs_genuine": 0.998
+      "auc_vs_genuine": 1.0
     },
     "impersonation": {
       "n": 7,
-      "mean_score": 0.9932,
+      "mean_score": 1.0,
       "caught_at_review": 1.0,
       "caught_at_reject": 1.0,
       "auc_vs_genuine": 1.0
     },
     "invalid_document": {
       "n": 4,
-      "mean_score": 0.7298,
+      "mean_score": 0.797,
       "caught_at_review": 1.0,
-      "caught_at_reject": 0.25,
-      "auc_vs_genuine": 0.9045
+      "caught_at_reject": 0.75,
+      "auc_vs_genuine": 0.925
     },
     "reused_id_selfie": {
       "n": 6,
-      "mean_score": 0.8025,
+      "mean_score": 0.7597,
       "caught_at_review": 1.0,
       "caught_at_reject": 0.5,
-      "auc_vs_genuine": 0.9379
+      "auc_vs_genuine": 0.9258
     },
     "stale_or_edited_media": {
       "n": 8,
-      "mean_score": 0.7602,
+      "mean_score": 0.7544,
       "caught_at_review": 1.0,
-      "caught_at_reject": 0.5,
-      "auc_vs_genuine": 0.9091
+      "caught_at_reject": 0.625,
+      "auc_vs_genuine": 0.9159
     },
     "synthetic_identity": {
       "n": 7,
-      "mean_score": 0.6706,
+      "mean_score": 0.6481,
       "caught_at_review": 0.7143,
       "caught_at_reject": 0.5714,
-      "auc_vs_genuine": 0.8091
+      "auc_vs_genuine": 0.8078
     },
     "tampered_document": {
       "n": 5,
-      "mean_score": 0.6736,
+      "mean_score": 0.6454,
       "caught_at_review": 0.6,
       "caught_at_reject": 0.6,
-      "auc_vs_genuine": 0.7982
+      "auc_vs_genuine": 0.7255
     }
   },
   "per_capture_mode": {
@@ -1453,13 +1448,13 @@
       "n": 57,
       "id_forensics_auc": 0.555,
       "tamper_only_auc": 0.6875,
-      "fusion_auc": 0.9106
+      "fusion_auc": 0.8862
     },
     "scan": {
       "n": 49,
       "id_forensics_auc": 0.6739,
       "tamper_only_auc": 0.6957,
-      "fusion_auc": 0.9164
+      "fusion_auc": 0.9323
     }
   },
   "bias_audit": {
@@ -1467,38 +1462,38 @@
     "buckets": {
       "brown": {
         "n": 33,
-        "auc": 0.9135,
-        "false_reject_rate": 0.0,
+        "auc": 0.8985,
+        "false_reject_rate": 0.0526,
         "false_accept_rate": 0.2857,
-        "mean_score_genuine": 0.2719
+        "mean_score_genuine": 0.2237
       },
       "dark": {
         "n": 15,
-        "auc": 0.9286,
+        "auc": 0.9107,
         "false_reject_rate": 0.0,
-        "false_accept_rate": 0.5,
-        "mean_score_genuine": 0.2589
+        "false_accept_rate": 0.375,
+        "mean_score_genuine": 0.2269
       },
       "intermediate": {
         "n": 19,
-        "auc": 0.9889,
+        "auc": 0.9944,
         "false_reject_rate": 0.0,
-        "false_accept_rate": 0.3,
-        "mean_score_genuine": 0.2289
+        "false_accept_rate": 0.2,
+        "mean_score_genuine": 0.1971
       },
       "light": {
         "n": 11,
         "auc": 0.8833,
         "false_reject_rate": 0.0,
-        "false_accept_rate": 0.6,
-        "mean_score_genuine": 0.2125
+        "false_accept_rate": 0.4,
+        "mean_score_genuine": 0.2022
       },
       "tan": {
         "n": 17,
-        "auc": 0.9514,
+        "auc": 0.9583,
         "false_reject_rate": 0.1111,
         "false_accept_rate": 0.125,
-        "mean_score_genuine": 0.3442
+        "mean_score_genuine": 0.3127
       },
       "unknown": {
         "n": 1,
@@ -1506,25 +1501,25 @@
       },
       "very_light": {
         "n": 10,
-        "auc": 0.78,
+        "auc": 0.74,
         "false_reject_rate": 0.2,
         "false_accept_rate": 0.4,
-        "mean_score_genuine": 0.6059
+        "mean_score_genuine": 0.6032
       }
     },
     "caveat": "ITA\u00b0 is an image-derived proxy for skin tone, not self-reported demographic data, and it is confounded by lighting. With 6 bucket(s) above the reporting threshold on 106 held-out packets, this audit is a harness and a direction, not a powered conclusion."
   },
   "latency_ms": {
     "note": "measured in batch mode, detectors run sequentially; the API runs them concurrently",
-    "p50": 12336.4,
-    "p90": 16044.5,
-    "p99": 18171.7,
+    "p50": 11107.9,
+    "p90": 11977.2,
+    "p99": 12798.3,
     "per_detector_median": {
-      "selfie_deepfake": 455.2,
-      "liveness_video": 1727.3,
-      "id_forensics": 10140.7,
-      "face_match": 86.2,
-      "metadata_exif": 41.2
+      "selfie_deepfake": 229.7,
+      "liveness_video": 1023.1,
+      "id_forensics": 9762.1,
+      "face_match": 40.8,
+      "metadata_exif": 44.6
     }
   },
   "raw_scores": {
@@ -1637,112 +1632,112 @@
       1
     ],
     "y_score": [
-      0.5,
-      0.3,
-      0.733333,
-      0.5,
-      0.086957,
-      0.086957,
-      0.733333,
-      0.115385,
-      0.3,
-      0.5,
-      0.214286,
-      0.093034,
-      0.5,
-      1.0,
-      0.115385,
-      0.086957,
-      0.5,
-      1.0,
-      0.5,
-      0.952381,
-      1.0,
-      0.952381,
-      0.115385,
-      0.377958,
-      0.3,
-      0.733333,
-      0.733333,
-      1.0,
-      0.115385,
-      0.947368,
-      0.086957,
-      0.219267,
-      0.5,
-      0.952381,
-      0.947368,
-      0.952381,
-      0.086957,
-      0.214286,
-      0.5,
-      0.214286,
-      0.947368,
-      0.214286,
-      0.952381,
-      0.733333,
+      0.454545,
+      0.157895,
       0.666667,
-      0.952381,
-      0.947368,
-      0.5,
-      0.115385,
-      0.086957,
-      0.5,
+      0.454545,
+      0.068966,
+      0.157895,
+      0.666667,
+      0.157895,
+      0.266385,
+      0.625,
+      0.181533,
+      0.068966,
+      0.468416,
+      1.0,
+      0.157895,
+      0.068966,
       0.666667,
       1.0,
-      0.115385,
-      0.5,
-      0.086957,
-      0.086957,
-      0.086957,
-      0.952381,
-      0.947368,
-      0.733333,
-      0.947368,
-      0.115385,
-      0.786986,
+      0.454545,
       1.0,
       1.0,
-      0.086957,
-      0.086957,
+      1.0,
+      0.157895,
+      0.216336,
+      0.157895,
       0.666667,
-      0.3,
-      0.115385,
-      0.733333,
+      0.866667,
       1.0,
-      0.3,
-      0.5,
-      0.733333,
-      0.25857,
-      0.3,
-      0.947368,
-      0.947368,
-      0.733333,
-      0.214286,
+      0.068966,
+      0.866667,
+      0.068966,
+      0.333333,
+      0.333333,
       1.0,
-      0.010306,
-      0.947368,
-      0.115385,
+      0.866667,
       1.0,
-      0.5,
-      0.3,
-      0.115385,
+      0.068966,
+      0.157895,
+      0.666667,
+      0.157895,
       1.0,
-      0.086957,
+      0.157895,
+      1.0,
+      0.866667,
+      0.47894,
+      1.0,
+      0.9,
+      0.391184,
+      0.068966,
+      0.068966,
+      0.454545,
+      0.463733,
+      1.0,
+      0.157895,
+      0.6,
+      0.068966,
+      0.068966,
+      0.068966,
+      1.0,
+      0.9,
+      0.625,
+      0.9,
+      0.068966,
+      0.866667,
       1.0,
       1.0,
-      0.214286,
-      0.947368,
-      0.115385,
-      0.733333,
-      0.5,
-      0.85581,
-      0.284063,
+      0.068966,
+      0.068966,
+      0.591446,
+      0.157895,
+      0.068966,
+      0.866667,
       1.0,
-      0.086957,
-      0.921137,
-      0.952381,
-      0.733333
+      0.167612,
+      0.666667,
+      0.6,
+      0.157895,
+      0.157895,
+      0.9,
+      0.866667,
+      0.666667,
+      0.157895,
+      1.0,
+      0.0,
+      0.866667,
+      0.157895,
+      1.0,
+      0.454545,
+      0.157895,
+      0.157895,
+      1.0,
+      0.068966,
+      1.0,
+      1.0,
+      0.157895,
+      1.0,
+      0.157895,
+      0.666667,
+      0.454545,
+      0.9,
+      0.157895,
+      1.0,
+      0.068966,
+      0.866667,
+      1.0,
+      0.866667
     ],
     "ids": [
       "pkt_0097",

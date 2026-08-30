@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import functools
 import hashlib
+import threading
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -58,6 +59,11 @@ def _haar():
         return None
 
 
+#: MTCNN is one shared torch module; concurrent detect() calls on it race in
+#: native code. See DeepfakeClassifier.__init__.
+_MTCNN_LOCK = threading.Lock()
+
+
 @functools.lru_cache(maxsize=1)
 def _mtcnn():
     """MTCNN if facenet-pytorch is importable; None otherwise (we fall back to Haar)."""
@@ -78,7 +84,8 @@ def detect_faces(rgb: np.ndarray, min_size: int = 24) -> List[BBox]:
     m = _mtcnn()
     if m is not None:
         try:
-            det, probs = m.detect(to_pil(rgb))
+            with _MTCNN_LOCK:
+                det, probs = m.detect(to_pil(rgb))
             if det is not None:
                 for b, p in zip(det, probs):
                     if p is not None and p >= 0.90:

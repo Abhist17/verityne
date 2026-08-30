@@ -22,6 +22,8 @@ log = logging.getLogger("verityne.models")
 os.environ.setdefault("HF_HOME", str(MODEL_ROOT / "hf"))
 os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
 
+#: Guards *construction* of the singletons below, so two threads racing to warm
+#: the same model do not both build it.
 _LOCK = threading.Lock()
 
 # Candidate deepfake classifiers, tried in order. `scripts/benchmark_models.py`
@@ -49,6 +51,21 @@ class DeepfakeClassifier:
         import torch
         from transformers import AutoImageProcessor, AutoModelForImageClassification
 
+        # One lock per model object, held across every forward pass.
+        #
+        # These singletons are shared by a ThreadPoolExecutor - `pipeline.py`
+        # runs stage one concurrently and `scripts/score_corpus.py` scores
+        # several packets at once - and a HuggingFace processor plus a torch
+        # module are not safe to call concurrently on one instance. Left
+        # unguarded this corrupts the heap: scoring the corpus aborted with
+        # "double free or corruption" and "corrupted size vs. prev_size" partway
+        # through, at both two and four workers, non-deterministically.
+        #
+        # The lock is per model rather than global on purpose. Serialising one
+        # model's forward passes is what fixes the crash; OCR, face embedding
+        # and the deepfake head can still overlap with each other, which is
+        # where the concurrency actually pays.
+        self._lock = threading.Lock()
         self.repo_id = repo_id
         self.device = resolve_device()
         self.processor = AutoImageProcessor.from_pretrained(repo_id)
@@ -67,7 +84,7 @@ class DeepfakeClassifier:
     def predict(self, rgb: np.ndarray) -> float:
         import torch
 
-        with torch.no_grad():
+        with self._lock, torch.no_grad():
             inputs = self.processor(images=rgb, return_tensors="pt").to(self.device)
             logits = self.model(**inputs).logits
             probs = torch.softmax(logits.float(), dim=-1)[0]
@@ -78,7 +95,7 @@ class DeepfakeClassifier:
 
         if not images:
             return []
-        with torch.no_grad():
+        with self._lock, torch.no_grad():
             inputs = self.processor(images=images, return_tensors="pt").to(self.device)
             probs = torch.softmax(self.model(**inputs).logits.float(), dim=-1)
         return [float(p[self.fake_index]) for p in probs]
@@ -91,10 +108,11 @@ class DeepfakeClassifier:
         if layer is None:
             return None
         try:
-            inputs = self.processor(images=rgb, return_tensors="pt").to(self.device)
-            pixel_values = inputs["pixel_values"].requires_grad_(True)
-            with GradCAM(self.model, layer) as cam:
-                return cam(pixel_values, class_idx=self.fake_index)
+            with self._lock:
+                inputs = self.processor(images=rgb, return_tensors="pt").to(self.device)
+                pixel_values = inputs["pixel_values"].requires_grad_(True)
+                with GradCAM(self.model, layer) as cam:
+                    return cam(pixel_values, class_idx=self.fake_index)
         except Exception as exc:  # noqa: BLE001
             log.warning("grad-cam failed: %s", exc)
             return None
@@ -120,6 +138,7 @@ class FaceEmbedder:
         import torch
         from facenet_pytorch import InceptionResnetV1
 
+        self._lock = threading.Lock()  # see DeepfakeClassifier.__init__
         self.device = resolve_device()
         self.model = InceptionResnetV1(pretrained="vggface2").eval().to(self.device)
 
@@ -130,7 +149,7 @@ class FaceEmbedder:
         face = cv2.resize(face_rgb, (160, 160), interpolation=cv2.INTER_AREA)
         t = torch.from_numpy(face).permute(2, 0, 1).float()
         t = (t - 127.5) / 128.0  # facenet's expected normalisation
-        with torch.no_grad():
+        with self._lock, torch.no_grad():
             v = self.model(t.unsqueeze(0).to(self.device))[0]
         v = v.detach().float().cpu().numpy()
         return v / (np.linalg.norm(v) + 1e-9)

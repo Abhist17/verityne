@@ -242,22 +242,22 @@ labels, because we generated the fakes ourselves; 89.2% train accuracy over
 
 A **logistic regression** over ten features (each detector's score *and* its
 confidence). XGBoost is fitted alongside for comparison and the report prints
-both — on the training split LR reaches 0.881 CV AUC against XGBoost's 0.871, so
+both — on the training split LR reaches 0.891 CV AUC against XGBoost's 0.867, so
 LR ships: at this feature count they tie, and LR hands back a coefficient per
 detector you can argue with.
 
 | Feature | LR coefficient |
 | --- | --- |
-| `metadata_exif_score` | **+1.64** |
-| `id_forensics_score` | +0.89 |
-| `face_match_conf` | +0.87 |
-| `face_match_score` | +0.86 |
-| `selfie_deepfake_conf` | +0.50 |
-| `liveness_video_score` | +0.31 |
-| `metadata_exif_conf` | +0.27 |
+| `metadata_exif_score` | **+1.67** |
+| `id_forensics_score` | +0.88 |
+| `face_match_conf` | +0.86 |
+| `face_match_score` | +0.85 |
+| `selfie_deepfake_conf` | +0.51 |
+| `liveness_video_score` | +0.34 |
+| `metadata_exif_conf` | +0.30 |
 | `id_forensics_conf` | −0.00 |
-| `selfie_deepfake_score` | −0.05 |
-| `liveness_video_conf` | −0.18 |
+| `selfie_deepfake_score` | −0.04 |
+| `liveness_video_conf` | −0.29 |
 
 Isotonic calibration makes the output read as a probability, which is what the
 policy thresholds and the cost model both assume it is.
@@ -297,26 +297,26 @@ the fusion layer appears in these numbers.
 
 | | Value |
 | --- | --- |
-| Fusion ROC-AUC | **0.914** |
-| Mean score, genuine | 0.299 |
-| Mean score, fraud | 0.810 |
+| Fusion ROC-AUC | **0.911** |
+| Mean score, genuine | 0.266 |
+| Mean score, fraud | 0.809 |
 
 At the two shipped thresholds:
 
 | Threshold | Precision | Recall | False accept | False reject | Accuracy |
 | --- | --- | --- | --- | --- | --- |
-| `REVIEW` @ 0.40 | 0.746 | 0.922 | 7.8% | 29.1% | 0.811 |
-| `REJECT` @ 0.75 | 0.943 | 0.647 | 35.3% | **3.6%** | 0.811 |
+| `REVIEW` @ 0.40 | 0.771 | 0.922 | 7.8% | 25.5% | 0.830 |
+| `REJECT` @ 0.75 | 0.923 | 0.706 | 29.4% | **5.5%** | 0.830 |
 
 Read those two rows together: the reject threshold is deliberately conservative.
-It auto-rejects 65% of fraud while wrongly rejecting 3.6% of genuine
+It auto-rejects 71% of fraud while wrongly rejecting 5.5% of genuine
 merchants — the remaining fraud lands in the review queue rather than being
 waved through, which is the whole point of a three-way verdict.
 
 **The `REVIEW` row is worse than it was, and the reason is worth stating.** The
-previous run put 12.7% of genuine merchants into review; this one puts 29.1%.
-Ranking did not get worse — AUC rose from 0.906 to 0.914 — the *score
-distribution* moved: mean genuine went from 0.248 to 0.299, so a fixed 0.40
+previous run put 12.7% of genuine merchants into review; this one puts 25.5%.
+Ranking did not get worse — AUC rose from 0.906 to 0.911 — the *score
+distribution* moved: mean genuine went from 0.248 to 0.266, so a fixed 0.40
 threshold now sits lower on it. That is a direct consequence of correcting the
 face-match band on real pairs (below), and it is mostly an artifact of this
 corpus rather than of the fix. The corpus's genuine selfie/ID pairs derive from
@@ -344,13 +344,13 @@ to catch attacks aimed at a different part of the packet.
 
 | Attack | n | Caught @ REVIEW | Caught @ REJECT | AUC vs genuine |
 | --- | --- | --- | --- | --- |
-| `tampered_document` | 5 | 60% | 60% | 0.798 |
-| `synthetic_identity` | 7 | 71% | 57% | 0.809 |
-| `invalid_document` | 4 | 100% | 25% | 0.905 |
-| `face_swap_liveness` | 5 | 100% | 40% | 0.889 |
-| `stale_or_edited_media` | 8 | 100% | 50% | 0.909 |
-| `reused_id_selfie` | 6 | 100% | 50% | 0.938 |
-| `generated_selfie` | 9 | 100% | 100% | 0.998 |
+| `tampered_document` | 5 | 60% | 60% | 0.726 |
+| `synthetic_identity` | 7 | 71% | 57% | 0.808 |
+| `stale_or_edited_media` | 8 | 100% | 62% | 0.916 |
+| `face_swap_liveness` | 5 | 100% | 40% | 0.920 |
+| `invalid_document` | 4 | 100% | 75% | 0.925 |
+| `reused_id_selfie` | 6 | 100% | 50% | 0.926 |
+| `generated_selfie` | 9 | 100% | 100% | 1.000 |
 | `impersonation` | 7 | 100% | 100% | 1.000 |
 
 Diffusion-generated selfies and impersonation are solved. Tampered documents are
@@ -361,11 +361,12 @@ finds something considerably worse than 0.798.
 > **On these numbers being different from a previous run.** They were
 > regenerated after the face-match band was re-fitted on LFW, so `face_match`
 > and everything downstream of it moved. `id_forensics` also moved (0.526 →
-> 0.573) by more than that change explains. The detector is deterministic —
-> verified by scoring the same documents twice — so the earlier figure came from
-> a different model-resolution state in that run, not from noise. Rather than
-> guess at which, the figures printed here are the ones the current code
-> reproduces.
+> 0.573) by more than that change explains; the detector is deterministic, so
+> that earlier figure came from a different model-resolution state in that run.
+> The figures here are the ones the current code reproduces.
+>
+> Chasing that discrepancy turned up a real bug, which is now fixed — see
+> [Concurrency](#a-thread-safety-bug-the-real-data-work-uncovered) below.
 
 ### Split by capture mode
 
@@ -375,28 +376,76 @@ neither population.
 
 | Capture mode | n | ID forensics AUC | Tamper-only AUC | Fusion AUC |
 | --- | --- | --- | --- | --- |
-| Photo | 57 | 0.555 | 0.688 | 0.911 |
-| Scan | 49 | 0.674 | 0.696 | 0.916 |
+| Photo | 57 | 0.555 | 0.688 | 0.886 |
+| Scan | 49 | 0.674 | 0.696 | 0.932 |
 
 ### Latency
 
 | | ms |
 | --- | --- |
-| p50 | 12,336 |
-| p90 | 16,045 |
-| p99 | 18,172 |
+| p50 | 11,108 |
+| p90 | 11,977 |
+| p99 | 12,798 |
 
-Measured in batch mode with detectors running **sequentially**, four packets at
-a time, and — for this particular run — while the real-document evaluation was
-sharing the same GPU. Treat it as a throughput figure under contention, not as
-per-request latency.
+**This is not per-request latency and should not be read as one.** It is
+wall-clock time per packet during `make score`, which runs four packets at once
+with each packet's detectors sequential, so every number here includes waiting
+for three other packets. It scales with `--workers` — the same corpus at
+`--workers 2` gives a p50 of 5,714 ms — which is the tell that it measures
+throughput, not latency.
 
-The API runs stage one concurrently and one request at a time: a live
-`POST /verify` against the corpus measured **2,137 ms** end to end on a CUDA
-GPU, and that is the number that describes what a caller waits for.
-Per-detector medians from this batch run: ID forensics 10,141 ms (OCR
-dominates), liveness 1,727 ms, selfie deepfake 455 ms, face match 86 ms,
-metadata 41 ms.
+The number a caller actually waits for is the API's: stage one runs
+concurrently, one request at a time, and a live `POST /verify` against the
+corpus measured **2,137 ms** end to end on a CUDA GPU. Per-detector medians from
+the batch run: ID forensics 9,762 ms (OCR dominates), liveness 1,023 ms, selfie
+deepfake 230 ms, face match 41 ms, metadata 45 ms.
+
+### A thread-safety bug the real-data work uncovered
+
+Re-running the pipeline to regenerate these numbers exposed a defect that had
+been there the whole time and that no test would have caught.
+
+`scripts/score_corpus.py` scores several packets at once, and `pipeline.py` runs
+stage one concurrently for every live `POST /verify` — both by design, because
+torch and OpenCV release the GIL. But the models underneath are **`lru_cache`
+singletons**: one `DeepfakeClassifier`, one `FaceEmbedder`, one EasyOCR
+`Reader`, one MTCNN. The existing lock guarded only their *construction*. Every
+forward pass ran unsynchronised on a shared object, and a HuggingFace processor,
+a torch module and an EasyOCR reader are none of them safe to call that way.
+
+It failed three different ways, which is why it went unnoticed:
+
+| Symptom | Frequency observed |
+| --- | --- |
+| Process aborts — `double free or corruption`, `corrupted size vs. prev_size` | 2 of 4 full corpus runs, at both 2 and 4 workers |
+| A detector throws, degrades to `status="error"`, and contributes score 0.0 / confidence 0.0 | 1 packet per run |
+| Slightly different numeric output for the same input | 3 packets per run |
+
+The silent one is the worst. `Detector.run` catches everything so a broken
+detector cannot take down a verdict — correct behaviour in production, but here
+it meant a packet quietly entered the fusion *training set* with a zeroed
+liveness feature. That is what made `liveness_video_conf` swing between −0.18
+and −0.64 across runs whose held-out detector AUCs were identical to the last
+digit. A crash announces itself; this corrupted a coefficient and said nothing.
+
+The fix is a lock per model object, held across each forward pass — in
+`detectors/models.py`, `utils/ocr.py` and `utils/images.py`. Per model rather
+than one global lock on purpose: serialising a single model's forward passes is
+what fixes the crash, while OCR, face embedding and the deepfake head still
+overlap, which is where the concurrency actually pays. It is not a slowdown — the two
+locked 4-worker runs scored the corpus in 811 s and 754 s, against 896 s for the
+unlocked 2-worker run that managed to finish. Threads thrashing one CUDA context
+were never buying throughput.
+
+Verified afterwards: two full 4-worker runs, no aborts, no error rows, and
+**1,500 of 1,500 detector outputs identical** between them — which is also the
+first time this pipeline has been shown to be reproducible rather than assumed
+to be.
+
+The lesson generalises past this repo. The bug lived in the gap between "the
+tests pass" and "the numbers reproduce" — the suite is deterministic and
+single-threaded, so it was green throughout. What caught it was regenerating a
+result and asking why a coefficient had moved.
 
 ### Bias audit
 
@@ -405,12 +454,12 @@ conclusion** — see the limitations below.
 
 | Bucket | n | AUC | False reject | False accept |
 | --- | --- | --- | --- | --- |
-| dark | 15 | 0.929 | 0.0% | 50.0% |
-| brown | 33 | 0.913 | 0.0% | 28.6% |
-| tan | 17 | 0.951 | 11.1% | 12.5% |
-| intermediate | 19 | 0.989 | 0.0% | 30.0% |
-| light | 11 | 0.883 | 0.0% | 60.0% |
-| very light | 10 | 0.780 | 20.0% | 40.0% |
+| dark | 15 | 0.911 | 0.0% | 37.5% |
+| brown | 33 | 0.898 | 5.3% | 28.6% |
+| tan | 17 | 0.958 | 11.1% | 12.5% |
+| intermediate | 19 | 0.994 | 0.0% | 20.0% |
+| light | 11 | 0.883 | 0.0% | 40.0% |
+| very light | 10 | 0.740 | 20.0% | 40.0% |
 
 ---
 
@@ -792,6 +841,7 @@ typecheck and production build.
 | Gauntlet page is empty | Fixtures aren't loaded: `make gauntlet`. |
 | Everything gets rejected as a "reused KYC kit" | The linkage index has accumulated repeat submissions of the same files, which is what re-scoring the corpus during testing looks like. `make clean` drops the database, then `make gauntlet` re-seeds. Note that an *exact* pixel match is a real signal — a near-match no longer rejects on its own. |
 | CUDA out of memory | `VERITYNE_DEVICE=cpu`, or lower `VERITYNE_MAX_VIDEO_FRAMES`. |
+| `double free or corruption` / `corrupted size vs. prev_size` during `make score` | Fixed. The shared model singletons were being called from several threads without a lock; see [the thread-safety section](#a-thread-safety-bug-the-real-data-work-uncovered). If you see it again, `--workers 1` isolates it, but the locks in `detectors/models.py`, `utils/ocr.py` and `utils/images.py` should have settled it. |
 
 ---
 

@@ -11,6 +11,7 @@ from __future__ import annotations
 import functools
 import re
 import shutil
+import threading
 from typing import Dict, List, Optional, Tuple
 
 import cv2
@@ -33,6 +34,13 @@ def available_backend() -> str:
     except Exception:
         pass
     return "none"
+
+
+#: EasyOCR's Reader is a single object holding torch modules and is not safe to
+#: call from several threads at once. Stage one runs concurrently, so every
+#: readtext() goes through this. See DeepfakeClassifier.__init__ for what the
+#: unguarded version did to the heap.
+_EASYOCR_LOCK = threading.Lock()
 
 
 @functools.lru_cache(maxsize=1)
@@ -72,7 +80,9 @@ def extract_text(rgb: np.ndarray) -> Tuple[str, List[Dict]]:
                 )
         return " ".join(w["text"] for w in words), words
     if backend == "easyocr":
-        res = _easyocr_reader().readtext(rgb)
+        reader = _easyocr_reader()
+        with _EASYOCR_LOCK:
+            res = reader.readtext(rgb)
         words = []
         for box, txt, conf in res:
             xs = [int(p[0]) for p in box]
