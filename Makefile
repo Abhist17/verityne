@@ -12,7 +12,7 @@ export HF_HOME := $(CURDIR)/storage/models/hf
 export PYTHONPATH := $(CURDIR)/backend
 
 .PHONY: help setup setup-backend setup-frontend pipeline dataset benchmark calibrate score train evaluate \
-        gauntlet redteam backend frontend dev demo test clean clean-data fresh \
+        ablate gauntlet redteam backend frontend dev demo test clean clean-data fresh \
         real data-real calibrate-face real-docs eval-real-docs eval-real-video
 
 help:
@@ -51,8 +51,11 @@ train: ## fit the fusion layer on the training split
 evaluate: ## produce the held-out evaluation report
 	$(PY) backend/scripts/evaluate.py
 
-pipeline: dataset benchmark calibrate score train evaluate ## the whole data + model pipeline
-	@echo "pipeline complete — see eval/metrics.json"
+ablate: ## what each detector is worth, and whether the corpus leaks its labels
+	$(PY) backend/scripts/ablate_fusion.py
+
+pipeline: dataset benchmark calibrate score train evaluate ablate ## the whole data + model pipeline
+	@echo "pipeline complete — see eval/metrics.json and eval/ablation.json"
 
 # ---------------------------------------------------------------- real data
 # The synthetic corpus measures separability on data we generated. These targets

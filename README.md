@@ -340,6 +340,70 @@ to catch attacks aimed at a different part of the packet.
 | Liveness video | 0.604 | 0.560 | 100% | 0 |
 | ID forensics | 0.573 | 0.702 | 100% | 0 |
 
+### What the headline AUC is actually made of
+
+A single fused number does not say which detector earned it, and an ensemble can
+be one feature wearing five. `make ablate` refits fusion on the training split
+with one detector's columns zeroed, scores the same held-out split, and reports
+the drop — `eval/ablation.json`.
+
+| Detector muted | Held-out AUC | Change | Share of the model's above-chance AUC |
+| --- | --- | --- | --- |
+| *(none — full model)* | 0.913 | | |
+| Metadata / EXIF | **0.709** | **−0.204** | **49.5%** |
+| Face match | 0.858 | −0.055 | 13.3% |
+| ID forensics | 0.903 | −0.010 | 2.5% |
+| Liveness video | 0.926 | **+0.013** | −3.2% |
+| Selfie deepfake | 0.929 | **+0.016** | −3.8% |
+
+Two things fall out of that table, and neither is comfortable.
+
+**Half of the headline rests on one detector — and that detector was reading a
+label this project wrote into the file.** `build_dataset.py` chose an EXIF mode
+per packet, and the choice was conditioned on the label in a way that left three
+modes appearing on fraudulent packets and never on genuine ones:
+
+| Selfie EXIF mode | Genuine | Fraud | P(fraud) |
+| --- | --- | --- | --- |
+| `fresh` | 79 | 31 | 0.28 |
+| `plain` | 34 | 15 | 0.31 |
+| `none` | 37 | 52 | 0.58 |
+| `stale` | **0** | 26 | **1.00** |
+| `edited` | **0** | 16 | **1.00** |
+| `generated` | **0** | 10 | **1.00** |
+
+52 of 150 fraudulent packets — 17.3% of the corpus — carried a mode that is
+a fraud label in disguise. A detector reading `Software: GIMP 2.10` out of those
+files is not detecting fraud; it is reading an answer key, at 100% precision, for
+free. That is why `metadata_exif` scores `auc_on_target_attacks` of exactly
+1.000 in the table above: a perfect score on real data is a bug report.
+
+The irony is on the record. `pick_exif_mode` carries a docstring explaining that
+EXIF is mixed across classes on purpose, "if the corpus made EXIF a perfect class
+signal the metadata detector would look superhuman and the fusion model would
+learn nothing real" — and the function immediately below it does exactly that.
+The guard was written for EXIF *presence*, which is genuinely well mixed
+(`none`: 20% of genuine, 24% of fraud). The leak is in EXIF *content*, which
+nobody checked.
+
+**Second: the two neural detectors are worth less than nothing.** Muting the
+selfie deepfake CNN *raises* held-out AUC by 0.016, and muting the liveness
+analyser raises it by 0.013. Fusion had already noticed — the fitted weight on
+`selfie_deepfake_score` is −0.044, effectively zero, against +1.671 on
+`metadata_exif_score`. The system marketed on deepfake detection was, on this
+corpus, a metadata reader with a CNN bolted to the side as ballast.
+
+Both findings come from the same 40-line script, and neither is visible in
+`eval/metrics.json`, which reports one aggregate that both defects hide inside.
+`ablate_fusion.py` also audits the manifest directly for any categorical whose
+value appears on one class only, so the corpus cannot quietly reacquire this
+defect: `make ablate` fails loudly when it finds one.
+
+The corpus generator has since been corrected and the numbers above are the
+*leaked* ones, kept here because they are the finding. What the system is worth
+without the answer key is reported in
+[The corrected corpus](#the-corrected-corpus).
+
 ### Per attack type, worst first
 
 | Attack | n | Caught @ REVIEW | Caught @ REJECT | AUC vs genuine |
