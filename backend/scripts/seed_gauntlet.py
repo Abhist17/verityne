@@ -6,7 +6,10 @@
 Fixtures are drawn from the **test** split, so nothing the Gauntlet scores was
 seen by the fusion model during training. The fake half is spread across attack
 types rather than sampled at random, so the demo exercises every detector
-instead of accidentally showing ten of the easiest case.
+instead of accidentally showing ten of the easiest case. The genuine half is
+then drawn from identities the fake half does not use, so the scoreboard's
+false-reject rate measures the detectors rather than fixture overlap - see
+``pick_disjoint``.
 """
 from __future__ import annotations
 
@@ -18,7 +21,7 @@ import shutil
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Set
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
@@ -49,6 +52,41 @@ def pick_spread(entries: List[Dict], n: int, rng: random.Random) -> List[Dict]:
     return picked
 
 
+def pick_disjoint(entries: List[Dict], n: int, taken: Set[int], rng: random.Random) -> List[Dict]:
+    """Genuine fixtures drawn from identities the fraudulent half does not use.
+
+    Two packets sharing an ``identity_index`` are the same person wearing two
+    claimed names. Put both halves of such a pair in the Gauntlet and linkage
+    will - correctly - report an onboarding ring, because on the evidence it was
+    given that is exactly what it is looking at. What is wrong in that situation
+    is the scoreboard, which counts the flag on the genuine half as a false
+    reject and so reports fixture overlap as detector error.
+
+    Selecting the two halves independently, as this script used to, let that
+    happen: at ``--seed 7`` four identities appeared on both sides, and the two
+    where the attack keeps the victim's real selfie (``tampered_document``,
+    ``reused_id_selfie``) cost a genuine fixture a REVIEW apiece.
+
+    Identity reuse across a genuine and a fraudulent packet is a real fraud
+    pattern and the system should keep flagging it. It just cannot also be the
+    demo's measure of how often honest merchants are wrongly stopped.
+    """
+    pool = [e for e in entries if e.get("identity_index") not in taken]
+    rng.shuffle(pool)
+    if len(pool) < n:
+        # Too small a corpus to keep the halves disjoint. Say so rather than
+        # quietly reporting the overlap as a false-reject rate.
+        log.warning(
+            "only %d genuine packets have an identity the fraudulent half does not use; "
+            "topping up with %d that overlap, whose linkage hits are expected, not errors",
+            len(pool), n - len(pool),
+        )
+        rest = [e for e in entries if e.get("identity_index") in taken]
+        rng.shuffle(rest)
+        pool += rest
+    return pool[:n]
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--real", type=int, default=10)
@@ -69,8 +107,11 @@ def main() -> None:
     rng = random.Random(args.seed)
     reals = [e for e in entries if e["label"] == "real"]
     fakes = [e for e in entries if e["label"] == "fake"]
-    rng.shuffle(reals)
-    chosen = reals[: args.real] + pick_spread(fakes, args.fake, rng)
+    # Fakes first: their selection is the constrained one, spread across attack
+    # types. The genuine half is then drawn around whatever identities that took.
+    picked_fakes = pick_spread(fakes, args.fake, rng)
+    picked_reals = pick_disjoint(reals, args.real, {e.get("identity_index") for e in picked_fakes}, rng)
+    chosen = picked_reals + picked_fakes
     rng.shuffle(chosen)
 
     init_db()

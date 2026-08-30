@@ -61,11 +61,21 @@ def _summarise(results: List[GauntletResult]) -> GauntletSummary:
     reals = [r for r in results if r.truth == "real"]
     caught = sum(1 for r in fakes if r.verdict in ("REJECT", "REVIEW"))
     passed = sum(1 for r in reals if r.verdict == "PASS")
+    # A genuine merchant sent to review and one auto-rejected are both friction,
+    # but they are not the same failure: the first costs an analyst a few minutes,
+    # the second loses the merchant outright. false_reject_rate counts them
+    # together because both are packets that did not pass on their own; these two
+    # say which kind actually happened, so the headline cannot read as "blocked"
+    # when nothing was blocked.
+    reviewed = sum(1 for r in reals if r.verdict == "REVIEW")
+    rejected = sum(1 for r in reals if r.verdict == "REJECT")
     return GauntletSummary(
         total=len(results),
         fakes_caught=caught,
         fakes_total=len(fakes),
         reals_passed=passed,
+        reals_reviewed=reviewed,
+        reals_rejected=rejected,
         reals_total=len(reals),
         detection_rate=round(caught / len(fakes), 4) if fakes else 0.0,
         false_accept_rate=round((len(fakes) - caught) / len(fakes), 4) if fakes else 0.0,

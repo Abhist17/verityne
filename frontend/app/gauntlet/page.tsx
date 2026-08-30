@@ -117,10 +117,10 @@ export default function GauntletPage() {
             tone={summary.false_accept_rate <= 0.1 ? "pass" : "reject"}
           />
           <StatTile
-            label="False rejects"
+            label="Genuine not passed"
             value={fmtPct(summary.false_reject_rate, 0)}
-            sub={`${summary.reals_total - summary.reals_passed}/${summary.reals_total} genuine merchants blocked`}
-            tone={summary.false_reject_rate <= 0.1 ? "pass" : "review"}
+            sub={`${summary.reals_rejected} rejected, ${summary.reals_reviewed} sent to review, of ${summary.reals_total}`}
+            tone={summary.reals_rejected > 0 ? "reject" : summary.false_reject_rate <= 0.1 ? "pass" : "review"}
           />
           <StatTile label="Accuracy" value={fmtPct(summary.accuracy, 0)} sub={`${summary.total} packets scored`} />
           <StatTile

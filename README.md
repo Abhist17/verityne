@@ -704,8 +704,56 @@ Three deliberate choices keep the numbers honest:
   audit log to link against. The live `POST /verify` path adds linkage on top
   and takes `max(fusion, linkage)`, so a linkage hit can move a verdict that
   nothing in this report accounts for. Linkage is measured in the Gauntlet
-  instead, which runs the full API path — on the current fixtures it costs no
-  fraud recall (9/10 caught) and auto-rejects no genuine merchant.
+  instead, which runs the full API path — see below.
+
+### The Gauntlet, and a false positive the fixtures were manufacturing
+
+The Gauntlet runs 10 genuine and 10 fraudulent packets from the held-out split
+through the full `POST /verify` path — the only place linkage is exercised
+end to end. From a clean database (`make clean && make gauntlet`):
+
+| | Result |
+| --- | --- |
+| Fraud caught (REJECT or REVIEW) | **10 / 10** |
+| Genuine auto-rejected | **0 / 10** |
+| Genuine passed outright | 5 / 10 |
+| Genuine sent to human review | 5 / 10 |
+| Mean latency per packet | ~3 s (2.9–3.2 s across runs, CUDA) |
+
+The scoreboard reports the last two separately rather than as one
+"false rejects" figure, because a merchant an analyst clears in a minute and a
+merchant turned away are not the same failure, and the aggregate reads as the
+second when it is entirely the first.
+
+Until recently the fixture set manufactured some of those reviews itself.
+Genuine and fraudulent halves were drawn independently from the split, so the
+same `identity_index` — the same person — could land on both sides under two
+claimed names. Linkage then reported an onboarding ring, which on that
+evidence is the correct call: identity reuse across a genuine and a fraudulent
+application is a real fraud pattern and the check should keep firing on it.
+What was wrong was the scoreboard, which counted the flag as a detector
+error. At `--seed 7` four
+identities appeared on both sides, and the two whose attack keeps the victim's
+real selfie (`tampered_document`, `reused_id_selfie`) cost a genuine fixture a
+REVIEW apiece — a 50% review rate of which a fifth was the fixture list
+arguing with itself.
+
+Fixing the selection changes which packets are drawn, so the run above is not
+the same twenty packets with two flags removed and nothing else about it is
+attributable to the fix. What is attributable, and is checked directly: no
+genuine fixture carries a linkage reason or an `onboarding_ring` pattern.
+
+`seed_gauntlet.py` now picks the fraudulent half first, then draws the genuine
+half only from identities that half did not use, and says so loudly if the
+corpus is too small to keep them disjoint.
+
+The five reviews that remain are fusion's own output, not linkage, and they are
+not being tuned away. They are driven mainly by `metadata_exif` — the corpus
+strips EXIF from genuine packets as often as from fake ones, deliberately, so
+that no detector can learn "no EXIF means fake". A genuine packet with no camera
+metadata is a case the model finds genuinely ambiguous, and moving a threshold
+until ten demo fixtures look better would be exactly the self-confirming loop
+this project keeps refusing to run.
 
 ---
 
@@ -809,7 +857,7 @@ Copy `.env.example` to `.env`. Every value has a working default.
 ## Testing
 
 ```bash
-make test                                  # 65 tests, ~2 s
+make test                                  # 75 tests, ~2 s
 .venv/bin/python -m pytest backend/tests -q -k verhoeff   # one group
 cd frontend && npx tsc --noEmit && npm run build          # dashboard gates
 ```
@@ -818,7 +866,8 @@ The suite covers the deterministic parts — Verhoeff check digits, PAN structur
 validation, OCR confusion repair, ELA tamper scoring, spectral features, fusion
 arithmetic, policy decisions, the detector base contract, and the real-data
 ingest: LFW's fold protocol, MIDV-2020 quad ordering, threshold arithmetic,
-tamper placement and localisation scoring. It deliberately
+tamper placement and localisation scoring, and the Gauntlet's fixture
+selection and scoreboard arithmetic. It deliberately
 does *not* assert on model outputs: those belong in `eval/metrics.json`, where a
 regression shows up as a number rather than a red test. CI
 (`.github/workflows/ci.yml`) runs the same suite on CPU torch plus the dashboard
@@ -870,7 +919,7 @@ backend/
     calibrate_face_match_lfw.py  fit the identity threshold on LFW's 6,000 real pairs
     real_video.py         read FaceForensics++ / Celeb-DF / DFDC, whichever is present
     evaluate_real_video.py score liveness on recorded deepfakes
-  tests/              65 tests over the deterministic surface
+  tests/              75 tests over the deterministic surface
   requirements.txt          resolvable pins
   requirements-nodeps.txt   facenet-pytorch, installed second with --no-deps
 frontend/

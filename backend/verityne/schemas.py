@@ -84,6 +84,8 @@ class GauntletSummary(BaseModel):
     fakes_caught: int
     fakes_total: int
     reals_passed: int
+    reals_reviewed: int
+    reals_rejected: int
     reals_total: int
     detection_rate: float
     false_accept_rate: float

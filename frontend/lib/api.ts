@@ -65,6 +65,8 @@ export interface GauntletSummary {
   fakes_caught: number;
   fakes_total: number;
   reals_passed: number;
+  reals_reviewed: number;
+  reals_rejected: number;
   reals_total: number;
   detection_rate: number;
   false_accept_rate: number;
