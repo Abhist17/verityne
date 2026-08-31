@@ -15,7 +15,7 @@ Stable Diffusion and DeepFaceLab on their laptop.
 POST /verify  →  { verdict, risk score, top 3 reasons, heatmaps, per-detector breakdown }
 ```
 
-Held-out ROC-AUC **0.914** · 2.1 s per packet on GPU · every number in this file
+Held-out ROC-AUC **0.753** · 2.1 s per packet on GPU · every number in this file
 is reproducible with `make pipeline`, and the real-data numbers with `make real`.
 
 The face-identity threshold is fitted on **LFW** (98.2% ± 0.4% over its official
@@ -69,11 +69,11 @@ where it *doesn't* work is the contribution.
 Concretely, the first thing this project did was benchmark the obvious
 off-the-shelf answer, on its own data, before building anything on top of it:
 
-| Selfie detector (measured on our training split, n=194) | ROC-AUC | ms/image |
+| Selfie detector (measured on our training split, n=195) | ROC-AUC | ms/image |
 | --- | --- | --- |
-| `dima806/deepfake_vs_real_image_detection` | **0.416** | 7.6 |
-| `prithivMLmods/Deep-Fake-Detector-v2-Model` | **0.609** | 8.0 |
-| Frequency-domain head, fitted here | **0.964** (train) | 2.8 |
+| `dima806/deepfake_vs_real_image_detection` | **0.466** | 7.9 |
+| `prithivMLmods/Deep-Fake-Detector-v2-Model` | **0.629** | 8.6 |
+| Frequency-domain head, fitted here | **0.969** (train) | 2.5 |
 
 Both pretrained checkpoints are at or below chance. That is not a bug — their
 label mappings were verified, and they are printed in
@@ -82,10 +82,30 @@ StyleGAN and face-swap video frames meets diffusion output. A project that had
 shipped the popular checkpoint on reputation would have reported a confident
 number for a model that was guessing.
 
-The same habit, applied later to our own code on real data, found two more:
-a face-identity threshold that would have rejected **half of genuine
-applicants**, and a tamper check that fires on **1 of 500 real documents**.
-Both are written up in [Measured on real data](#measured-on-real-data).
+The same habit, turned on this project's own code, found three more — including
+one in its own headline number. Every row below is a thing this project believed
+until it measured it, and each links to the measurement that changed its mind:
+
+| What was believed | What measuring it showed |
+| --- | --- |
+| The popular pretrained deepfake checkpoint is a reasonable baseline | **0.47 and 0.63 ROC-AUC** on our own data — at or below chance ([above](#the-honest-version-of-what-this-is)) |
+| The face-identity threshold was calibrated | Fitted on this corpus it sits at 0.83, which on LFW's 6,000 real pairs accepts 32% of genuine ones — it **rejects two thirds of real applicants** ([§1](#1-face-identity-on-lfw--and-two-thresholds-that-were-badly-wrong)) |
+| Tamper detection works, just weakly | It does not fire at all — the sub-score is **0.0 on 499 of 500 real documents** ([§2](#2-tamper-detection-on-real-documents--the-check-does-not-fire-at-all)) |
+| The system scores 0.913 held out | **Half of that was a label the corpus wrote into its own files**, and two of five detectors were making the model worse ([§](#what-the-headline-auc-is-actually-made-of)) |
+| The calibrated score was free | Isotonic regression on 195 rows collapsed the held-out scores to **14 distinct values**, and the ties cost **0.02 AUC** ([§](#the-calibrator-was-costing-002-auc)) |
+| Linkage catches onboarding rings | Its threshold was fitted for a *pair* and deployed as a *search*: at the shipped scan limit **100% of genuine applicants false-link** to a stranger ([§2b](#2b-the-linkage-threshold-was-answering-the-wrong-question)) |
+| The selfie detector detects synthesis | Its frequency head separates **real Indian faces from real FFHQ faces at 0.916** — it learned the prompt list ([§3](#3-the-selfie-detector-is-reading-demography)) |
+
+The last two are the ones that matter. Neither came from a metric: the linkage
+bug was found by submitting a genuine packet to the running API and reading the
+verdict, and the demographic shortcut is invisible to `eval/metrics.json` by
+construction, because every genuine face in that corpus comes from one dataset.
+
+The EXIF leak is the sharpest of the rest, because nothing external caused it and
+no aggregate number could show it. It took ablating the fusion layer one detector
+at a time — `make ablate`, forty lines — to find that a project built to detect
+deepfakes was, on its own evaluation corpus, mostly reading EXIF tags it had
+written itself.
 
 So the architecture leans on the signals that generalise: **frequency-domain
 artefacts** left by every upsampling generator, **image provenance** (is this
@@ -147,6 +167,7 @@ make calibrate    # fit the face-match band, spectral head and generator fingerp
 make score        # run all detectors over the corpus, cache raw scores
 make train        # fit the fusion layer (train split only)
 make evaluate     # held-out report → eval/metrics.json
+make ablate       # what each detector is worth; fails if the corpus leaks its labels
 make gauntlet     # load 10 genuine + 10 fraudulent demo fixtures
 make redteam      # generate unseen attacks for the live red-team button
 make backend      # API only, on :8000
@@ -159,6 +180,8 @@ make fresh        # nuke everything and rebuild end to end
 ```bash
 make data-real       # fetch LFW; prints the manual steps for MIDV-2020
 make calibrate-face  # fit the identity threshold on LFW's 6,000 real pairs, and apply it
+make calibrate-linkage  # fit the linkage threshold as a search, not a pair
+make indian-faces    # is the selfie detector reading demography? Indian faces vs FFHQ
 make real-docs       # build the tamper set from real captured documents
 make eval-real-docs  # score ID forensics on it
 make eval-real-video DATA=datasets/faceforensics   # needs gated access; see below
@@ -205,7 +228,7 @@ adds about 45 minutes, nearly all of it OCR on 500 documents.
                                           │
                        ┌──────────────────▼───────────────────┐
                        │  fusion: logistic regression over    │
-                       │  10 features → isotonic calibration  │
+                       │  10 features → Platt calibration     │
                        └──────────────────┬───────────────────┘
                                           │
                        ┌──────────────────▼───────────────────┐
@@ -241,26 +264,51 @@ labels, because we generated the fakes ourselves; 89.2% train accuracy over
 ## Fusion and policy
 
 A **logistic regression** over ten features (each detector's score *and* its
-confidence). XGBoost is fitted alongside for comparison and the report prints
-both — on the training split LR reaches 0.891 CV AUC against XGBoost's 0.867, so
-LR ships: at this feature count they tie, and LR hands back a coefficient per
-detector you can argue with.
+confidence). XGBoost is fitted alongside for comparison and both are printed to
+`eval/fusion_training.json`. On the training split XGBoost is marginally ahead —
+0.791 CV AUC against LR's 0.785 — and LR still ships, because the switch rule is
+a margin of 0.02 fixed in `train_fusion.py` before either number was known.
+Six thousandths of cross-validated AUC on 195 rows is noise, and trading a
+coefficient per detector you can argue with for it would be a bad trade.
 
 | Feature | LR coefficient |
 | --- | --- |
-| `metadata_exif_score` | **+1.67** |
-| `id_forensics_score` | +0.88 |
-| `face_match_conf` | +0.86 |
-| `face_match_score` | +0.85 |
-| `selfie_deepfake_conf` | +0.51 |
-| `liveness_video_score` | +0.34 |
-| `metadata_exif_conf` | +0.30 |
+| `face_match_score` | **+1.15** |
+| `metadata_exif_conf` | +0.87 |
+| `id_forensics_score` | +0.86 |
+| `selfie_deepfake_conf` | +0.48 |
+| `metadata_exif_score` | +0.44 |
+| `face_match_conf` | +0.31 |
+| `liveness_video_score` | +0.23 |
+| `selfie_deepfake_score` | +0.13 |
 | `id_forensics_conf` | −0.00 |
-| `selfie_deepfake_score` | −0.04 |
-| `liveness_video_conf` | −0.29 |
+| `liveness_video_conf` | −0.14 |
 
-Isotonic calibration makes the output read as a probability, which is what the
-policy thresholds and the cost model both assume it is.
+Calibration makes the output read as a probability, which is what the policy
+thresholds and the cost model both assume it is.
+
+### The calibrator was costing 0.02 AUC
+
+That calibration step was isotonic regression, which is the usual default and is
+the wrong choice at this sample size. Isotonic is non-parametric: fitted on 195
+training rows it produced a step function with so few distinct levels that the
+held-out scores collapsed to **14 distinct values**. Ranking is what AUC
+measures, and mass ties destroy ranking — the ties alone cost **0.020 of
+held-out AUC, 0.753 down to 0.732**, without a single detector changing.
+
+It also made the score unusable as a dial, which matters more than the AUC. A
+packet a hair above a step boundary jumped from 0.44 to 0.92, and `policy.yaml`
+cuts that score at fixed thresholds while the cost curve integrates over it.
+
+Platt scaling — two parameters, fitted by a one-feature logistic regression on
+the same out-of-fold predictions — is strictly monotonic. It preserves the
+ranking exactly, so it leaves AUC identical to the uncalibrated model, and
+returns a smooth score. Isotonic is the better choice with thousands of rows;
+it is not what this has. See `PlattCalibrator` in `backend/verityne/fusion.py`.
+
+This is the fourth thing on the list at the top of this file, and the cheapest
+to have missed: nothing was broken, no test failed, and the number was simply
+0.02 lower than the model had earned.
 
 Two things force a `REVIEW` that the raw score alone would not: the score
 landing inside the abstention band around a threshold, and a required input
@@ -290,42 +338,44 @@ merchants:
 ## Results
 
 Everything below is from `eval/metrics.json`, computed on an **identity-disjoint
-held-out split**: 106 packets, 51 fraudulent, 55 genuine. No face that trained
+held-out split**: 105 packets, 54 fraudulent, 51 genuine. No face that trained
 the fusion layer appears in these numbers.
 
 ### Headline
 
 | | Value |
 | --- | --- |
-| Fusion ROC-AUC | **0.911** |
-| Mean score, genuine | 0.266 |
-| Mean score, fraud | 0.809 |
+| Fusion ROC-AUC | **0.753** |
+| Mean score, genuine | 0.419 |
+| Mean score, fraud | 0.606 |
 
 At the two shipped thresholds:
 
 | Threshold | Precision | Recall | False accept | False reject | Accuracy |
 | --- | --- | --- | --- | --- | --- |
-| `REVIEW` @ 0.40 | 0.771 | 0.922 | 7.8% | 25.5% | 0.830 |
-| `REJECT` @ 0.75 | 0.923 | 0.706 | 29.4% | **5.5%** | 0.830 |
+| `REVIEW` @ 0.40 | 0.662 | 0.796 | 20.4% | 43.1% | 0.686 |
+| `REJECT` @ 0.75 | 0.815 | 0.407 | 59.3% | **9.8%** | 0.648 |
 
-Read those two rows together: the reject threshold is deliberately conservative.
-It auto-rejects 71% of fraud while wrongly rejecting 5.5% of genuine
-merchants — the remaining fraud lands in the review queue rather than being
-waved through, which is the whole point of a three-way verdict.
+**Those two rows are bad, and the thresholds producing them are stale.** `0.40`
+and `0.75` were chosen against the leaked model, whose scores separated the
+classes far more widely — mean genuine 0.266 against mean fraud 0.809, a gap of
+0.542. On the corrected model the same two means are 0.419 and
+0.606, a gap of 0.187. The distribution compressed towards the middle, so
+fixed cut points inherited from the old one now sit in the wrong places:
+`REJECT` at 0.75 catches only 40.7% of fraud, and `REVIEW` at 0.40 sends 43.1%
+of genuine merchants to a human.
 
-**The `REVIEW` row is worse than it was, and the reason is worth stating.** The
-previous run put 12.7% of genuine merchants into review; this one puts 25.5%.
-Ranking did not get worse — AUC rose from 0.906 to 0.911 — the *score
-distribution* moved: mean genuine went from 0.248 to 0.266, so a fixed 0.40
-threshold now sits lower on it. That is a direct consequence of correcting the
-face-match band on real pairs (below), and it is mostly an artifact of this
-corpus rather than of the fix. The corpus's genuine selfie/ID pairs derive from
-one source photograph each and sit at cosine 0.943, near the top of a band whose
-lower bound is now calibrated on what two *real* photographs of one person
-score. Under an honest band, this corpus's own genuine pairs look faintly
-duplicate-ish — which is the corpus artifact becoming visible, not a new defect.
-`min_risk_for_review` in `policy.yaml` is a policy knob and has deliberately not
-been re-tuned to hide the shift.
+They have deliberately not been re-tuned. Picking new thresholds on the same
+held-out split that reports them is how a model gets graded on its own answer
+sheet, and this README has just finished writing up what that costs. Choosing
+them properly needs an operating point argued from fraud loss, merchant lifetime
+value and abandonment — which is what `/metrics/cost-curve` and the sliders on
+the Metrics page exist to do, and what `policy.yaml` exposes per merchant. The
+ranking is what the detectors earn; where to cut it is an operator's decision,
+and the honest thing is to show the curve rather than pick a flattering point on
+it.
+
+What ranking is worth is 0.753, and that is the number to argue with.
 
 ### Per detector
 
@@ -334,11 +384,11 @@ to catch attacks aimed at a different part of the packet.
 
 | Detector | AUC (all) | AUC (target attacks) | Coverage | Errors |
 | --- | --- | --- | --- | --- |
-| Metadata / EXIF | 0.874 | **1.000** | 100% | 0 |
-| Face match | 0.705 | 0.776 | 100% | 0 |
-| Selfie deepfake | 0.650 | 0.844 | 100% | 0 |
-| Liveness video | 0.604 | 0.560 | 100% | 0 |
-| ID forensics | 0.573 | 0.702 | 100% | 0 |
+| Metadata / EXIF | 0.744 | **0.902** | 100% | 0 |
+| Face match | 0.638 | 0.816 | 100% | 0 |
+| Liveness video | 0.555 | 0.477 | 100% | 0 |
+| Selfie deepfake | 0.540 | 0.691 | 100% | 0 |
+| ID forensics | 0.388 | 0.439 | 100% | 0 |
 
 ### What the headline AUC is actually made of
 
@@ -411,32 +461,106 @@ The corpus generator has since been corrected and the numbers above are the
 without the answer key is reported in
 [The corrected corpus](#the-corrected-corpus).
 
+### The corrected corpus
+
+`pick_exif_mode` now draws `stale` and `edited` for both classes, at rates that
+keep fraud enriched without letting either mode name the class. Everything
+downstream was rebuilt on that: a new 300-packet corpus, the spectral head and
+generator fingerprint refitted, the identity threshold re-applied from LFW, all
+300 packets rescored, fusion refitted, and the held-out report and ablation
+regenerated. The ablation fits and calibrates exactly as `train_fusion.py` ships,
+so its full-model row equals the headline in `eval/metrics.json` rather than
+approximating it.
+
+| Detector muted | Leaked corpus | Corrected corpus |
+| --- | --- | --- |
+| *(none — full model)* | 0.913 | **0.753** |
+| Metadata / EXIF | 0.709 (+49.5%) | 0.603 (+59.2%) |
+| Face match | 0.858 (+13.3%) | 0.639 (+45.0%) |
+| Selfie deepfake | 0.929 (-3.8%) | 0.726 (+10.6%) |
+| Liveness video | 0.926 (-3.2%) | 0.752 (+0.1%) |
+| ID forensics | 0.903 (+2.5%) | 0.827 (-29.3%) |
+
+**The headline fell from 0.913 to 0.753.** That gap is what the answer key was
+worth, and 0.753 is the number this project stands behind: a measured 0.753
+is worth more than a 0.913 that was half bookkeeping. Every threshold, recall
+figure and cost curve in this README is recomputed on it.
+
+What is more interesting than the drop is that **removing the leak changed which
+detectors matter**, which no aggregate could have shown:
+
+- **The deepfake CNN started working.** Muting `selfie_deepfake` used to *raise*
+  held-out AUC by 0.016; it now costs 0.027, 10.6% of the model's
+  above-chance performance. The signal was there the whole time, drowned out by
+  a feature that was cheating. Fusion's coefficient on `selfie_deepfake_score`
+  moved from -0.044 — a model actively discounting it — to +0.133, while the
+  weight on `metadata_exif_score` fell from +1.671 to +0.445 and
+  `face_match_score` became the largest at +1.147.
+- **ID forensics went the other way.** It was worth +2.5% before and now
+  costs **0.074 AUC** (-29.3%): the model is measurably better with it
+  muted. On the real-document track it also scores at chance and its tamper
+  check never fires ([§2](#2-tamper-detection-on-real-documents--the-check-does-not-fire-at-all)).
+  Two independent measurements now say the same thing about it.
+- **Liveness video remains worth nothing** (+0.1%, three ten-thousandths of
+  AUC — the closest to exactly zero any of the five gets), which is expected and
+  stated elsewhere: the corpus animates its clips from stills, so there is no
+  genuine camera motion for a temporal detector to read.
+- **Metadata / EXIF is still the largest single contributor**, and its share of
+  above-chance AUC actually *rose*, from 49.5% to 59.2% — because the
+  model it is a share of got much smaller. In absolute terms its contribution
+  fell from 0.204 to 0.150 AUC. It did not collapse to chance, and it
+  should not have: stripped EXIF and forged timestamps are real signals, and the
+  detector also carries the image-provenance check — whether a file's actual
+  detail matches the resolution it claims — which never depended on the leak.
+
+Those two detectors are reported, not deleted. "We removed the detectors that
+did not work" and "we ship five detectors" cannot both be on the same slide, and
+a fusion layer that assigns a feature a near-zero coefficient is telling you
+something worth printing rather than something worth hiding.
+
+The corpus leak audit now reports clean: no EXIF mode lands on one class only
+except `generated`, which is exempt for a stated physical reason and displayed
+as such on the Metrics page rather than suppressed.
+
 ### Per attack type, worst first
 
 | Attack | n | Caught @ REVIEW | Caught @ REJECT | AUC vs genuine |
 | --- | --- | --- | --- | --- |
-| `tampered_document` | 5 | 60% | 60% | 0.726 |
-| `synthetic_identity` | 7 | 71% | 57% | 0.808 |
-| `stale_or_edited_media` | 8 | 100% | 62% | 0.916 |
-| `face_swap_liveness` | 5 | 100% | 40% | 0.920 |
-| `invalid_document` | 4 | 100% | 75% | 0.925 |
-| `reused_id_selfie` | 6 | 100% | 50% | 0.926 |
-| `generated_selfie` | 9 | 100% | 100% | 1.000 |
-| `impersonation` | 7 | 100% | 100% | 1.000 |
+| `face_swap_liveness` | 3 | 33% | 0% | 0.536 |
+| `tampered_document` | 7 | 57% | 29% | 0.599 |
+| `reused_id_selfie` | 6 | 67% | 0% | 0.608 |
+| `recaptured_screen` | 5 | 80% | 0% | 0.631 |
+| `invalid_document` | 6 | 67% | 33% | 0.644 |
+| `synthetic_identity` | 7 | 100% | 14% | 0.765 |
+| `stale_or_edited_media` | 7 | 100% | 71% | 0.916 |
+| `impersonation` | 7 | 86% | 86% | 0.919 |
+| `generated_selfie` | 6 | 100% | 100% | 0.997 |
 
-Diffusion-generated selfies and impersonation are solved. Tampered documents are
-still the weakest class and the honest headline of this table — which is exactly
-why the next section stops measuring them on documents we drew ourselves, and
-finds something considerably worse than 0.798.
+Diffusion-generated selfies remain solved (0.997) — a frequency-domain
+head reads upsampling artefacts reliably, and that result survived the corpus
+fix intact. Almost nothing else did.
 
-> **On these numbers being different from a previous run.** They were
-> regenerated after the face-match band was re-fitted on LFW, so `face_match`
-> and everything downstream of it moved. `id_forensics` also moved (0.526 →
-> 0.573) by more than that change explains; the detector is deterministic, so
-> that earlier figure came from a different model-resolution state in that run.
-> The figures here are the ones the current code reproduces.
+**`face_swap_liveness` is at 0.536, which is chance**, and `reused_id_selfie` at
+0.608 is barely above it. Neither is caught at the reject threshold at
+all. That is the same conclusion the ablation reaches from the other direction:
+the liveness analyser contributes nothing, because the corpus animates its clips
+from stills and there is no genuine camera motion in any of them. Two
+measurements, one cause, and it is the largest untested surface in the project.
+
+`tampered_document` sits at 0.599 here, on documents we drew ourselves. The
+next section stops doing that and measures the same check on documents somebody
+else printed, photographed and scanned — where it turns out not to fire at all.
+
+> **On these numbers being different from a previous run.** They are. The whole
+> pipeline was rebuilt after the EXIF leak was found — new corpus, refitted
+> heads, the LFW threshold re-applied, everything rescored — so every figure in
+> this section moved, and the ones that moved most are the ones the leak had
+> been propping up. The earlier run is not preserved as a comparison because it
+> was measuring a corpus that gave the answer away; the one figure worth keeping
+> from it is in [The corrected corpus](#the-corrected-corpus).
 >
-> Chasing that discrepancy turned up a real bug, which is now fixed — see
+> An earlier discrepancy-chase, before any of this, turned up a real
+> thread-safety bug, which is fixed — see
 > [Concurrency](#a-thread-safety-bug-the-real-data-work-uncovered) below.
 
 ### Split by capture mode
@@ -447,29 +571,28 @@ neither population.
 
 | Capture mode | n | ID forensics AUC | Tamper-only AUC | Fusion AUC |
 | --- | --- | --- | --- | --- |
-| Photo | 57 | 0.555 | 0.688 | 0.886 |
-| Scan | 49 | 0.674 | 0.696 | 0.932 |
+| Photo | 58 | 0.286 | 0.100 | 0.745 |
+| Scan | 47 | 0.513 | 0.484 | 0.804 |
 
 ### Latency
 
 | | ms |
 | --- | --- |
-| p50 | 11,108 |
-| p90 | 11,977 |
-| p99 | 12,798 |
+| p50 | 10,442 |
+| p90 | 11,626 |
+| p99 | 12,005 |
 
 **This is not per-request latency and should not be read as one.** It is
 wall-clock time per packet during `make score`, which runs four packets at once
 with each packet's detectors sequential, so every number here includes waiting
-for three other packets. It scales with `--workers` — the same corpus at
-`--workers 2` gives a p50 of 5,714 ms — which is the tell that it measures
-throughput, not latency.
+for three other packets. It scales with `--workers`, which is the tell that it
+measures throughput rather than latency: halving the worker count roughly halves
+the per-packet figure without changing a single detector.
 
 The number a caller actually waits for is the API's: stage one runs
 concurrently, one request at a time, and a live `POST /verify` against the
 corpus measured **2,137 ms** end to end on a CUDA GPU. Per-detector medians from
-the batch run: ID forensics 9,762 ms (OCR dominates), liveness 1,023 ms, selfie
-deepfake 230 ms, face match 41 ms, metadata 45 ms.
+the batch run: ID forensics 8,773 ms (OCR dominates), liveness 1,217 ms, selfie deepfake 278 ms, face match 49 ms, metadata 41 ms.
 
 ### A thread-safety bug the real-data work uncovered
 
@@ -525,12 +648,13 @@ conclusion** — see the limitations below.
 
 | Bucket | n | AUC | False reject | False accept |
 | --- | --- | --- | --- | --- |
-| dark | 15 | 0.911 | 0.0% | 37.5% |
-| brown | 33 | 0.898 | 5.3% | 28.6% |
-| tan | 17 | 0.958 | 11.1% | 12.5% |
-| intermediate | 19 | 0.994 | 0.0% | 20.0% |
-| light | 11 | 0.883 | 0.0% | 40.0% |
-| very light | 10 | 0.740 | 20.0% | 40.0% |
+| brown | 37 | 0.803 | 13.6% | 46.7% |
+| dark | 15 | 0.929 | 0.0% | 57.1% |
+| intermediate | 11 | 0.700 | 0.0% | 60.0% |
+| light | 11 | 0.750 | 0.0% | 85.7% |
+| tan | 23 | 0.804 | 16.7% | 58.8% |
+| unknown | 1 | — | — | — |
+| very_light | 7 | 0.300 | 20.0% | 100.0% |
 
 ---
 
@@ -573,14 +697,21 @@ MTCNN crop and the same FaceNet weights the API uses.
 Then the same 6,000 real pairs were used to grade the constants the code was
 already shipping:
 
-| Constant | Was | True-accept rate | Accuracy |
+| Constant | Value graded | True-accept rate | Accuracy |
 | --- | --- | --- | --- |
-| `linkage.SAME_PERSON` | 0.75 | **63.3%** | 0.817 |
-| face-match band `low` | 0.7835 | **52.1%** | 0.760 |
+| `linkage.SAME_PERSON`, as first hard-coded | 0.75 | **63.3%** | 0.817 |
+| face-match band `low`, as first fitted here | 0.7835 | **52.1%** | 0.760 |
+| face-match band `low`, refitted on the current corpus | 0.8321 | **32.2%** | 0.661 |
 
 The linkage threshold was missing **more than a third of the repeat applicants
-it exists to find**. The face-match lower bound was worse: on real pairs it
-would have called **nearly half of honest applicants impersonators**.
+it exists to find**. The face-match lower bound was worse: on real pairs the
+0.7835 it shipped with would have called **nearly half of honest applicants
+impersonators**, and the third row is the same procedure re-run on the current
+corpus — it lands at 0.8321, which accepts 32.2% of genuine real pairs and
+would turn away **68% of honest merchants**. The defect is not a bad constant
+that has since been corrected; it is that fitting this bound on this corpus
+produces a wrong answer every time, and a worse one the better the corpus gets
+at making a person's two images look alike.
 
 Neither was an arithmetic mistake. Both were set against corpus pairs whose "two
 photographs of one person" are one photograph re-captured twice, which score
@@ -588,10 +719,26 @@ photographs of one person" are one photograph re-captured twice, which score
 on average, and 0.523 at the 5th percentile. The corpus could not have exposed
 this, because the corpus is what caused it.
 
-`linkage.SAME_PERSON` is now **0.5198** — the FAR=0.1% point rather than the
-accuracy-optimal one, because a linkage hit accuses somebody of applying twice
-under two names, so the false-accept budget should be strict. It costs little:
-95.1% of true same-person pairs still link, against 63.3% before.
+`linkage.SAME_PERSON` was set from this fit to **0.5198** — the FAR=0.1% point
+rather than the accuracy-optimal one, because a linkage hit accuses somebody of
+applying twice under two names, so the false-accept budget should be strict. On
+these pairs that costs little: 95.1% of true same-person pairs still link,
+against 63.3% before.
+
+**That reasoning was right about the budget and wrong about the question.** This
+is a pairwise fit, and linkage is not a pairwise test — it is a search against
+every prior record. The threshold has since been refitted for that, and the
+number above is kept here because it is what this section measured;
+[§2b](#2b-the-linkage-threshold-was-answering-the-wrong-question) is what
+happened when it met a database.
+
+Because that bound can only get worse by being re-fitted here, `calibrate.py` no
+longer overwrites it. `make pipeline` used to write a fresh band file and silently
+reinstate the corpus value over the LFW one; anyone following the documented
+order (`make pipeline`, then `make real`) recovered by accident, and nothing
+warned. The corpus still fits the upper bound, which is corpus-derived by design,
+and its value for the lower one is recorded beside the better one instead of
+replacing it.
 
 LFW does not fit the band's *upper* bound, which catches a "selfie" that is a
 copy of the printed card portrait. That needs selfie-vs-document pairs and LFW
@@ -701,7 +848,143 @@ the same generator would be exactly the self-confirming loop this project exists
 to avoid. Fixing it needs tamper data not produced by the script that would
 score the fix.
 
-### 3. Liveness on recorded video — built, not yet run
+### 2b. The linkage threshold was answering the wrong question
+
+Found by running the product rather than by reading a report: a **genuine**
+corpus packet came back `REJECT` at 0.95, top reason *"this face has already
+been submitted under 4 different name(s) — strong indicator of an onboarding
+ring."* Every one of the 300 corpus packets carries a distinct identity and a
+distinct name. All four links were false, against four unrelated strangers.
+
+The threshold was not too loose by accident. It was **measuring the wrong
+thing.** [§1](#1-face-identity-on-lfw--and-two-thresholds-that-were-badly-wrong)
+fits `SAME_PERSON` at LFW's FAR=0.1% point — a *verification* question, are these
+two photographs the same person, graded on 6,000 pairs. But `find_face_links`
+never asks about a pair. It compares one applicant against every prior record,
+up to `SCAN_LIMIT = 5000`. A pairwise false-accept rate of `p` applied `N` times
+gives a per-applicant false-link probability of `1 − (1 − p)^N`, which grows with
+the size of the database while the pair fit stays where it was put.
+
+The official protocol also cannot see this, because 3,000 impostor pairs cannot
+resolve a rate below 3.3 × 10⁻⁴ — the shipped 0.0007 was **two pairs**. So
+`calibrate_linkage_lfw.py` scores every pair among LFW's 5,749 distinct
+identities: **16,522,626 impostor pairs**, resolving to 6 × 10⁻⁸. Reproduce with
+`make calibrate-linkage` → `eval/linkage_lfw.json`.
+
+The pairwise rate turned out to be 27× worse than the official protocol's
+estimate, and the search rate is what an honest merchant actually meets:
+
+| Prior records scanned | 0.5198 as shipped | 0.8169 as fitted |
+| --- | --- | --- |
+| 100 | 17.2% | 0.0% |
+| 1,000 | 84.8% | 0.2% |
+| 5,000 (`SCAN_LIMIT`) | **100.0%** | 1.0% |
+| 50,000 | 100.0% | 9.2% |
+| *pairwise FAR* | *1.88 × 10⁻³* | *1.94 × 10⁻⁶* |
+| *true-accept rate* | *0.9513* | *0.3853* |
+
+**At the shipped threshold and a full scan, every genuine applicant false-links
+to a stranger.** Not most — the rounded figure is 100%.
+
+Two changes, and the second matters more than the first:
+
+1. **The threshold is fitted for the search**, from a stated budget: at most 1%
+   of honest applicants may pick up a false link over `SCAN_LIMIT` records.
+   `--budget` exposes the choice rather than burying it.
+2. **A face link can no longer reject anyone by itself.** `pipeline.py` took
+   `max(fusion, linkage)`, so one false match overruled all five detectors. A
+   similarity search has a false-accept rate that compounds with database size;
+   a claim with that error profile belongs in a human's queue, not in an
+   automatic rejection. It is now capped one abstention band below the
+   merchant's own reject threshold.
+
+   A byte-identical asset is exempt and can still reject alone, because it is not
+   a similarity: two files share a SHA-256 or they do not.
+
+**The cost is real and is not hidden.** Holding that budget drops linkage's
+true-accept rate from 95.1% to **38.53%** — it now misses roughly three fifths of
+genuine repeat applicants. That is the honest price of doing identification with
+a face embedder at this scale, and the 9.2% at 50,000 records says the approach
+does not stretch much further. A production system needs a stronger embedder or
+a blocking key, not a better threshold on this one. What it must not do is keep
+a 100% false-link rate because the number that was measured looked reassuring.
+
+### 3. The selfie detector is reading demography
+
+This is the worst thing in this README, and the corpus was structurally
+incapable of reporting it.
+
+`build_dataset.py` draws its *synthetic* faces from SD-Turbo with prompts that
+name the demographic — "a passport photograph of an indian man", "headshot
+portrait of a south asian woman" — and its *genuine* faces from FFHQ, which is
+Flickr photographs and is predominantly not South Asian. Every fake face is
+Indian by construction; most real ones are not. A detector that learned any part
+of "South Asian features" as evidence of synthesis would score beautifully on
+this corpus and reject Indian merchants in production, and **no number in
+`eval/metrics.json` could tell the two apart**, because every genuine face it
+scores comes from FFHQ.
+
+So the check has to come from outside: real photographs of Indian people, scored
+beside real FFHQ photographs. Both groups are genuine. Neither is fraudulent.
+A detector that separates them is not detecting anything.
+
+Reproduce with `make indian-faces` → `eval/indian_faces.json`.
+
+Two populations photographed differently are not a demographic comparison, and
+these two are: the Indian shards are 2268×4032 phone portraits, FFHQ is 512×512
+aligned crops. Feed both to a frequency-domain head and it can separate them on
+resampling history alone. So both groups are face-detected, cropped at the same
+margin and resized to the same pixel size *before* an identical capture
+simulation and JPEG encode. The naive whole-frame protocol is reported too,
+because the gap between them is evidence.
+
+| Shortcut AUC — real Indian vs real FFHQ | Whole frame | **Controlled** |
+| --- | --- | --- |
+| Shipped selfie score | 0.704 | **0.793** |
+| — the pretrained CNN alone | 0.621 | **0.501** |
+| — the frequency head, fitted here | 0.642 | **0.916** |
+
+*0.5 is the only defensible value in this table.*
+
+Controlling the confound did not shrink the effect, it **sharpened** it, which is
+the answer to the obvious objection. And it splits the detector cleanly in two:
+
+- **The pretrained CNN is at 0.501 — exactly chance.** The checkpoint this
+  README opens by calling a bad baseline is the one component here with no
+  demographic signal at all. It was trained on somebody else's data.
+- **The frequency-domain head is at 0.916.** That is the component this project
+  fitted itself, on this corpus, and reports as its best detector at 0.969 train
+  AUC. It is separating real Indian faces from real FFHQ faces almost perfectly.
+  It learned the prompt list.
+
+What that costs an honest applicant, at the thresholds the system ships:
+
+| Real faces scored above | Indian | FFHQ |
+| --- | --- | --- |
+| 0.40 | **79.5%** | 45.5% |
+| 0.50 | **65.4%** | 15.3% |
+| 0.75 | **12.8%** | 1.2% |
+
+Two thirds of genuine Indian applicants are scored more synthetic than real by a
+detector built for a payments platform onboarding in India, against one sixth of
+genuine FFHQ ones. At 0.75 the disparity is more than tenfold.
+
+One more thing fell out of it: MTCNN found a face in **84.3%** of the Indian
+full-frame photographs against **100%** of FFHQ. That is a second, independent
+disparity sitting in front of every downstream detector — a face the detector
+cannot find is a packet that gets scored on a whole frame — and it is invisible
+to a corpus whose genuine faces are pre-cropped by construction. Cropping first
+lifts it to 97.4%, which is why the controlled protocol reports it separately.
+
+**Nothing has been tuned in response.** The corpus needs rebuilding with
+demography decoupled from the label — Indian real faces and non-Indian synthetic
+ones, both — and the spectral head refitting on it. Adjusting a threshold until
+this table looks better would move the disparity somewhere a metric cannot see,
+which is the failure this section exists to report. The bias audit
+[above](#bias-audit) buckets by ITA° on 105 packets and calls itself a harness
+rather than a conclusion; this is the measurement it could not make.
+
+### 4. Liveness on recorded video — built, not yet run
 
 `scripts/real_video.py` reads FaceForensics++, Celeb-DF v2 or the DFDC preview,
 whichever is extracted, uses each dataset's official test split where one is
@@ -772,10 +1055,13 @@ Three deliberate choices keep the numbers honest:
   for it.
 - **These numbers do not include cross-submission linkage.** The evaluation
   harness scores detectors and fusion offline, one packet at a time, with no
-  audit log to link against. The live `POST /verify` path adds linkage on top
-  and takes `max(fusion, linkage)`, so a linkage hit can move a verdict that
-  nothing in this report accounts for. Linkage is measured in the Gauntlet
-  instead, which runs the full API path — see below.
+  audit log to link against. The live `POST /verify` path adds linkage on top,
+  so a linkage hit can move a verdict that nothing in this report accounts for.
+  It takes `max(fusion, linkage)`, with the linkage term capped below the reject
+  threshold unless it rests on a byte-identical file — a cap that exists because
+  the uncapped version rejected a genuine applicant on four false matches
+  ([§2b](#2b-the-linkage-threshold-was-answering-the-wrong-question)). Linkage is
+  measured in the Gauntlet instead, which runs the full API path — see below.
 
 ### The Gauntlet, and a false positive the fixtures were manufacturing
 
@@ -785,16 +1071,34 @@ end to end. From a clean database (`make clean && make gauntlet`):
 
 | | Result |
 | --- | --- |
-| Fraud caught (REJECT or REVIEW) | **10 / 10** |
-| Genuine auto-rejected | **0 / 10** |
-| Genuine passed outright | 5 / 10 |
-| Genuine sent to human review | 5 / 10 |
-| Mean latency per packet | ~3 s (2.9–3.2 s across runs, CUDA) |
+| Fraud caught (REJECT or REVIEW) | **9 / 10** |
+| Genuine auto-rejected | **1 / 10** |
+| Genuine passed outright | 1 / 10 |
+| Genuine sent to human review | 8 / 10 |
+| Mean latency per packet | ~5.3 s (CUDA, 20 packets sequential) |
 
 The scoreboard reports the last two separately rather than as one
 "false rejects" figure, because a merchant an analyst clears in a minute and a
 merchant turned away are not the same failure, and the aggregate reads as the
 second when it is entirely the first.
+
+**These are worse than the numbers this section used to report (10/10 and 5
+passing), and the reason is the recalibration, not a regression in the demo.**
+Fixing the isotonic calibrator
+([§](#the-calibrator-was-costing-002-auc)) moved the whole score distribution:
+mean genuine went from 0.394 to 0.419 while mean fraud fell to 0.606, so the
+same fixed `0.40` and `0.75` cut points now sit differently on it. Eight of ten
+genuine fixtures land in the review band. The thresholds are stale and are
+[documented as stale](#headline); they are not being re-tuned against twenty
+demo packets.
+
+The one auto-rejected genuine fixture (`REAL-07`, 0.826) is worth naming,
+because it is not linkage — its cross-submission lookup returns zero face
+matches. It is `selfie_deepfake` scoring a real photograph at 0.745, with the
+frequency head at 0.778. That is the same detector, and the same failure mode,
+that [§3](#3-the-selfie-detector-is-reading-demography) measures at 0.916 AUC
+against real Indian faces. The Gauntlet is showing one instance of it; §3 is the
+measurement of how often it happens.
 
 Until recently the fixture set manufactured some of those reviews itself.
 Genuine and fraudulent halves were drawn independently from the split, so the
@@ -814,11 +1118,18 @@ the same twenty packets with two flags removed and nothing else about it is
 attributable to the fix. What is attributable, and is checked directly: no
 genuine fixture carries a linkage reason or an `onboarding_ring` pattern.
 
+That check passed on twenty fixtures and still missed
+[§2b](#2b-the-linkage-threshold-was-answering-the-wrong-question), because
+twenty records is small enough that a 17%-per-100 false-link rate leaves most
+runs clean. The Gauntlet is a smoke test for the API path, not a measurement of
+linkage — a search whose error rate grows with database size cannot be graded on
+a database of twenty.
+
 `seed_gauntlet.py` now picks the fraudulent half first, then draws the genuine
 half only from identities that half did not use, and says so loudly if the
 corpus is too small to keep them disjoint.
 
-The five reviews that remain are fusion's own output, not linkage, and they are
+The reviews that remain are fusion's own output, not linkage, and they are
 not being tuned away. They are driven mainly by `metadata_exif` — the corpus
 strips EXIF from genuine packets as often as from fake ones, deliberately, so
 that no detector can learn "no EXIF means fake". A genuine packet with no camera
@@ -928,7 +1239,7 @@ Copy `.env.example` to `.env`. Every value has a working default.
 ## Testing
 
 ```bash
-make test                                  # 75 tests, ~2 s
+make test                                  # 124 tests, ~2 s
 .venv/bin/python -m pytest backend/tests -q -k verhoeff   # one group
 cd frontend && npx tsc --noEmit && npm run build          # dashboard gates
 ```
@@ -937,8 +1248,10 @@ The suite covers the deterministic parts — Verhoeff check digits, PAN structur
 validation, OCR confusion repair, ELA tamper scoring, spectral features, fusion
 arithmetic, policy decisions, the detector base contract, and the real-data
 ingest: LFW's fold protocol, MIDV-2020 quad ordering, threshold arithmetic,
-tamper placement and localisation scoring, and the Gauntlet's fixture
-selection and scoreboard arithmetic. It deliberately
+tamper placement and localisation scoring, the Gauntlet's fixture selection and
+scoreboard arithmetic, the corpus leak guards, the linkage cap and the search-vs-pair
+threshold contract, and the README's own headline numbers against the evidence
+files they cite. It deliberately
 does *not* assert on model outputs: those belong in `eval/metrics.json`, where a
 regression shows up as a number rather than a red test. CI
 (`.github/workflows/ci.yml`) runs the same suite on CPU torch plus the dashboard
@@ -984,13 +1297,17 @@ backend/
     schemas.py        pydantic request/response contracts
     main.py           FastAPI app, CORS, timing middleware, static mounts
   scripts/            dataset generation, benchmarking, calibration, training, evaluation
+    ablate_fusion.py      what each detector is worth; audits the corpus for label leaks
+    indian_faces.py       fetch real photographs of Indian people (third-party shards)
+    evaluate_indian_faces.py  does the selfie detector read demography? Indian vs FFHQ
     midv2020.py           read MIDV-2020: rectify a card out of a photo, carry its annotations
     build_real_docs.py    derive a tamper set from real captured documents
     evaluate_real_docs.py score ID forensics on it, including tamper localisation
     calibrate_face_match_lfw.py  fit the identity threshold on LFW's 6,000 real pairs
+    calibrate_linkage_lfw.py  fit the linkage threshold as a search, over every LFW pair
     real_video.py         read FaceForensics++ / Celeb-DF / DFDC, whichever is present
     evaluate_real_video.py score liveness on recorded deepfakes
-  tests/              75 tests over the deterministic surface
+  tests/              124 tests over the deterministic surface
   requirements.txt          resolvable pins
   requirements-nodeps.txt   facenet-pytorch, installed second with --no-deps
 frontend/
@@ -998,7 +1315,8 @@ frontend/
   components/         DropZone, DetectorPanel, Nav, shared UI primitives
   lib/api.ts          typed API client
 eval/                 metrics.json, model_benchmark.json, calibration.json,
-                      fusion_training.json, face_match_lfw.json, real_docs.json
+                      fusion_training.json, face_match_lfw.json, real_docs.json,
+                      ablation.json, ablation_leaked_corpus.json
                       — committed; these are the evidence
 datasets/             generated corpus (git-ignored, rebuild with `make dataset`);
                       lfw/, midv2020/, real_docs/ also git-ignored — research

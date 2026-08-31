@@ -36,6 +36,10 @@ datasets/midv2020/
 datasets/celebdf/
 datasets/faceforensics/
 datasets/dfdc/
+# Real photographs of Indian people, fetched on demand by `make indian-faces`.
+# Third-party dataset shards plus the FFHQ faces they are scored against:
+# fetched from source, never vendored.
+datasets/indian_faces/
 
 # Derived from MIDV-2020, so it inherits that dataset's terms and is rebuilt
 # with `make real-docs` rather than committed.
