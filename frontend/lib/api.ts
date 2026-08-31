@@ -77,6 +77,15 @@ export interface FaceMatchResult {
   latency_ms: number;
 }
 
+export interface BehavioralAck {
+  token: string;
+  event_count: number;
+  features_extracted: number;
+  preview_score: number;
+  preview_confidence: number;
+  preview_reasons: string[];
+}
+
 export interface GauntletResult {
   submission_id: string;
   name: string;
@@ -142,6 +151,15 @@ export const api = {
   /** Re-run the pipeline over an already-stored packet, and return a full verdict. */
   rescore: (id: string) =>
     request<VerifyResponse>(`/submissions/${id}/rescore`, { method: "POST" }),
+
+  /** Post the form-fill telemetry buffer. Returns the detector's preview of what
+   *  it read, which is also what `/verify` will see once it binds the token. */
+  behavioral: (buffer: unknown) =>
+    request<BehavioralAck>("/behavioral", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buffer),
+    }),
 
   gauntletManifest: () => request<any>("/gauntlet"),
 

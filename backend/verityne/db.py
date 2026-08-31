@@ -129,6 +129,35 @@ class AssetHash(Base):
     submission = relationship("Submission", back_populates="hashes")
 
 
+class BehavioralSession(Base):
+    """How the form was filled, as opposed to what was uploaded.
+
+    One row per form-fill session, not per event: the browser posts its raw
+    buffer once, `detectors.behavioral.extract_features` reduces it, and only the
+    reduction is stored. Keeping thousands of raw keystroke timings per applicant
+    would be a biometric database with no retention story, and nothing downstream
+    reads them - the features are sufficient for both scoring and audit.
+
+    Keyed by an opaque token the page mints on load, because telemetry is posted
+    while the applicant is still choosing files. `/verify` binds the token to the
+    submission afterwards.
+    """
+
+    __tablename__ = "behavioral_sessions"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    submission_id: Mapped[Optional[str]] = mapped_column(
+        ForeignKey("submissions.id", ondelete="CASCADE"), index=True, nullable=True
+    )
+    merchant_id: Mapped[str] = mapped_column(String(64), index=True, default="default")
+
+    features: Mapped[dict] = mapped_column(JSON, default=dict)
+    event_count: Mapped[int] = mapped_column(Integer, default=0)
+    user_agent: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_utcnow, index=True)
+
+
 class AuditEvent(Base):
     __tablename__ = "audit_events"
 

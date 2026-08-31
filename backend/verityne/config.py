@@ -49,6 +49,23 @@ DETECTOR_NAMES = [
     "id_forensics",
     "face_match",
     "metadata_exif",
+    "behavioral",
+]
+
+#: The detectors the *learned* fusion model was fitted on. This is deliberately
+#: not the same list as DETECTOR_NAMES. Behavioral telemetry has no labelled
+#: corpus here - the only way to put it in the training matrix would be to
+#: synthesise both the human and the bot side of it, which teaches the model our
+#: own assumptions and nothing else. This repository has already paid for that
+#: mistake twice (see eval/ablation.json), so behavioral is combined downstream
+#: as its own evidence channel instead, with a ceiling. When real telemetry
+#: exists, move the name into this list and retrain.
+FUSION_TRAINED_NAMES = [
+    "selfie_deepfake",
+    "liveness_video",
+    "id_forensics",
+    "face_match",
+    "metadata_exif",
 ]
 
 # Human-facing labels used by the dashboard and the NL explainer.
@@ -58,6 +75,7 @@ DETECTOR_LABELS = {
     "id_forensics": "ID Document Forensics",
     "face_match": "Face Match (Selfie vs ID)",
     "metadata_exif": "Metadata / EXIF Auditor",
+    "behavioral": "Behavioral Biometrics",
 }
 
 
@@ -69,6 +87,12 @@ class MerchantPolicy(BaseModel):
     min_risk_for_review: float = 0.40
     require_liveness: bool = True
     require_id_document: bool = True
+    #: Off by default: the API accepts packets from server-to-server integrations
+    #: that never rendered a form, and those must not all land in review. A
+    #: merchant whose onboarding *is* the hosted form turns this on, and any
+    #: submission arriving without telemetry is then routed to a human rather
+    #: than scored as though the absence were innocent.
+    require_behavioral: bool = False
     abstain_band: float = Field(
         0.05, description="Half-width around a threshold where we route to human review instead of deciding."
     )

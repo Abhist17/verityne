@@ -18,6 +18,8 @@ from .schemas import DetectorOutput
 ATTACK_PATTERNS: List[Tuple[str, str]] = [
     ("reused_kyc_kit", "Reused KYC kit"),
     ("onboarding_ring", "Onboarding ring (one face, many identities)"),
+    ("automated_submission", "Automated submission (bot-filled form)"),
+    ("assisted_submission", "Form filled by someone other than the applicant"),
     ("reused_id_selfie", "Selfie copied from ID photo"),
     ("impersonation", "Impersonation (selfie ≠ ID holder)"),
     ("synthetic_identity", "Fully synthetic identity"),
@@ -58,6 +60,22 @@ def classify_attack(breakdown: Dict[str, DetectorOutput], linkage: Optional[Dict
         return "reused_kyc_kit"
     if any(m.get("name_differs") for m in linkage.get("face_links", [])):
         return "onboarding_ring"
+
+    # Behavioral evidence is checked early because it names something the
+    # artifact detectors cannot: not what was uploaded, but who - or what - was
+    # at the keyboard. A categorical hit outranks any image finding, since a
+    # browser that declares itself automated has settled the question of whether
+    # a human filled this form regardless of how clean the selfie looks.
+    behav_hits = {h["rule"] for h in (_sig(breakdown, "behavioral", "rule_hits", []) or [])}
+    if behav_hits & {"environment:automation", "keystroke:below_human_floor",
+                     "keystroke:uniform_dwell", "keystroke:uniform_flight",
+                     "pointer:uniform_sampling", "timing:hardcoded_sleep"}:
+        return "automated_submission"
+    # A human typed it, but the evidence says they were working from a script of
+    # their own: the identity number pasted from a file, no hesitation anywhere.
+    # That is an agent onboarding merchants in bulk, not necessarily a bot.
+    if "form:pasted_identity" in behav_hits and _score(breakdown, "behavioral") >= 0.5:
+        return "assisted_submission"
 
     direction = _sig(breakdown, "face_match", "direction")
     meta_hits = [h["rule"] for h in (_sig(breakdown, "metadata_exif", "rule_hits", []) or [])]
@@ -173,6 +191,20 @@ def narrate(
         extra += f" The pattern matches a known attack class: {pattern_label}."
     if generator:
         extra += f" Spectral fingerprinting attributes the synthetic imagery to {generator}."
+    behav = breakdown.get("behavioral")
+    if behav is not None and behav.status == "ok" and behav.score >= 0.5:
+        seen = (behav.signals.get("evidence") or {}).get("events_seen")
+        extra += (
+            " Behavioral biometrics scored this fill "
+            f"{behav.score:.0%} anomalous"
+            + (f" over {seen} captured interaction events" if seen else "")
+            + " — that signal is about the person at the keyboard, not the files they uploaded."
+        )
+    elif behav is not None and behav.status == "skipped":
+        extra += (
+            " No form-fill telemetry accompanied this packet, so behavioral biometrics did not run;"
+            " the verdict rests on the uploaded artifacts alone."
+        )
     if linkage:
         links = linkage.get("asset_links", []) or []
         n_face = len(linkage.get("face_links", []) or [])

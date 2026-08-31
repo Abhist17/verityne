@@ -42,18 +42,13 @@ _EXECUTOR = ThreadPoolExecutor(max_workers=6, thread_name_prefix="detector")
 def linkage_review_ceiling(policy: MerchantPolicy) -> float:
     """The highest risk a probabilistic linkage hit may contribute on its own.
 
-    Derived from the merchant's own policy rather than hard-coded, so a merchant
-    who moves their reject threshold moves this with it. It sits one abstention
-    band below `min_risk_for_reject`: high enough to force a REVIEW under any
-    sane review threshold, low enough that `decide` cannot read it as a REJECT.
-
-    Subtracting the band matters — `decide` already turns a score within one band
-    *below* the reject line into an abstaining REVIEW, so landing exactly on
-    `min_risk_for_reject - epsilon` would work today but only by way of the
-    abstention rule. Clearing the band says the intent in the number itself.
+    Now one instance of a general rule — see `fusion.uncorroborated_ceiling`,
+    which the behavioral channel shares. Kept as a name because the linkage
+    reasoning that produced it is specific and worth being able to point at: a
+    face match is a similarity search over every prior record, and its
+    false-accept rate compounds with database size.
     """
-    band = max(0.0, policy.abstain_band)
-    return max(policy.min_risk_for_review, policy.min_risk_for_reject - band - 1e-6)
+    return fusion.uncorroborated_ceiling(policy)
 
 
 def storage_dir(submission_id: str) -> Path:
@@ -164,11 +159,22 @@ async def run_pipeline(
     # capped below the reject threshold and lands in a human's queue instead.
     if link_score > 0 and not link_exact:
         link_score = min(link_score, linkage_review_ceiling(policy))
-    final_score = max(base_score, link_score) if link_score > 0 else base_score
+
+    # Detector 6 is combined the same way, and for a related reason: the trained
+    # fusion model was never fitted on behavioral features, so feeding it one
+    # would be asking it about a column it has never seen. It escalates instead,
+    # ceilinged unless its evidence is categorical rather than statistical.
+    behav_score, behav_reasons = fusion.behavioral_channel(breakdown, policy)
+
+    final_score = max(base_score, link_score, behav_score)
     verdict_label, abstained = fusion.decide(final_score, policy, breakdown)
 
     attack_pattern = classify_attack(breakdown, link_info)
-    top_reasons = rank_reasons(breakdown, extra=[(link_score * 1.2, r) for r in link_reasons])
+    top_reasons = rank_reasons(
+        breakdown,
+        extra=[(link_score * 1.2, r) for r in link_reasons]
+        + [(behav_score * 1.3, r) for r in behav_reasons],
+    )
     explanation = narrate(
         verdict_label, final_score, breakdown, attack_pattern,
         generator=generator_guess, linkage=link_info, abstained=abstained,
@@ -238,6 +244,12 @@ async def run_pipeline(
         "linkage_score": round(link_score, 4),
     }
     response.policy["generator_probabilities"] = gen_probs
+    response.policy["behavioral"] = {
+        "channel_score": round(behav_score, 4),
+        "ceiling": round(fusion.uncorroborated_ceiling(policy), 4),
+        "telemetry_present": breakdown.get("behavioral") is not None
+        and breakdown["behavioral"].status == "ok",
+    }
 
     if fire_webhook and verdict_label == "REJECT" and final_score >= policy.webhook_min_score:
         asyncio.create_task(_notify(response))

@@ -40,6 +40,40 @@ class VerifyResponse(BaseModel):
     created_at: Optional[dt.datetime] = None
 
 
+class BehavioralEnvelope(BaseModel):
+    """The raw telemetry buffer a KYC form posts when the applicant submits.
+
+    Every field is optional on purpose. This arrives from a browser we do not
+    control, over an endpoint an attacker can call directly, so the contract has
+    to be 'send what you have' and the extractor has to be total. A buffer that
+    is empty, truncated or deliberately malformed produces a feature row with
+    zeros, not a 422 - and a feature row with no events makes Detector 6 *skip*,
+    which is a different and more honest outcome than scoring it clean.
+    """
+
+    token: str = Field(..., min_length=8, max_length=64, description="Opaque id the form minted on load")
+    merchant_id: str = "default"
+    form_loaded_at: Optional[float] = Field(None, description="performance.now() at form load, ms")
+    submitted_at: Optional[float] = Field(None, description="performance.now() at submit, ms")
+    declared_country: Optional[str] = None
+    keys: List[Dict[str, Any]] = Field(default_factory=list, description="{key, down, up, field} per keystroke")
+    mouse: List[Dict[str, Any]] = Field(default_factory=list, description="{t, x, y} pointer samples")
+    focus: List[Dict[str, Any]] = Field(default_factory=list, description="{field, index, in, out} per focus")
+    paste: List[Dict[str, Any]] = Field(default_factory=list, description="{field, t, length} per paste")
+    env: Dict[str, Any] = Field(default_factory=dict, description="timezone, languages, screen, webdriver flag")
+
+
+class BehavioralAck(BaseModel):
+    token: str
+    event_count: int
+    features_extracted: int
+    #: Returned so the collector can be developed and demoed without a full
+    #: /verify round trip. It is the same score the detector will produce.
+    preview_score: float
+    preview_confidence: float
+    preview_reasons: List[str] = []
+
+
 class BatchVerifyRequest(BaseModel):
     submission_ids: List[str] = Field(default_factory=list, description="Existing submission ids to re-score")
     merchant_id: Optional[str] = None

@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import List
 
 from .base import Detector, SubmissionPayload
+from .behavioral import BehavioralDetector
 from .face_match import FaceMatchDetector
 from .id_forensics import IDForensicsDetector
 from .liveness_video import LivenessVideoDetector
@@ -19,6 +20,7 @@ STAGE_ONE: List[Detector] = [
     IDForensicsDetector(),
     LivenessVideoDetector(),
     MetadataExifDetector(),
+    BehavioralDetector(),
 ]
 STAGE_TWO: List[Detector] = [FaceMatchDetector()]
 

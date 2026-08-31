@@ -7,9 +7,12 @@
 [![Python 3.12](https://img.shields.io/badge/python-3.12-3776ab.svg)](https://www.python.org/)
 [![Next.js 14](https://img.shields.io/badge/next.js-14-000000.svg)](https://nextjs.org/)
 
-Five independent detectors, a calibrated fusion layer, and a human-readable
+Six independent detectors, a calibrated fusion layer, and a human-readable
 explanation behind every verdict — built on the assumption that the attacker has
 Stable Diffusion and DeepFaceLab on their laptop.
+
+Five of them inspect what the applicant uploaded. The sixth inspects how they
+filled the form, which is the one input a fraud kit cannot buy.
 
 ```
 POST /verify  →  { verdict, risk score, top 3 reasons, heatmaps, per-detector breakdown }
@@ -31,7 +34,7 @@ that were printed, photographed and scanned** — see
 - [The honest version of what this is](#the-honest-version-of-what-this-is)
 - [Quick start](#quick-start)
 - [Architecture](#architecture)
-- [The five detectors](#the-five-detectors)
+- [The six detectors](#the-six-detectors)
 - [Fusion and policy](#fusion-and-policy)
 - [Results](#results)
 - [Measured on real data](#measured-on-real-data)
@@ -213,6 +216,10 @@ adds about 45 minutes, nearly all of it OCR on 500 documents.
                        │  │ liveness   │ ┌─────────────────┐  │
                        │  │ video      │ │ metadata / EXIF │  │
                        │  └────────────┘ └─────────────────┘  │
+                       │  ┌──────────────────────────────────┐│
+                       │  │ behavioral biometrics            ││
+                       │  │ (keystroke · pointer · locale)   ││
+                       │  └──────────────────────────────────┘│
                        │        shared cache: decoded images, │
                        │        face crops, embeddings        │
                        └──────────────────┬───────────────────┘
@@ -225,10 +232,15 @@ adds about 45 minutes, nearly all of it OCR on 500 documents.
               cross-cutting ──────────────┤
               • linkage (same face / same file, prior submissions)
               • generator fingerprint (which model made this fake)
+
+  form telemetry ─────▶ POST /behavioral ─▶ features ─▶ detector 6
+  (posted before the files, bound by token at /verify)
                                           │
                        ┌──────────────────▼───────────────────┐
                        │  fusion: logistic regression over    │
                        │  10 features → Platt calibration     │
+                       │  then max() with the un-modelled     │
+                       │  evidence channels, each ceilinged   │
                        └──────────────────┬───────────────────┘
                                           │
                        ┌──────────────────▼───────────────────┐
@@ -245,7 +257,7 @@ over CPU-bound work would have bought nothing.
 
 ---
 
-## The five detectors
+## The six detectors
 
 | # | Detector | What it actually looks at |
 | --- | --- | --- |
@@ -254,17 +266,73 @@ over CPU-bound work would have bought nothing.
 | 3 | **ID forensics** | OCR with positional confusion repair, then *structural* validation — a PAN's 4th character is a holder-type code and its 5th is the surname initial; Aadhaar carries a Verhoeff check digit. Plus edge-normalised Error Level Analysis, and the printed portrait run through the deepfake classifier. **The ELA component is measured at chance on real captured documents** — see [Measured on real data](#measured-on-real-data); the structural checks are deterministic and unaffected. |
 | 4 | **Face match** | 512-d FaceNet embeddings, selfie vs the portrait on the card. Flagged in both directions: too low is impersonation, too high means the "selfie" is a copy of the ID photo. The lower bound is **fitted on LFW's 6,000 real pairs** (`eval/face_match_lfw.json`, 98.2% accuracy); the upper bound still comes from the corpus, because LFW contains no documents. |
 | 5 | **Metadata / EXIF** | Deterministic provenance: generator tags, editor software, capture-to-submission age, device/resolution consistency, screen re-capture, and an upscale check that asks whether the file carries the detail its resolution claims. |
+| 6 | **Behavioral biometrics** | Not an artifact at all — *how the form was filled*. Keystroke dwell and flight timing and their variance, pointer path straightness, tremor and sampling regularity, paste events into identity fields, field-revisit order, time on form, and device/locale coherence. **No held-out number is claimed for it** — see [Detector 6 has no evaluation number, and why](#detector-6-has-no-evaluation-number-and-why). |
 
-Beyond the five, two cross-cutting signals: **cross-submission linkage** (one
+Beyond the six, two cross-cutting signals: **cross-submission linkage** (one
 face onboarding under several names is a ring, and the embeddings are already
 computed) and **generator fingerprinting** (which model made this fake — free
 labels, because we generated the fakes ourselves; 89.2% train accuracy over
 `stable_diffusion` / `faceswap` / `real`).
 
+### Detector 6 has no evaluation number, and why
+
+Every other number in this README is reproducible from a file in `eval/`. This
+detector has none, and printing one would be worse than printing nothing.
+
+To measure it we would need labelled form-fill telemetry: real Indian merchants
+completing a real KYC form, and real fraud kits completing the same one. We have
+neither. The only way to manufacture a corpus would be to write a generator for
+the human side *and* a generator for the bot side — and then any AUC we reported
+would be measuring whether our bot generator differs from our human generator,
+which we already know, because we wrote both. This repository has published that
+exact mistake twice ([§](#what-the-headline-auc-is-actually-made-of)); doing it a
+third time deliberately, on the detector the pitch leans hardest on, is not a
+trade we are willing to make.
+
+So three things are true about Detector 6 as shipped, and all three are stated
+rather than buried:
+
+1. **Its thresholds are priors, not fits.** Every constant lives in one named
+   block at the top of `detectors/behavioral.py` — the ~15 ms floor a finger can
+   physically achieve, the dwell-variance level below which a timer is more
+   likely than a hand, the round-number sleeps a kit pads with. They are set in
+   the direction that costs a false accept rather than a false reject, and
+   re-fitting them on real telemetry is a diff to that block alone.
+2. **It is not in the trained fusion model.** `config.FUSION_TRAINED_NAMES` is
+   deliberately shorter than `DETECTOR_NAMES`. Feeding a logistic regression a
+   feature we could only have synthesised would corrupt the one number in this
+   README that *is* honest. Detector 6 is combined afterwards as an evidence
+   channel — `max()`, with a ceiling — the same way linkage is.
+3. **Statistical evidence from it cannot reject anyone.** Low dwell variance, a
+   straight pointer path and a fast fill all describe some real person having an
+   unusual day: a practised operator on their fourth signup of the morning types
+   fast, does not correct, and moves in straight lines. Those hits are capped one
+   abstention band below the merchant's reject threshold, so they route to a
+   human. Only *categorical* evidence — a flight time below the physical floor,
+   or a browser that sets `navigator.webdriver` about itself — may carry a
+   rejection, because neither has an innocent explanation.
+
+What the test suite does hold it to is separation on the two cases we can
+construct honestly, and the asymmetry between them: `test_behavioral.py` asserts
+that no rule fires on any simulated genuine fill, that every simulated kit
+outscores every simulated human, and that the false-positive path lands in review
+rather than rejection. That is a statement about the wiring, not about field
+accuracy, and it is not an AUC.
+
+**The argument for building it anyway** is that it is the only detector here
+whose adversary is not on a release cycle. Detectors 1–5 degrade every time a
+better generator ships. Defeating Detector 6 needs a rig that reproduces human
+motor timing under a form that changes its own field order — not a download. It
+is also the cheapest signal in the system: no model, no GPU, no allocation,
+sub-millisecond.
+
+---
+
 ## Fusion and policy
 
-A **logistic regression** over ten features (each detector's score *and* its
-confidence). XGBoost is fitted alongside for comparison and both are printed to
+A **logistic regression** over ten features (each of the five *artifact*
+detectors' score *and* its confidence — Detector 6 is combined separately, for
+the reason above). XGBoost is fitted alongside for comparison and both are printed to
 `eval/fusion_training.json`. On the training split XGBoost is marginally ahead —
 0.791 CV AUC against LR's 0.785 — and LR still ships, because the switch rule is
 a margin of 0.02 fixed in `train_fusion.py` before either number was known.
@@ -514,7 +582,7 @@ detectors matter**, which no aggregate could have shown:
   detail matches the resolution it claims — which never depended on the leak.
 
 Those two detectors are reported, not deleted. "We removed the detectors that
-did not work" and "we ship five detectors" cannot both be on the same slide, and
+did not work" and "we ship six detectors" cannot both be on the same slide, and
 a fusion layer that assigns a feature a near-zero coefficient is telling you
 something worth printing rather than something worth hiding.
 
@@ -1145,7 +1213,7 @@ Next.js 14 App Router, five pages:
 
 | Page | What it does |
 | --- | --- |
-| **Live Verify** (`/`) | Drag in a selfie, ID and liveness clip; get the verdict, the three reasons, the heatmaps and the per-detector breakdown. |
+| **Live Verify** (`/`) | Drag in a selfie, ID and liveness clip; get the verdict, the three reasons, the heatmaps and the per-detector breakdown. Also collects the form-fill telemetry Detector 6 reads, and says on screen that it is doing so. |
 | **Gauntlet** (`/gauntlet`) | Runs 10 genuine + 10 fraudulent fixtures over server-sent events, scoring live. |
 | **Metrics** (`/metrics`) | The held-out report rendered — ROC, per-attack recall, bias audit, and the cost-of-friction curve with operator-tunable ₹ sliders. |
 | **Attack Gallery** (`/attacks`) | Rejected submissions grouped by attack pattern, with the evidence that flagged each. |
@@ -1157,7 +1225,9 @@ Next.js 14 App Router, five pages:
 
 | Endpoint | Purpose |
 | --- | --- |
-| `POST /verify` | Score one KYC packet (multipart: `selfie`, `liveness_video`, `id_document`). |
+| `POST /verify` | Score one KYC packet (multipart: `selfie`, `liveness_video`, `id_document`, optional `behavioral_token`). |
+| `POST /behavioral` | Accept a form-fill telemetry buffer against a token the page minted on load, reduce it to features, and store only those. Posted before the files, because uploads fail and the buffer should not die with them. |
+| `GET /behavioral/{token}` | Read back one stored telemetry session with its score and the rules that fired. |
 | `POST /batch-verify` | Retroactive sweep — re-score history with the current model to find fakes that were let through. |
 | `GET /submissions` · `GET /submissions/{id}` | Browse the audit log; full record for one submission. |
 | `POST /submissions/{id}/rescore` | Re-run one stored packet against the current model. |
@@ -1239,7 +1309,7 @@ Copy `.env.example` to `.env`. Every value has a working default.
 ## Testing
 
 ```bash
-make test                                  # 124 tests, ~2 s
+make test                                  # 182 tests, ~2 s
 .venv/bin/python -m pytest backend/tests -q -k verhoeff   # one group
 cd frontend && npx tsc --noEmit && npm run build          # dashboard gates
 ```
@@ -1283,9 +1353,10 @@ typecheck and production build.
 ```
 backend/
   verityne/
-    detectors/        the five detectors + model loading, generator fingerprinting
+    detectors/        the six detectors + model loading, generator fingerprinting
+      behavioral.py     detector 6: keystroke, pointer and locale features + rules
     utils/            ELA, spectral, OCR, Verhoeff, Grad-CAM, hashing, provenance
-    api/              route modules: verify, gauntlet, metrics, ops
+    api/              route modules: verify, behavioral, gauntlet, metrics, ops
     pipeline.py       orchestration (ThreadPool — torch and OpenCV release the GIL,
                       asyncio.gather over CPU-bound work would buy nothing)
     fusion.py         logistic regression + calibration + policy decisions
@@ -1293,7 +1364,7 @@ backend/
     linkage.py        cross-submission face and asset lookup
     config.py         paths, env, per-merchant policy loading
     policy.yaml       merchant thresholds, hot-reloadable
-    db.py             SQLAlchemy models: submissions, detector results, audit log
+    db.py             SQLAlchemy models: submissions, detector results, telemetry, audit log
     schemas.py        pydantic request/response contracts
     main.py           FastAPI app, CORS, timing middleware, static mounts
   scripts/            dataset generation, benchmarking, calibration, training, evaluation
@@ -1307,13 +1378,18 @@ backend/
     calibrate_linkage_lfw.py  fit the linkage threshold as a search, over every LFW pair
     real_video.py         read FaceForensics++ / Celeb-DF / DFDC, whichever is present
     evaluate_real_video.py score liveness on recorded deepfakes
-  tests/              124 tests over the deterministic surface
+  tests/              182 tests over the deterministic surface
   requirements.txt          resolvable pins
   requirements-nodeps.txt   facenet-pytorch, installed second with --no-deps
 frontend/
   app/                Live Verify, Gauntlet, Metrics, Attack Gallery, Review Queue
   components/         DropZone, DetectorPanel, Nav, shared UI primitives
   lib/api.ts          typed API client
+  lib/telemetry.ts    detector 6's client half: keystroke, pointer and focus
+                      timing. Redacts key identity at source — printable keys
+                      are reported as one placeholder character, so the
+                      extractor can still count them without the applicant's
+                      PAN ever leaving the browser as a keystroke log.
 eval/                 metrics.json, model_benchmark.json, calibration.json,
                       fusion_training.json, face_match_lfw.json, real_docs.json,
                       ablation.json, ablation_leaked_corpus.json

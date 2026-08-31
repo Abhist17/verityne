@@ -2,15 +2,17 @@
 from __future__ import annotations
 
 import datetime as dt
+import json
+import logging
 import time
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from ..config import get_policy
-from ..db import Submission, Verdict, log_event
+from ..db import BehavioralSession, Submission, Verdict, log_event
 from ..pipeline import run_pipeline, storage_dir
 from ..schemas import BatchVerifyItem, BatchVerifyRequest, BatchVerifyResponse, VerifyResponse
 from .deps import db_session, require_api_key, save_upload
@@ -28,21 +30,41 @@ async def verify(
     claimed_name: Optional[str] = Form(None),
     claimed_id_number: Optional[str] = Form(None),
     claimed_dob: Optional[str] = Form(None),
+    behavioral_token: Optional[str] = Form(
+        None, description="Token from a prior POST /behavioral, to attach Detector 6's evidence"
+    ),
     session: Session = Depends(db_session),
     _: str = Depends(require_api_key),
 ) -> VerifyResponse:
     if selfie is None and id_document is None and liveness_video is None:
         raise HTTPException(400, "At least one of selfie, liveness_video or id_document is required")
 
+    extra = {"claimed_name": claimed_name, "claimed_id_number": claimed_id_number, "claimed_dob": claimed_dob}
+
+    # Detector 6's evidence was posted separately, before the files. Look it up
+    # now. A token that does not resolve is left absent rather than faked clean:
+    # the detector skips, and a merchant with `require_behavioral` set gets the
+    # review that absence deserves.
+    behavioral_row = None
+    if behavioral_token:
+        behavioral_row = (
+            session.query(BehavioralSession).filter(BehavioralSession.token == behavioral_token).one_or_none()
+        )
+        if behavioral_row is not None:
+            extra["behavioral"] = behavioral_row.features or {}
+            extra["behavioral_token"] = behavioral_token
+
     submission = Submission(
         merchant_id=merchant_id,
         external_ref=external_ref,
         status="PROCESSING",
         source="api",
-        extra={"claimed_name": claimed_name, "claimed_id_number": claimed_id_number, "claimed_dob": claimed_dob},
+        extra=extra,
     )
     session.add(submission)
     session.flush()  # assigns the id we key storage on
+    if behavioral_row is not None:
+        behavioral_row.submission_id = submission.id
 
     d = storage_dir(submission.id)
     submission.selfie_path = str(await save_upload(selfie, d, "selfie", "image") or "") or None

@@ -1,14 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import clsx from "clsx";
 import { motion } from "framer-motion";
 import { api, type VerifyResponse } from "@/lib/api";
 import { DropZone } from "@/components/DropZone";
 import { LiveFaceMatch } from "@/components/LiveFaceMatch";
 import { DetectorPanel, PipelineRunning } from "@/components/DetectorPanel";
 import { ErrorBox, PageHeader, ScoreDial, Spinner, VerdictBadge } from "@/components/ui";
+import { TelemetryCollector } from "@/lib/telemetry";
 
-const DETECTOR_ORDER = ["selfie_deepfake", "liveness_video", "id_forensics", "face_match", "metadata_exif"];
+const DETECTOR_ORDER = [
+  "selfie_deepfake",
+  "liveness_video",
+  "id_forensics",
+  "face_match",
+  "metadata_exif",
+  "behavioral",
+];
 
 const POLICIES = [
   { id: "default", label: "default" },
@@ -28,11 +37,27 @@ export default function LiveVerifyPage() {
   const [result, setResult] = useState<VerifyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [samples, setSamples] = useState<any[]>([]);
+  const [events, setEvents] = useState(0);
   const timer = useRef<any>(null);
+
+  // Detector 6 reads how this form was filled. The collector starts on mount so
+  // the buffer covers the whole session, and it is deliberately created once —
+  // remounting would mint a new token and throw away the fill it had recorded.
+  const telemetry = useRef<TelemetryCollector | null>(null);
+  if (telemetry.current === null && typeof window !== "undefined") {
+    telemetry.current = new TelemetryCollector();
+  }
 
   useEffect(() => {
     api.gauntletManifest().then((m) => setSamples(m.items ?? [])).catch(() => setSamples([]));
-    return () => timer.current && clearInterval(timer.current);
+    const t = telemetry.current;
+    t?.start();
+    const tick = setInterval(() => setEvents(t?.eventCount ?? 0), 700);
+    return () => {
+      clearInterval(tick);
+      t?.stop();
+      if (timer.current) clearInterval(timer.current);
+    };
   }, []);
 
   const startTimer = () => {
@@ -52,12 +77,29 @@ export default function LiveVerifyPage() {
     setRunning(true);
     startTimer();
     try {
+      // Telemetry goes up first, against a token minted at form load. The files
+      // can take seconds over a phone connection, and holding the buffer until
+      // that multipart body is assembled would lose it whenever an upload fails.
+      let token: string | null = null;
+      const t = telemetry.current;
+      if (t && t.eventCount > 0) {
+        try {
+          token = (await api.behavioral(t.snapshot(merchantId))).token;
+        } catch {
+          // Best-effort evidence: a failed telemetry post must not cost the
+          // applicant their verification. The detector skips instead, which is
+          // the same outcome as a server-to-server caller that never had a form.
+          token = null;
+        }
+      }
+
       const form = new FormData();
       if (selfie) form.append("selfie", selfie);
       if (video) form.append("liveness_video", video);
       if (idDoc) form.append("id_document", idDoc);
       form.append("merchant_id", merchantId);
       if (claimedName) form.append("claimed_name", claimedName);
+      if (token) form.append("behavioral_token", token);
       setResult(await api.verify(form));
     } catch (e: any) {
       setError(e.message ?? String(e));
@@ -101,7 +143,7 @@ export default function LiveVerifyPage() {
           </div>
         }
       >
-        Drop a KYC packet and watch all five detectors run. Every verdict comes back with the evidence behind
+        Drop a KYC packet and watch all six detectors run. Every verdict comes back with the evidence behind
         it — no score without a reason.
       </PageHeader>
 
@@ -138,16 +180,41 @@ export default function LiveVerifyPage() {
             />
           </div>
 
-          <input
-            value={claimedName}
-            onChange={(e) => setClaimedName(e.target.value)}
-            placeholder="Claimed name (optional — enables PAN surname check)"
-            className="input"
-          />
+          <div data-tele-field="claimed_name">
+            <input
+              value={claimedName}
+              onChange={(e) => setClaimedName(e.target.value)}
+              placeholder="Claimed name (optional — enables PAN surname check)"
+              className="input"
+            />
+          </div>
 
           <button onClick={run} disabled={running || !hasInput} className="btn-primary w-full py-2">
             {running ? <Spinner label="Verifying…" /> : "Run verification"}
           </button>
+
+          {/* Detector 6 is the only one whose input the applicant produces just
+              by being here, so it is the only one that has to say so. */}
+          <div className="flex items-start gap-2 px-0.5 text-2xs leading-relaxed text-slate-600">
+            <span
+              className={clsx("mt-1 h-1.5 w-1.5 shrink-0 rounded-full", events > 0 ? "bg-pass" : "bg-ink-700")}
+              aria-hidden
+            />
+            <span>
+              {events > 0 ? (
+                <>
+                  <span className="num text-slate-500">{events}</span> interaction
+                  {events === 1 ? " event" : " events"} captured for behavioural analysis — timing only.
+                  Which keys you pressed is never recorded or sent.
+                </>
+              ) : (
+                <>
+                  Behavioural analysis reads typing and pointer <em>timing</em>, never content. Type in the
+                  field above to start the capture.
+                </>
+              )}
+            </span>
+          </div>
 
           {samples.length > 0 && (
             <div className="card-pad">
