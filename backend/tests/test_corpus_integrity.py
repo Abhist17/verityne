@@ -14,6 +14,8 @@ above-chance performance before `ablate_fusion.py` caught it - see
 
 import random
 
+import pytest
+
 from ablate_fusion import leak_audit
 from build_dataset import PHYSICALLY_FRAUD_ONLY, audit_exif_balance, pick_exif_mode
 
@@ -262,3 +264,98 @@ class TestPreserveBetterLowBound:
 
         stale = {"low": 0.9, "high": 0.99, "fitted_on": "some earlier corpus run"}
         assert preserve_better_low_bound(dict(self.CORPUS), stale)["low"] == 0.8321
+
+
+# ---------------------------------------------------------------------------------
+# Two copies of one calibrated number
+# ---------------------------------------------------------------------------------
+
+class TestLinkageThresholdMatchesItsCalibration:
+    """`linkage.SAME_PERSON` must be the threshold its own comment describes.
+
+    It used to be the FAR=0.1% point from `calibrate_face_match_lfw.py` — a
+    *verification* fit graded on 6,000 pairs — while `find_face_links` applies it
+    as a search over up to `SCAN_LIMIT` records. That is a different question with
+    a different operating point, so the constant is now fitted by
+    `calibrate_linkage_lfw.py` and must agree with *that* report, not the pair one.
+    """
+
+    def _report(self):
+        import json
+
+        from verityne.config import MODEL_ROOT
+
+        path = MODEL_ROOT / "linkage_threshold.json"
+        if not path.exists():
+            pytest.skip("no fitted linkage threshold — run `make calibrate-linkage`")
+        return json.loads(path.read_text())
+
+    def _band(self):
+        """The face-match band, which is a separate fit for a separate question."""
+        import json
+
+        from verityne.config import MODEL_ROOT
+
+        path = MODEL_ROOT / "face_match_band.json"
+        if not path.exists():
+            pytest.skip("no calibrated band on disk — run `make calibrate-face`")
+        band = json.loads(path.read_text())
+        if "far_0.1pct_threshold" not in band:
+            pytest.skip("band was not fitted on LFW — run `make calibrate-face --apply`")
+        return band
+
+    def test_same_person_equals_the_identification_point_it_documents(self):
+        from verityne import linkage
+
+        fitted = self._report()
+        assert linkage.same_person_threshold()[0] == pytest.approx(
+            fitted["same_person"], abs=1e-4
+        ), (
+            f"linkage threshold in force is {linkage.same_person_threshold()[0]} but "
+            f"calibrate_linkage_lfw.py fitted {fitted['same_person']}. Re-run the "
+            f"calibration, or the comment above the constant describes a different "
+            f"threshold than the one deciding."
+        )
+
+    def test_it_is_not_the_verification_threshold(self):
+        """The pair threshold must not be reinstated by a well-meaning re-fit.
+
+        `calibrate_face_match_lfw.py` also writes a `same_person` key into the
+        band file, from the pairwise fit. Reading the linkage threshold from
+        there is exactly the bug this split exists to prevent.
+        """
+        import json
+
+        from verityne import linkage
+        from verityne.config import MODEL_ROOT
+
+        band_path = MODEL_ROOT / "face_match_band.json"
+        if not band_path.exists():
+            pytest.skip("no calibrated band on disk")
+        band = json.loads(band_path.read_text())
+        pair_point = band.get("far_0.1pct_threshold")
+        if pair_point is None:
+            pytest.skip("band was not fitted on LFW")
+        assert linkage.same_person_threshold()[0] > pair_point, (
+            f"the linkage threshold ({linkage.same_person_threshold()[0]}) is at or below "
+            f"the pairwise FAR=0.1% point ({pair_point}). Applied over "
+            f"{linkage.SCAN_LIMIT:,} records that is a per-applicant false-link rate of "
+            f"{1 - (1 - 0.001) ** linkage.SCAN_LIMIT:.0%}."
+        )
+
+    def test_the_detector_uses_the_calibrated_bound_not_a_default(self):
+        """The band on disk is what `face_match` actually decides with.
+
+        `decision_band()` falls back to built-in constants when the file is
+        missing or unreadable, which is right for a fresh checkout and wrong to
+        discover in production. This asserts the calibrated file is the one in
+        force.
+        """
+        from verityne.detectors import face_match
+
+        band = self._band()
+        face_match.reload_band()
+        low, high, provenance = face_match.decision_band()
+        assert low == pytest.approx(band["low"], abs=1e-4)
+        assert high == pytest.approx(band["high"], abs=1e-4)
+        assert "LFW" in provenance, "the shipped band is no longer the LFW-fitted one"

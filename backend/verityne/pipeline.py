@@ -39,6 +39,23 @@ log = logging.getLogger("verityne.pipeline")
 _EXECUTOR = ThreadPoolExecutor(max_workers=6, thread_name_prefix="detector")
 
 
+def linkage_review_ceiling(policy: MerchantPolicy) -> float:
+    """The highest risk a probabilistic linkage hit may contribute on its own.
+
+    Derived from the merchant's own policy rather than hard-coded, so a merchant
+    who moves their reject threshold moves this with it. It sits one abstention
+    band below `min_risk_for_reject`: high enough to force a REVIEW under any
+    sane review threshold, low enough that `decide` cannot read it as a REJECT.
+
+    Subtracting the band matters — `decide` already turns a score within one band
+    *below* the reject line into an abstaining REVIEW, so landing exactly on
+    `min_risk_for_reject - epsilon` would work today but only by way of the
+    abstention rule. Clearing the band says the intent in the number itself.
+    """
+    band = max(0.0, policy.abstain_band)
+    return max(policy.min_risk_for_review, policy.min_risk_for_reject - band - 1e-6)
+
+
 def storage_dir(submission_id: str) -> Path:
     d = UPLOAD_DIR / submission_id
     d.mkdir(parents=True, exist_ok=True)
@@ -123,7 +140,9 @@ async def run_pipeline(
         link_info["asset_links"] = linkage.find_asset_links(session, submission.id, hashes)
     except Exception as exc:  # noqa: BLE001
         log.warning("linkage failed: %s", exc)
-    link_score, link_reasons = linkage.linkage_signal(link_info["face_links"], link_info["asset_links"])
+    link_score, link_reasons, link_exact = linkage.linkage_signal(
+        link_info["face_links"], link_info["asset_links"]
+    )
 
     gen_key, gen_conf, gen_probs = (None, 0.0, {})
     face = payload.cache.get("selfie_face")
@@ -133,7 +152,18 @@ async def run_pipeline(
 
     # ---- fuse ------------------------------------------------------------------
     base_score, model_kind = fusion.fuse(breakdown)
-    # Linkage is a hard, non-statistical fact about history; it can only raise risk.
+    # Linkage can only raise risk, never lower it. How far it may raise depends on
+    # what kind of claim it is.
+    #
+    # A byte-identical asset is a fact: two files share a SHA-256 or they do not,
+    # so it may carry a rejection by itself. A face match is a similarity search
+    # over every prior record, and its false-accept rate compounds with database
+    # size — at the threshold this repo shipped, a genuine applicant false-linked
+    # to a stranger 97% of the time against a full 5,000-record scan. A claim with
+    # that error profile must not be able to reject anyone on its own, so it is
+    # capped below the reject threshold and lands in a human's queue instead.
+    if link_score > 0 and not link_exact:
+        link_score = min(link_score, linkage_review_ceiling(policy))
     final_score = max(base_score, link_score) if link_score > 0 else base_score
     verdict_label, abstained = fusion.decide(final_score, policy, breakdown)
 

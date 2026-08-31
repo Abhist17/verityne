@@ -79,19 +79,23 @@ class TestAssetLinkage:
     def test_exact_match_carries_the_kit_claim(self):
         from verityne.linkage import linkage_signal
 
-        score, reasons = linkage_signal([], [{"submission_id": "a", "kind": "selfie", "hamming": 0, "match": "exact"}])
+        score, reasons, exact = linkage_signal(
+            [], [{"submission_id": "a", "kind": "selfie", "hamming": 0, "match": "exact"}]
+        )
         assert score >= 0.6
         assert "exact same image file" in reasons[0]
+        assert exact is True, "a byte-identical file is the one claim that may reject alone"
 
     def test_near_match_cannot_reject_on_its_own(self):
         from verityne.config import MerchantPolicy
         from verityne.linkage import linkage_signal
 
         near = [{"submission_id": str(i), "kind": "id_document", "hamming": 2, "match": "near"} for i in range(5)]
-        score, reasons = linkage_signal([], near)
+        score, reasons, exact = linkage_signal([], near)
         assert score < MerchantPolicy().min_risk_for_reject
         assert "near-identical" in reasons[0]
         assert "exact same image file" not in reasons[0]
+        assert exact is False, "a perceptual-hash hit is a similarity, not an identity"
 
     def test_near_match_is_not_labelled_a_reused_kit(self):
         from verityne.explain import classify_attack
@@ -113,3 +117,89 @@ class TestAssetLinkage:
         assert hamming(phash(card), phash(other)) <= 8
         assert content_hash(card) != content_hash(other)
         assert content_hash(card) == content_hash(card.copy())
+
+
+class TestFaceLinkageIsASearchNotAPair:
+    """A face-similarity hit must not be able to reject anyone by itself.
+
+    `find_face_links` compares an applicant against every prior record, up to
+    `SCAN_LIMIT`. A pairwise false-accept rate of p applied N times gives a
+    per-applicant false-link probability of 1-(1-p)^N, so the error compounds
+    with the size of the database rather than staying where the pair fit put it.
+
+    The threshold shipped at 0.5198 — LFW's FAR=0.1% verification point, itself
+    two impostor pairs out of 3,000. Driven live, a genuine corpus packet
+    false-linked to five unrelated strangers and `max(fusion, linkage)` turned
+    that into a REJECT at 0.95, overruling five detectors that read it clean.
+    """
+
+    def _policy(self):
+        from verityne.config import MerchantPolicy
+
+        return MerchantPolicy()
+
+    def test_a_face_ring_claim_cannot_reach_the_reject_threshold(self):
+        from verityne.linkage import linkage_signal
+        from verityne.pipeline import linkage_review_ceiling
+
+        policy = self._policy()
+        links = [
+            {"submission_id": str(i), "claimed_name": f"Person {i}",
+             "merchant_id": "default", "name_differs": True}
+            for i in range(8)
+        ]
+        raw, reasons, exact = linkage_signal(links, [])
+        assert raw >= 0.95, "the raw signal should still be loud"
+        assert exact is False
+        assert "onboarding ring" in reasons[0]
+
+        capped = min(raw, linkage_review_ceiling(policy))
+        assert capped < policy.min_risk_for_reject, (
+            "a similarity search must not carry a rejection on its own"
+        )
+
+    def test_the_cap_still_forces_a_human_review(self):
+        """Capping must not silently downgrade a ring signal to PASS."""
+        from verityne.fusion import decide
+        from verityne.pipeline import linkage_review_ceiling
+
+        policy = self._policy()
+        verdict, _ = decide(linkage_review_ceiling(policy), policy)
+        assert verdict == "REVIEW"
+
+    def test_an_exact_asset_match_is_still_allowed_to_reject(self):
+        """The cap keys on the kind of claim, not on linkage in general."""
+        from verityne.linkage import linkage_signal
+
+        policy = self._policy()
+        raw, _, exact = linkage_signal(
+            [], [{"submission_id": str(i), "kind": "selfie", "hamming": 0, "match": "exact"}
+                 for i in range(4)]
+        )
+        assert exact is True
+        assert raw >= policy.min_risk_for_reject, (
+            "a byte-identical file across identities is a fact, not a similarity"
+        )
+
+    def test_the_ceiling_tracks_a_merchants_own_thresholds(self):
+        """A merchant who moves their reject line moves the cap with it."""
+        from verityne.config import MerchantPolicy
+        from verityne.pipeline import linkage_review_ceiling
+
+        strict = MerchantPolicy(min_risk_for_reject=0.60, min_risk_for_review=0.25)
+        lax = MerchantPolicy(min_risk_for_reject=0.88, min_risk_for_review=0.55)
+        assert linkage_review_ceiling(strict) < strict.min_risk_for_reject
+        assert linkage_review_ceiling(lax) < lax.min_risk_for_reject
+        assert linkage_review_ceiling(strict) < linkage_review_ceiling(lax)
+
+    def test_the_shipped_threshold_is_an_identification_operating_point(self):
+        """0.5198 was a verification fit and must not come back.
+
+        Guards the constant against being reverted to the LFW pair threshold,
+        which at SCAN_LIMIT gives a 97% per-applicant false-link rate.
+        """
+        from verityne.linkage import SAME_PERSON, SCAN_LIMIT
+
+        assert SAME_PERSON > 0.5198, "this is the verification point, not a search point"
+        per_applicant = 1.0 - (1.0 - 0.0007) ** SCAN_LIMIT
+        assert per_applicant > 0.9, "the arithmetic this threshold exists to avoid"

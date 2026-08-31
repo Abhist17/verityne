@@ -1,0 +1,72 @@
+{
+  "what_this_measures": "The operating point for a one-against-many search, not a pairwise test. linkage.find_face_links compares each applicant against up to SCAN_LIMIT prior records, so the rate that matters is the per-applicant probability of at least one false link, not the pairwise false-accept rate.",
+  "method": "One photograph per LFW identity (5749 distinct people), every pair among them scored (16,522,626 impostor pairs, all impostor by construction). True-accept rate comes from LFW's official same-person pairs.",
+  "far_resolution": {
+    "this_sample": 6.052306697494696e-08,
+    "official_lfw_pairs": 0.0003333333333333333,
+    "note": "The official protocol has 3,000 impostor pairs, so it cannot measure a false-accept rate below 3.3e-4. The shipped 0.0007 was two of those pairs."
+  },
+  "budget": {
+    "per_applicant_false_link_rate": 0.01,
+    "over_database_of": 5000,
+    "required_pairwise_far": 2.010065150548357e-06
+  },
+  "fitted": {
+    "threshold": 0.8169,
+    "pairwise_far": 1.9367381431983027e-06,
+    "impostor_pairs_accepted": 32,
+    "tar": 0.3853,
+    "per_applicant_false_link_rate": {
+      "20": 3.9e-05,
+      "100": 0.000194,
+      "500": 0.000968,
+      "1000": 0.001935,
+      "5000": 0.009637,
+      "50000": 0.092296
+    },
+    "sample_resolves_this_far": true
+  },
+  "as_shipped": {
+    "threshold": 0.8169,
+    "pairwise_far": 1.9367381431983027e-06,
+    "impostor_pairs_accepted": 32,
+    "tar": 0.3853,
+    "per_applicant_false_link_rate": {
+      "20": 3.9e-05,
+      "100": 0.000194,
+      "500": 0.000968,
+      "1000": 0.001935,
+      "5000": 0.009637,
+      "50000": 0.092296
+    }
+  },
+  "superseded": {
+    "threshold": 0.5198,
+    "pairwise_far": 0.00188275156745665,
+    "impostor_pairs_accepted": 31108,
+    "tar": 0.9513,
+    "per_applicant_false_link_rate": {
+      "20": 0.036989,
+      "100": 0.17176,
+      "500": 0.610255,
+      "1000": 0.848099,
+      "5000": 0.999919,
+      "50000": 1.0
+    },
+    "note": "LFW's FAR=0.1% verification point, which linkage used before it was calibrated as a search. Kept so the README's before/after table has evidence behind it after the constant moved."
+  },
+  "impostor_distribution": {
+    "n": 16522626,
+    "mean": 0.0381,
+    "p99": 0.417,
+    "p99.99": 0.6624,
+    "max": 0.9906
+  },
+  "genuine_distribution": {
+    "n": 3000,
+    "mean": 0.7578,
+    "p05": 0.5232,
+    "p50": 0.7878
+  },
+  "caveat": "LFW photographs are web images of public figures, not phone selfies. The identification question is the same; the capture conditions are not. This is a lower bound on the threshold a production queue needs, measured on real faces."
+}

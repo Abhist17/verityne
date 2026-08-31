@@ -11,32 +11,70 @@ Two lookups:
 """
 from __future__ import annotations
 
+import functools
+import json
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from .config import MODEL_ROOT
 from .db import AssetHash, FaceEmbedding, Submission, Verdict
 from .utils.hashing import hamming
 
 #: Above this cosine similarity two selfies are the same person.
 #:
-#: Fitted on LFW's official 10-fold protocol — 6,000 pairs of real photographs of
-#: real people — by ``scripts/calibrate_face_match_lfw.py``; the full report is
-#: ``eval/face_match_lfw.json``. This is the FAR=0.1% operating point, not the
-#: accuracy-optimal one, because a linkage hit accuses somebody of applying twice
-#: under two names: the false-accept budget should be strict even at some cost to
-#: recall. At this threshold that costs little — 95.1% of true same-person pairs
-#: still link.
+#: **This is a search threshold, not a pair threshold, and the difference is the
+#: whole story.** ``find_face_links`` compares one applicant against every prior
+#: record, up to ``SCAN_LIMIT``. A pairwise false-accept rate of ``p`` applied
+#: ``N`` times gives a per-applicant false-link probability of ``1-(1-p)^N``.
 #:
-#: It was 0.75, hard-coded. Graded on those same 6,000 real pairs, 0.75 linked
-#: only 63.3% of true same-person pairs: it was silently missing more than a
-#: third of the repeat applicants it exists to find. The corpus could not have
-#: revealed that — its genuine pairs derive from one source photograph each, so
-#: their similarity runs far above what two real photographs of one person score
-#: (LFW same-person mean 0.758, 5th percentile 0.523).
-SAME_PERSON = 0.5198
+#: This constant used to be 0.5198, taken from the FAR=0.1% operating point of
+#: LFW's official 10-fold protocol — a *verification* fit, graded on 6,000 pairs.
+#: Deployed as a search it meant a genuine applicant false-linking to a stranger
+#: with probability 6.8% against 100 prior records and 97.0% against 5,000. That
+#: 0.1% was itself two impostor pairs out of the official 3,000, the resolution
+#: floor of that set.
+#:
+#: It is now fitted by ``scripts/calibrate_linkage_lfw.py``, which scores every
+#: pair among LFW's distinct identities — millions of impostor pairs rather than
+#: 3,000 — and picks the point holding a stated per-applicant false-link rate
+#: over ``SCAN_LIMIT`` records. Report: ``eval/linkage_lfw.json``.
+#:
+#: Before either fit it was 0.75, hard-coded, which linked only 63.3% of true
+#: same-person pairs. The corpus could not have revealed that — its genuine pairs
+#: derive from one source photograph each, so their similarity runs far above
+#: what two real photographs of one person score (LFW same-person mean 0.758).
+#: The fitted value, duplicated here so a checkout with no calibration file still
+#: behaves. Chosen for a 1% per-applicant false-link rate over SCAN_LIMIT records.
+DEFAULT_SAME_PERSON = 0.8169
+
+#: Written by ``calibrate_linkage_lfw.py --apply``; absent until it has been run.
+THRESHOLD_PATH = MODEL_ROOT / "linkage_threshold.json"
+
+
+@functools.lru_cache(maxsize=1)
+def same_person_threshold() -> Tuple[float, str]:
+    """(threshold, provenance). Falls back to the documented default."""
+    if THRESHOLD_PATH.exists():
+        try:
+            data = json.loads(THRESHOLD_PATH.read_text())
+            return float(data["same_person"]), data.get("fitted_on", "calibration file")
+        except Exception:  # noqa: BLE001
+            pass
+    return DEFAULT_SAME_PERSON, "uncalibrated default"
+
+
+def reload_threshold() -> None:
+    same_person_threshold.cache_clear()
+
+
+#: Module-level convenience for callers that want the value without the
+#: provenance (tests, the calibration scripts grading what ships). The search
+#: path in `find_face_links` reads `same_person_threshold()` live instead, so a
+#: re-fit does not need a restart.
+SAME_PERSON = same_person_threshold()[0]
 #: Perceptual-hash distance at or below which two files *look* alike. This is a
 #: similarity bound, not an identity one: ID cards drawn from a shared template
 #: land inside it while belonging to different people, so a hit here is a hint,
@@ -80,10 +118,13 @@ def find_face_links(
         return []
     sims = mat @ q
 
+    # Read live rather than through the module constant, so that applying a new
+    # calibration (or POST /admin/reload-policy) takes effect without a restart.
+    threshold = same_person_threshold()[0]
     matches: List[Dict] = []
     for idx in np.argsort(-sims)[:25]:
         sim = float(sims[idx])
-        if sim < SAME_PERSON:
+        if sim < threshold:
             break
         row = rows[int(idx)]
         sub = session.get(Submission, row.submission_id)
@@ -151,10 +192,26 @@ def find_asset_links(session: Session, submission_id: str, hashes: Dict[str, Dic
     return sorted(best.values(), key=lambda m: (m["match"] != "exact", m["hamming"]))[:15]
 
 
-def linkage_signal(face_links: List[Dict], asset_links: List[Dict]) -> Tuple[float, List[str]]:
-    """Turn linkage hits into a risk contribution and human-readable reasons."""
+def linkage_signal(
+    face_links: List[Dict], asset_links: List[Dict]
+) -> Tuple[float, List[str], bool]:
+    """Turn linkage hits into a risk contribution, reasons, and whether it is exact.
+
+    The third return value is what separates a *measured* claim from a
+    *statistical* one, and the caller needs it to know how far to trust the score.
+
+    A face match is a similarity threshold applied against every prior record, so
+    it carries a false-accept rate that compounds with database size - see
+    ``SAME_PERSON``. A byte-identical file does not: two submissions either share
+    a SHA-256 or they do not, and the only false positives are collisions.
+
+    So ``exact`` is True only when a byte-identical asset was found. Everything
+    else - face similarity, perceptual-hash near-matches - is a probabilistic
+    hit that must not carry a rejection on its own.
+    """
     reasons: List[str] = []
     score = 0.0
+    exact_match = False
 
     distinct_names = {m["claimed_name"] for m in face_links if m.get("claimed_name")}
     conflicting = [m for m in face_links if m.get("name_differs")]
@@ -174,6 +231,7 @@ def linkage_signal(face_links: List[Dict], asset_links: List[Dict]) -> Tuple[flo
     if exact:
         # Byte-identical pixels across identities is the KYC-kit signature, and
         # the one asset claim strong enough to carry a rejection on its own.
+        exact_match = True
         score = max(score, min(0.9, 0.6 + 0.1 * len(exact)))
         reasons.append(
             f"The exact same image file was used in {len(exact)} earlier submission(s) - "
@@ -187,7 +245,7 @@ def linkage_signal(face_links: List[Dict], asset_links: List[Dict]) -> Tuple[flo
             f"A visually near-identical image appeared in {len(near)} earlier submission(s) - "
             "could be a reused asset, or two documents sharing a template"
         )
-    return score, reasons
+    return score, reasons, exact_match
 
 
 def _normalise(name: str) -> str:
