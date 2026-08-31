@@ -41,9 +41,18 @@ datasets/dfdc/
 # fetched from source, never vendored.
 datasets/indian_faces/
 
+# Real human keystroke timings (Aalto 136M + CMU), for Detector 6. The source
+# archive alone is 1.5 GB and the derived JSONL another 50 MB; both are rebuilt
+# by `backend/scripts/keystroke_corpus.py` from their published sources.
+datasets/keystrokes/
+
 # Derived from MIDV-2020, so it inherits that dataset's terms and is rebuilt
 # with `make real-docs` rather than committed.
 datasets/real_docs/
+
+# Transpiled scratch copy of frontend/lib/telemetry.ts, used to score the real
+# collector against the keystroke corpus. A build artefact, not a source file.
+storage/tmp_collector/
 
 # --- personal documents, never committed ----------------------------------
 # Your own ID used for a live demo lives here. It is your data, it stays on your

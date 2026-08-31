@@ -86,6 +86,53 @@ export interface BehavioralAck {
   preview_reasons: string[];
 }
 
+export type LinkKind = "face" | "asset_exact" | "asset_near";
+
+export interface ThreatNode {
+  id: string;
+  merchant_id: string;
+  claimed_name: string | null;
+  verdict: Verdict;
+  score: number;
+  created_at: string;
+  generator_guess: string | null;
+  thumb_url: string | null;
+  /** Connected-component index, or null for an isolated submission. */
+  ring: number | null;
+}
+
+export interface ThreatEdge {
+  source: string;
+  target: string;
+  kind: LinkKind;
+  /** Cosine similarity for a face link; 1.0 for a byte-identical asset. */
+  weight: number;
+  name_differs?: boolean;
+}
+
+export interface ThreatRing {
+  id: number;
+  size: number;
+  merchants: string[];
+  distinct_names: number;
+  max_score: number;
+  /** True when at least one edge in the ring is a shared SHA-256. That is the
+   *  difference between a ring that is a fact and one that is an inference. */
+  has_exact_asset_reuse: boolean;
+}
+
+export interface ThreatGraph {
+  generated_at: string;
+  window_hours: number;
+  /** Provenance for the edge threshold, shown on the page. A graph drawn at the
+   *  verification point rather than the search point wires every genuine
+   *  applicant to a stranger — see linkage.SAME_PERSON. */
+  threshold: { same_person: number; fitted_on: string };
+  nodes: ThreatNode[];
+  edges: ThreatEdge[];
+  rings: ThreatRing[];
+}
+
 export interface GauntletResult {
   submission_id: string;
   name: string;
@@ -171,6 +218,11 @@ export const api = {
     const qs = new URLSearchParams(Object.entries(p).map(([k, v]) => [k, String(v)]));
     return request<any>(`/metrics/cost-curve?${qs}`);
   },
+
+  /** The fraud-ring graph. Served by `GET /threat/graph`; until that endpoint
+   *  exists this rejects and the page says so rather than drawing invented
+   *  edges — a fabricated ring in a fraud tool is worse than an empty panel. */
+  threatGraph: (hours = 168) => request<ThreatGraph>(`/threat/graph?hours=${hours}`),
 
   attacks: (hours = 24) => request<any>(`/attacks?hours=${hours}`),
 

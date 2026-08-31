@@ -1209,7 +1209,7 @@ this project keeps refusing to run.
 
 ## The dashboard
 
-Next.js 14 App Router, five pages:
+Next.js 14 App Router, six pages:
 
 | Page | What it does |
 | --- | --- |
@@ -1217,6 +1217,7 @@ Next.js 14 App Router, five pages:
 | **Gauntlet** (`/gauntlet`) | Runs 10 genuine + 10 fraudulent fixtures over server-sent events, scoring live. |
 | **Metrics** (`/metrics`) | The held-out report rendered — ROC, per-attack recall, bias audit, and the cost-of-friction curve with operator-tunable ₹ sliders. |
 | **Attack Gallery** (`/attacks`) | Rejected submissions grouped by attack pattern, with the evidence that flagged each. |
+| **Threat Intelligence** (`/threat`) | Fraud rings as a node-link graph, generator-fingerprint mix, attack-pattern counts and a live feed. Clicking a node filters the feed to that cluster. |
 | **Review Queue** (`/review`) | Human-in-the-loop: everything that abstained, with accept/reject and an audit note. Tracks how often analysts agree with the model. |
 
 ---
@@ -1228,6 +1229,7 @@ Next.js 14 App Router, five pages:
 | `POST /verify` | Score one KYC packet (multipart: `selfie`, `liveness_video`, `id_document`, optional `behavioral_token`). |
 | `POST /behavioral` | Accept a form-fill telemetry buffer against a token the page minted on load, reduce it to features, and store only those. Posted before the files, because uploads fail and the buffer should not die with them. |
 | `GET /behavioral/{token}` | Read back one stored telemetry session with its score and the rules that fired. |
+| `GET /threat/graph` | **Contract defined, not yet served.** The fraud-ring graph the Threat Intelligence page reads: `{nodes, edges, rings, threshold}`, where each edge carries `kind: "face" \| "asset_exact" \| "asset_near"`. Until it exists the panel says so rather than drawing invented edges. Edges must be built at the *search* threshold (0.8169), not the verification point (0.5198) — at the latter every genuine applicant wires to a stranger ([§2b](#2b-the-linkage-threshold-was-answering-the-wrong-question)). |
 | `POST /batch-verify` | Retroactive sweep — re-score history with the current model to find fakes that were let through. |
 | `GET /submissions` · `GET /submissions/{id}` | Browse the audit log; full record for one submission. |
 | `POST /submissions/{id}/rescore` | Re-run one stored packet against the current model. |
@@ -1384,6 +1386,13 @@ backend/
 frontend/
   app/                Live Verify, Gauntlet, Metrics, Attack Gallery, Review Queue
   components/         DropZone, DetectorPanel, Nav, shared UI primitives
+    RingGraph.tsx     fraud rings as a node-link diagram. Edge style is the
+                      evidence type: a byte-identical file is drawn solid and
+                      pulls tighter, a similarity link is dashed, so a proven
+                      cluster never looks like an inferred one. Layout is
+                      computed synchronously and seeded deterministically -
+                      it does not depend on rAF and does not move between
+                      reloads.
   lib/api.ts          typed API client
   lib/telemetry.ts    detector 6's client half: keystroke, pointer and focus
                       timing. Redacts key identity at source — printable keys

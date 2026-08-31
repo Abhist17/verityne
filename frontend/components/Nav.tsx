@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/gauntlet", label: "Gauntlet" },
   { href: "/metrics", label: "Metrics" },
   { href: "/attacks", label: "Attacks" },
+  { href: "/threat", label: "Threat" },
   { href: "/review", label: "Review" },
 ];
 
