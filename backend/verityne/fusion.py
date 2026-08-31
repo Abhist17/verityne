@@ -37,6 +37,41 @@ HEURISTIC_WEIGHTS: Dict[str, float] = {
 }
 
 
+class PlattCalibrator:
+    """Maps a raw fusion score onto a probability, by Platt scaling.
+
+    Two parameters, fitted by a one-feature logistic regression on out-of-fold
+    predictions. It lives here rather than in the training script because
+    `fusion.joblib` pickles it by reference and the API has to be able to load it.
+
+    It replaced isotonic regression, which is the usual default and is wrong at
+    this sample size. Isotonic is non-parametric: on 195 training rows it fitted a
+    step function with so few distinct levels that the held-out scores collapsed
+    to **14 distinct values**, and the ties that created cost 0.020 of held-out
+    AUC outright (0.753 to 0.732). It also made the score unusable as a dial - a
+    packet a hair above a step boundary jumped from 0.44 to 0.92 - which matters
+    because `policy.yaml` cuts that score at fixed thresholds and the cost curve
+    integrates over it. Platt scaling is strictly monotonic, so it preserves the
+    ranking exactly, leaves AUC identical to the uncalibrated model, and returns
+    a smooth score. Isotonic is the better choice with thousands of rows; it is
+    not what this has.
+    """
+
+    def __init__(self, model) -> None:
+        self.model = model
+
+    @classmethod
+    def fit(cls, scores, labels) -> "PlattCalibrator":
+        from sklearn.linear_model import LogisticRegression
+
+        x = np.asarray(scores, dtype=float).reshape(-1, 1)
+        return cls(LogisticRegression(max_iter=1000).fit(x, np.asarray(labels, dtype=int)))
+
+    def predict(self, scores):
+        x = np.asarray(scores, dtype=float).reshape(-1, 1)
+        return self.model.predict_proba(x)[:, 1]
+
+
 def feature_vector(breakdown: Dict[str, DetectorOutput]) -> Tuple[np.ndarray, List[str]]:
     """Build the fusion input: each detector's score plus whether it actually ran.
 

@@ -1,59 +1,59 @@
 {
   "protocol": "Fusion refit on the training split with one detector's score and confidence columns zeroed, then scored on the identity-disjoint held-out split. Same estimator and calibration as train_fusion.py ships.",
-  "n_train": 194,
-  "n_test": 106,
+  "n_train": 195,
+  "n_test": 105,
   "full_model": {
-    "roc_auc": 0.913,
-    "score_mean_genuine": 0.3183,
-    "score_mean_fraud": 0.7813,
-    "recall_at_0.75": 0.6471,
-    "false_reject_at_0.75": 0.0545
+    "roc_auc": 0.7527,
+    "score_mean_genuine": 0.4189,
+    "score_mean_fraud": 0.6059,
+    "recall_at_0.75": 0.4074,
+    "false_reject_at_0.75": 0.098
   },
   "per_detector": {
     "selfie_deepfake": {
-      "roc_auc": 0.9287,
-      "score_mean_genuine": 0.3182,
-      "score_mean_fraud": 0.7852,
-      "recall_at_0.75": 0.6078,
-      "false_reject_at_0.75": 0.0364,
-      "auc_drop": -0.0157,
-      "share_of_headline_auc_above_chance": -0.038
+      "roc_auc": 0.7259,
+      "score_mean_genuine": 0.4493,
+      "score_mean_fraud": 0.6056,
+      "recall_at_0.75": 0.3889,
+      "false_reject_at_0.75": 0.0784,
+      "auc_drop": 0.0268,
+      "share_of_headline_auc_above_chance": 0.1061
     },
     "liveness_video": {
-      "roc_auc": 0.9262,
-      "score_mean_genuine": 0.3222,
-      "score_mean_fraud": 0.7953,
-      "recall_at_0.75": 0.6667,
-      "false_reject_at_0.75": 0.0545,
-      "auc_drop": -0.0132,
-      "share_of_headline_auc_above_chance": -0.032
+      "roc_auc": 0.7524,
+      "score_mean_genuine": 0.4255,
+      "score_mean_fraud": 0.6101,
+      "recall_at_0.75": 0.4259,
+      "false_reject_at_0.75": 0.1176,
+      "auc_drop": 0.0003,
+      "share_of_headline_auc_above_chance": 0.0012
     },
     "id_forensics": {
-      "roc_auc": 0.9027,
-      "score_mean_genuine": 0.3288,
-      "score_mean_fraud": 0.7456,
-      "recall_at_0.75": 0.4902,
-      "false_reject_at_0.75": 0.0364,
-      "auc_drop": 0.0103,
-      "share_of_headline_auc_above_chance": 0.0249
+      "roc_auc": 0.8268,
+      "score_mean_genuine": 0.3781,
+      "score_mean_fraud": 0.5918,
+      "recall_at_0.75": 0.3519,
+      "false_reject_at_0.75": 0.0,
+      "auc_drop": -0.0741,
+      "share_of_headline_auc_above_chance": -0.2932
     },
     "face_match": {
-      "roc_auc": 0.8581,
-      "score_mean_genuine": 0.3752,
-      "score_mean_fraud": 0.6951,
-      "recall_at_0.75": 0.4902,
-      "false_reject_at_0.75": 0.0545,
-      "auc_drop": 0.0549,
-      "share_of_headline_auc_above_chance": 0.1329
+      "roc_auc": 0.6391,
+      "score_mean_genuine": 0.4567,
+      "score_mean_fraud": 0.5302,
+      "recall_at_0.75": 0.1481,
+      "false_reject_at_0.75": 0.0196,
+      "auc_drop": 0.1136,
+      "share_of_headline_auc_above_chance": 0.4495
     },
     "metadata_exif": {
-      "roc_auc": 0.7087,
-      "score_mean_genuine": 0.4483,
-      "score_mean_fraud": 0.5986,
-      "recall_at_0.75": 0.3137,
-      "false_reject_at_0.75": 0.0,
-      "auc_drop": 0.2043,
-      "share_of_headline_auc_above_chance": 0.4947
+      "roc_auc": 0.6031,
+      "score_mean_genuine": 0.4949,
+      "score_mean_fraud": 0.5598,
+      "recall_at_0.75": 0.2778,
+      "false_reject_at_0.75": 0.0588,
+      "auc_drop": 0.1496,
+      "share_of_headline_auc_above_chance": 0.592
     }
   },
   "most_load_bearing": "metadata_exif",
@@ -61,120 +61,97 @@
     "selfie_exif_mode": {
       "values": {
         "edited": {
-          "genuine": 0,
-          "fraud": 16,
-          "p_fraud": 1.0
+          "genuine": 12,
+          "fraud": 19,
+          "p_fraud": 0.6129
         },
         "fresh": {
-          "genuine": 79,
-          "fraud": 31,
-          "p_fraud": 0.2818
+          "genuine": 56,
+          "fraud": 32,
+          "p_fraud": 0.3636
         },
         "generated": {
           "genuine": 0,
-          "fraud": 10,
+          "fraud": 13,
           "p_fraud": 1.0
         },
         "none": {
-          "genuine": 37,
-          "fraud": 52,
-          "p_fraud": 0.5843
+          "genuine": 28,
+          "fraud": 41,
+          "p_fraud": 0.5942
         },
         "plain": {
-          "genuine": 34,
-          "fraud": 15,
-          "p_fraud": 0.3061
+          "genuine": 37,
+          "fraud": 19,
+          "p_fraud": 0.3393
         },
         "stale": {
-          "genuine": 0,
+          "genuine": 17,
           "fraud": 26,
-          "p_fraud": 1.0
+          "p_fraud": 0.6047
         }
       },
       "one_sided_values": [
         {
-          "value": "edited",
-          "p_fraud": 1.0,
-          "n": 16,
-          "class": "fraud"
-        },
-        {
           "value": "generated",
           "p_fraud": 1.0,
-          "n": 10,
-          "class": "fraud"
-        },
-        {
-          "value": "stale",
-          "p_fraud": 1.0,
-          "n": 26,
-          "class": "fraud"
+          "n": 13,
+          "class": "fraud",
+          "expected": true,
+          "justification": "no camera writes a diffusion model's name into the Software tag"
         }
       ],
-      "packets_carrying_a_one_sided_value": 52,
-      "share_of_corpus": 0.1733
+      "packets_carrying_a_one_sided_value": 13,
+      "share_of_corpus": 0.0433
     },
     "id_exif_mode": {
       "values": {
         "edited": {
-          "genuine": 0,
-          "fraud": 15,
-          "p_fraud": 1.0
+          "genuine": 13,
+          "fraud": 24,
+          "p_fraud": 0.6486
         },
         "fresh": {
-          "genuine": 87,
-          "fraud": 54,
-          "p_fraud": 0.383
+          "genuine": 57,
+          "fraud": 43,
+          "p_fraud": 0.43
         },
         "generated": {
           "genuine": 0,
-          "fraud": 6,
+          "fraud": 8,
           "p_fraud": 1.0
         },
         "none": {
-          "genuine": 27,
-          "fraud": 30,
-          "p_fraud": 0.5263
+          "genuine": 29,
+          "fraud": 36,
+          "p_fraud": 0.5538
         },
         "plain": {
-          "genuine": 36,
-          "fraud": 25,
-          "p_fraud": 0.4098
+          "genuine": 31,
+          "fraud": 15,
+          "p_fraud": 0.3261
         },
         "stale": {
-          "genuine": 0,
-          "fraud": 20,
-          "p_fraud": 1.0
+          "genuine": 20,
+          "fraud": 24,
+          "p_fraud": 0.5455
         }
       },
-      "one_sided_values": [
-        {
-          "value": "edited",
-          "p_fraud": 1.0,
-          "n": 15,
-          "class": "fraud"
-        },
-        {
-          "value": "stale",
-          "p_fraud": 1.0,
-          "n": 20,
-          "class": "fraud"
-        }
-      ],
-      "packets_carrying_a_one_sided_value": 35,
-      "share_of_corpus": 0.1167
+      "one_sided_values": [],
+      "packets_carrying_a_one_sided_value": 0,
+      "share_of_corpus": 0.0
     },
     "doc_type": {
       "values": {
         "Aadhaar": {
           "genuine": 56,
-          "fraud": 45,
-          "p_fraud": 0.4455
+          "fraud": 38,
+          "p_fraud": 0.4043
         },
         "PAN": {
           "genuine": 94,
-          "fraud": 105,
-          "p_fraud": 0.5276
+          "fraud": 112,
+          "p_fraud": 0.5437
         }
       },
       "one_sided_values": [],
@@ -185,18 +162,19 @@
       "values": {
         "photo": {
           "genuine": 79,
-          "fraud": 89,
-          "p_fraud": 0.5298
+          "fraud": 86,
+          "p_fraud": 0.5212
         },
         "scan": {
           "genuine": 71,
-          "fraud": 61,
-          "p_fraud": 0.4621
+          "fraud": 64,
+          "p_fraud": 0.4741
         }
       },
       "one_sided_values": [],
       "packets_carrying_a_one_sided_value": 0,
       "share_of_corpus": 0.0
     }
-  }
+  },
+  "corpus_clean": true
 }

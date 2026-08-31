@@ -112,15 +112,16 @@ def main() -> None:
         kind, chosen_auc = "logreg", lr_auc
     model.fit(X, y)
 
-    # Isotonic calibration so the score reads as a probability, which is what the
-    # policy thresholds and the cost model both assume it is.
+    # Platt scaling so the score reads as a probability, which is what the policy
+    # thresholds and the cost model both assume it is. Not isotonic: see
+    # verityne.fusion.PlattCalibrator for what isotonic cost at this sample size.
     calibrator = None
     try:
-        from sklearn.isotonic import IsotonicRegression
+        from verityne.fusion import PlattCalibrator
 
         oof = cross_val_predict(model, X, y, cv=cv, method="predict_proba")[:, 1]
-        calibrator = IsotonicRegression(out_of_bounds="clip", y_min=0.0, y_max=1.0).fit(oof, y)
-        log.info("fitted isotonic calibration on out-of-fold predictions")
+        calibrator = PlattCalibrator.fit(oof, y)
+        log.info("fitted Platt calibration on out-of-fold predictions")
     except Exception as exc:  # noqa: BLE001
         log.warning("calibration skipped: %s", exc)
 

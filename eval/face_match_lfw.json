@@ -53,17 +53,17 @@
   },
   "as_shipped": {
     "linkage.SAME_PERSON": {
-      "threshold": 0.5197,
+      "threshold": 0.5198,
       "tar": 0.9513,
-      "far": 0.001,
-      "accuracy": 0.9752
+      "far": 0.0007,
+      "accuracy": 0.9753
     },
     "face_match_band.low": {
-      "threshold": 0.4065,
-      "tar": 0.974,
-      "far": 0.0097,
-      "accuracy": 0.9822,
-      "source": "low: LFW 10-fold, 6000 real pairs, accuracy 0.9820\u00b10.0040; high: corpus calibration (see high_fitted_on)"
+      "threshold": 0.8321,
+      "tar": 0.3223,
+      "far": 0.0,
+      "accuracy": 0.6612,
+      "source": "99 genuine / 21 mismatch / 11 duplicate pairs (train split)"
     }
   },
   "superseded": {

@@ -1,56 +1,56 @@
 {
-  "train_packets": 194,
+  "train_packets": 195,
   "face_band": {
-    "low": 0.7835,
-    "high": 0.9878,
-    "fitted_on": "95 genuine / 18 mismatch / 11 duplicate pairs (train split)",
-    "duplicate_separability_auc": 0.5483,
+    "low": 0.8321,
+    "high": 0.9859,
+    "fitted_on": "99 genuine / 21 mismatch / 11 duplicate pairs (train split)",
+    "duplicate_separability_auc": 0.4031,
     "distributions": {
       "genuine": {
-        "n": 95,
-        "mean": 0.9426,
-        "p05": 0.8817,
-        "p50": 0.9488,
-        "p95": 0.9766
+        "n": 99,
+        "mean": 0.9388,
+        "p05": 0.887,
+        "p50": 0.945,
+        "p95": 0.9759
       },
       "mismatch": {
-        "n": 18,
-        "mean": 0.0355,
-        "p05": -0.1513,
-        "p50": 0.0121,
-        "p95": 0.2587
+        "n": 21,
+        "mean": 0.0694,
+        "p05": -0.1485,
+        "p50": 0.0835,
+        "p95": 0.3062
       },
       "duplicate": {
         "n": 11,
-        "mean": 0.945,
-        "p05": 0.8907,
-        "p50": 0.9603,
-        "p95": 0.9788
+        "mean": 0.918,
+        "p05": 0.8308,
+        "p50": 0.9187,
+        "p95": 0.9689
       }
     },
-    "caveat": "Genuine pairs in this corpus derive from a single source photograph per identity, re-captured to approximate a second photo, so their similarity runs far higher than real selfie-vs-ID pairs would. Consequence: cosine similarity cannot separate a copied ID photo from a genuine pair here (separability AUC 0.5483). The upper bound is therefore set above the genuine distribution rather than fitted, and the reused-photo attack is caught by the image-provenance check in the metadata auditor instead. Re-fit both on production pairs."
+    "caveat": "Genuine pairs in this corpus derive from a single source photograph per identity, re-captured to approximate a second photo, so their similarity runs far higher than real selfie-vs-ID pairs would. Consequence: cosine similarity cannot separate a copied ID photo from a genuine pair here (separability AUC 0.4031). The upper bound is therefore set above the genuine distribution rather than fitted, and the reused-photo attack is caught by the image-provenance check in the metadata auditor instead. Re-fit both on production pairs."
   },
   "spectral": {
-    "n": 194,
-    "spectral_train_auc": 0.9637,
+    "n": 195,
+    "spectral_train_auc": 0.9685,
     "spectral_weights": {
-      "effective_scale": -0.3805,
-      "grid_peak": 0.0564,
-      "hf_energy": 0.0275,
-      "hf_over_mf": 0.5587,
-      "hf_slope": -1.5951,
-      "laplacian_var": 0.7958,
-      "mf_energy": -0.9698,
-      "resample_residual": 0.7926,
-      "ripple": 1.4309,
-      "spectral_std": 0.6165
+      "effective_scale": -0.6593,
+      "grid_peak": -0.5062,
+      "hf_energy": 0.1853,
+      "hf_over_mf": 0.3877,
+      "hf_slope": -0.7272,
+      "laplacian_var": 0.8316,
+      "mf_energy": -0.5275,
+      "resample_residual": 1.0024,
+      "ripple": 1.7717,
+      "spectral_std": 0.4443
     },
-    "positives": 18,
+    "positives": 21,
     "fingerprint_classes": [
       "faceswap",
       "real",
       "stable_diffusion"
     ],
-    "fingerprint_train_acc": 0.8918
+    "fingerprint_train_acc": 0.9231
   }
 }

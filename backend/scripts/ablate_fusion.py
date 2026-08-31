@@ -61,19 +61,34 @@ def build_matrix(rows: List[Dict], drop: Optional[str] = None) -> Tuple[np.ndarr
 
 
 def fit_and_score(train: List[Dict], test: List[Dict], drop: Optional[str]) -> Dict:
-    from sklearn.calibration import CalibratedClassifierCV
+    """Fit and score exactly the way `train_fusion.py` ships.
+
+    Same pipeline, same hyper-parameters, and the same Platt calibration fitted
+    on out-of-fold predictions. Matching it matters: a "full model" row that did
+    not equal the headline in `eval/metrics.json` would make every drop below it
+    arguable.
+    """
     from sklearn.linear_model import LogisticRegression
     from sklearn.metrics import roc_auc_score
+    from sklearn.model_selection import StratifiedKFold, cross_val_predict
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import StandardScaler
 
     Xtr, ytr = build_matrix(train, drop)
     Xte, yte = build_matrix(test, drop)
-    base = Pipeline([("scale", StandardScaler()),
-                     ("clf", LogisticRegression(max_iter=4000, class_weight="balanced", C=1.0))])
-    model = CalibratedClassifierCV(base, method="sigmoid", cv=3)
+    model = Pipeline([("scale", StandardScaler()),
+                      ("clf", LogisticRegression(max_iter=4000, class_weight="balanced", C=1.0))])
     model.fit(Xtr, ytr)
     s = model.predict_proba(Xte)[:, 1]
+    try:
+        from verityne.fusion import PlattCalibrator
+
+        cv = StratifiedKFold(n_splits=max(2, min(5, int(np.bincount(ytr).min()))),
+                             shuffle=True, random_state=0)
+        oof = cross_val_predict(model, Xtr, ytr, cv=cv, method="predict_proba")[:, 1]
+        s = PlattCalibrator.fit(oof, ytr).predict(s)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("calibration skipped for drop=%s: %s", drop, exc)
     return {
         "roc_auc": round(float(roc_auc_score(yte, s)), 4),
         "score_mean_genuine": round(float(s[yte == 0].mean()), 4),
@@ -159,7 +174,11 @@ def main() -> None:
             round(r["auc_drop"] / max(1e-9, full["roc_auc"] - 0.5), 4)
         )
         per_detector[name] = r
-        log.info("  without %-18s AUC %.4f  (drop %+.4f)", name, r["roc_auc"], -r["auc_drop"])
+        # Printed as the change in AUC caused by muting: negative means the model
+        # got worse without it, which is a detector doing its job.
+        log.info("  without %-18s AUC %.4f  (delta %+.4f, %+.1f%% of above-chance)",
+                 name, r["roc_auc"], -r["auc_drop"],
+                 100 * r["share_of_headline_auc_above_chance"])
 
     ranked = sorted(per_detector.items(), key=lambda kv: -kv[1]["auc_drop"])
     report = {

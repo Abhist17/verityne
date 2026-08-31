@@ -1,11 +1,11 @@
 {
   "split": "test",
-  "n_packets": 106,
-  "n_fraud": 51,
-  "n_genuine": 55,
+  "n_packets": 105,
+  "n_fraud": 54,
+  "n_genuine": 51,
   "fusion_model": "logreg",
   "fusion": {
-    "roc_auc": 0.9111,
+    "roc_auc": 0.7527,
     "roc": [
       {
         "fpr": 0.0,
@@ -14,118 +14,243 @@
       },
       {
         "fpr": 0.0,
-        "tpr": 0.4706,
-        "threshold": 1.0
+        "tpr": 0.0185,
+        "threshold": 0.8395
       },
       {
-        "fpr": 0.0182,
-        "tpr": 0.549,
-        "threshold": 0.9
+        "fpr": 0.0,
+        "tpr": 0.2778,
+        "threshold": 0.8266
       },
       {
-        "fpr": 0.0545,
-        "tpr": 0.7059,
-        "threshold": 0.8667
+        "fpr": 0.0196,
+        "tpr": 0.2778,
+        "threshold": 0.8259
       },
       {
-        "fpr": 0.1273,
-        "tpr": 0.7843,
-        "threshold": 0.6667
+        "fpr": 0.0196,
+        "tpr": 0.3889,
+        "threshold": 0.7941
       },
       {
-        "fpr": 0.1636,
-        "tpr": 0.7843,
-        "threshold": 0.625
+        "fpr": 0.0588,
+        "tpr": 0.3889,
+        "threshold": 0.779
       },
       {
-        "fpr": 0.1818,
-        "tpr": 0.8039,
+        "fpr": 0.0588,
+        "tpr": 0.4074,
+        "threshold": 0.7736
+      },
+      {
+        "fpr": 0.098,
+        "tpr": 0.4074,
+        "threshold": 0.7525
+      },
+      {
+        "fpr": 0.098,
+        "tpr": 0.4259,
+        "threshold": 0.7491
+      },
+      {
+        "fpr": 0.1765,
+        "tpr": 0.4259,
+        "threshold": 0.6959
+      },
+      {
+        "fpr": 0.1765,
+        "tpr": 0.4444,
+        "threshold": 0.6845
+      },
+      {
+        "fpr": 0.1961,
+        "tpr": 0.4444,
+        "threshold": 0.66
+      },
+      {
+        "fpr": 0.1961,
+        "tpr": 0.4815,
         "threshold": 0.6
       },
       {
-        "fpr": 0.1818,
-        "tpr": 0.8627,
-        "threshold": 0.4684
+        "fpr": 0.2353,
+        "tpr": 0.4815,
+        "threshold": 0.5883
       },
       {
-        "fpr": 0.2,
-        "tpr": 0.8627,
-        "threshold": 0.4637
+        "fpr": 0.2353,
+        "tpr": 0.5185,
+        "threshold": 0.5768
       },
       {
-        "fpr": 0.2545,
-        "tpr": 0.9216,
-        "threshold": 0.4545
+        "fpr": 0.2549,
+        "tpr": 0.5185,
+        "threshold": 0.5707
       },
       {
-        "fpr": 0.2727,
-        "tpr": 0.9216,
-        "threshold": 0.3912
+        "fpr": 0.2549,
+        "tpr": 0.537,
+        "threshold": 0.5616
       },
       {
-        "fpr": 0.3091,
-        "tpr": 0.9216,
-        "threshold": 0.3333
+        "fpr": 0.2745,
+        "tpr": 0.537,
+        "threshold": 0.5595
       },
       {
-        "fpr": 0.3818,
-        "tpr": 0.9216,
-        "threshold": 0.1676
+        "fpr": 0.2745,
+        "tpr": 0.6296,
+        "threshold": 0.5136
       },
       {
-        "fpr": 0.6909,
-        "tpr": 0.9804,
-        "threshold": 0.1579
+        "fpr": 0.2941,
+        "tpr": 0.6296,
+        "threshold": 0.5123
       },
       {
-        "fpr": 0.9818,
-        "tpr": 1.0,
-        "threshold": 0.069
+        "fpr": 0.2941,
+        "tpr": 0.6481,
+        "threshold": 0.503
+      },
+      {
+        "fpr": 0.3333,
+        "tpr": 0.6481,
+        "threshold": 0.4947
+      },
+      {
+        "fpr": 0.3333,
+        "tpr": 0.6852,
+        "threshold": 0.4872
+      },
+      {
+        "fpr": 0.3529,
+        "tpr": 0.6852,
+        "threshold": 0.4832
+      },
+      {
+        "fpr": 0.3529,
+        "tpr": 0.7407,
+        "threshold": 0.4626
+      },
+      {
+        "fpr": 0.3922,
+        "tpr": 0.7407,
+        "threshold": 0.4556
+      },
+      {
+        "fpr": 0.3922,
+        "tpr": 0.7593,
+        "threshold": 0.4519
+      },
+      {
+        "fpr": 0.4314,
+        "tpr": 0.7593,
+        "threshold": 0.4297
+      },
+      {
+        "fpr": 0.4314,
+        "tpr": 0.8148,
+        "threshold": 0.3988
+      },
+      {
+        "fpr": 0.451,
+        "tpr": 0.8148,
+        "threshold": 0.3964
+      },
+      {
+        "fpr": 0.451,
+        "tpr": 0.8333,
+        "threshold": 0.3865
+      },
+      {
+        "fpr": 0.5098,
+        "tpr": 0.8333,
+        "threshold": 0.3568
+      },
+      {
+        "fpr": 0.5098,
+        "tpr": 0.8704,
+        "threshold": 0.3555
+      },
+      {
+        "fpr": 0.6275,
+        "tpr": 0.8704,
+        "threshold": 0.3123
+      },
+      {
+        "fpr": 0.6275,
+        "tpr": 0.8889,
+        "threshold": 0.3076
+      },
+      {
+        "fpr": 0.7059,
+        "tpr": 0.8889,
+        "threshold": 0.2913
+      },
+      {
+        "fpr": 0.7059,
+        "tpr": 0.9074,
+        "threshold": 0.2886
+      },
+      {
+        "fpr": 0.7255,
+        "tpr": 0.9074,
+        "threshold": 0.2829
+      },
+      {
+        "fpr": 0.7255,
+        "tpr": 0.9815,
+        "threshold": 0.2613
+      },
+      {
+        "fpr": 1.0,
+        "tpr": 0.9815,
+        "threshold": 0.1714
       },
       {
         "fpr": 1.0,
         "tpr": 1.0,
-        "threshold": 0.0
+        "threshold": 0.1708
       }
     ],
     "at_reject_threshold": {
       "threshold": 0.75,
-      "tp": 36,
-      "fp": 3,
-      "fn": 15,
-      "tn": 52,
-      "precision": 0.9231,
-      "recall": 0.7059,
-      "f1": 0.8,
-      "false_accept_rate": 0.2941,
-      "false_reject_rate": 0.0545,
-      "accuracy": 0.8302
+      "tp": 22,
+      "fp": 5,
+      "fn": 32,
+      "tn": 46,
+      "precision": 0.8148,
+      "recall": 0.4074,
+      "f1": 0.5432,
+      "false_accept_rate": 0.5926,
+      "false_reject_rate": 0.098,
+      "accuracy": 0.6476
     },
     "at_review_threshold": {
       "threshold": 0.4,
-      "tp": 47,
-      "fp": 14,
-      "fn": 4,
-      "tn": 41,
-      "precision": 0.7705,
-      "recall": 0.9216,
-      "f1": 0.8393,
-      "false_accept_rate": 0.0784,
-      "false_reject_rate": 0.2545,
-      "accuracy": 0.8302
+      "tp": 43,
+      "fp": 22,
+      "fn": 11,
+      "tn": 29,
+      "precision": 0.6615,
+      "recall": 0.7963,
+      "f1": 0.7227,
+      "false_accept_rate": 0.2037,
+      "false_reject_rate": 0.4314,
+      "accuracy": 0.6857
     },
-    "score_mean_genuine": 0.2664,
-    "score_mean_fraud": 0.8087
+    "score_mean_genuine": 0.4189,
+    "score_mean_fraud": 0.6059
   },
   "per_detector": {
     "selfie_deepfake": {
       "label": "Selfie Deepfake Detector",
-      "auc_all_rows": 0.6496,
+      "auc_all_rows": 0.5396,
       "coverage": 1.0,
       "errors": 0,
       "skipped": 0,
-      "mean_genuine": 0.3366,
-      "mean_fraud": 0.4336,
+      "mean_genuine": 0.3804,
+      "mean_fraud": 0.4071,
       "roc": [
         {
           "fpr": 0.0,
@@ -134,272 +259,252 @@
         },
         {
           "fpr": 0.0,
-          "tpr": 0.0196,
-          "threshold": 0.8676
+          "tpr": 0.0185,
+          "threshold": 0.8762
         },
         {
           "fpr": 0.0,
-          "tpr": 0.0392,
-          "threshold": 0.8263
+          "tpr": 0.0556,
+          "threshold": 0.7621
         },
         {
-          "fpr": 0.0182,
-          "tpr": 0.0392,
-          "threshold": 0.8102
+          "fpr": 0.0196,
+          "tpr": 0.0556,
+          "threshold": 0.7449
         },
         {
-          "fpr": 0.0182,
-          "tpr": 0.098,
-          "threshold": 0.7669
+          "fpr": 0.0196,
+          "tpr": 0.1111,
+          "threshold": 0.6742
         },
         {
-          "fpr": 0.0364,
-          "tpr": 0.098,
-          "threshold": 0.7636
+          "fpr": 0.0784,
+          "tpr": 0.1111,
+          "threshold": 0.5559
         },
         {
-          "fpr": 0.0364,
-          "tpr": 0.1765,
-          "threshold": 0.6279
+          "fpr": 0.0784,
+          "tpr": 0.2037,
+          "threshold": 0.55
         },
         {
-          "fpr": 0.0909,
-          "tpr": 0.1765,
-          "threshold": 0.532
+          "fpr": 0.0784,
+          "tpr": 0.2222,
+          "threshold": 0.549
         },
         {
-          "fpr": 0.0909,
-          "tpr": 0.2745,
-          "threshold": 0.5208
+          "fpr": 0.1176,
+          "tpr": 0.2222,
+          "threshold": 0.5396
         },
         {
-          "fpr": 0.1091,
-          "tpr": 0.2745,
-          "threshold": 0.5182
+          "fpr": 0.1176,
+          "tpr": 0.2593,
+          "threshold": 0.5283
         },
         {
-          "fpr": 0.1091,
-          "tpr": 0.3137,
-          "threshold": 0.5128
+          "fpr": 0.1569,
+          "tpr": 0.2593,
+          "threshold": 0.5145
         },
         {
-          "fpr": 0.1455,
-          "tpr": 0.3137,
-          "threshold": 0.4996
+          "fpr": 0.1569,
+          "tpr": 0.2963,
+          "threshold": 0.5116
         },
         {
-          "fpr": 0.1455,
-          "tpr": 0.3922,
-          "threshold": 0.4907
+          "fpr": 0.1765,
+          "tpr": 0.2963,
+          "threshold": 0.5041
         },
         {
-          "fpr": 0.2,
-          "tpr": 0.3922,
-          "threshold": 0.4812
+          "fpr": 0.1765,
+          "tpr": 0.3519,
+          "threshold": 0.4961
         },
         {
-          "fpr": 0.2,
-          "tpr": 0.4314,
-          "threshold": 0.4556
+          "fpr": 0.1961,
+          "tpr": 0.3519,
+          "threshold": 0.4839
         },
         {
-          "fpr": 0.2364,
-          "tpr": 0.4314,
-          "threshold": 0.4496
+          "fpr": 0.1961,
+          "tpr": 0.3704,
+          "threshold": 0.4799
         },
         {
-          "fpr": 0.2364,
-          "tpr": 0.4706,
-          "threshold": 0.4424
+          "fpr": 0.2157,
+          "tpr": 0.3704,
+          "threshold": 0.4766
         },
         {
-          "fpr": 0.2727,
-          "tpr": 0.4706,
-          "threshold": 0.4403
+          "fpr": 0.2157,
+          "tpr": 0.463,
+          "threshold": 0.4622
         },
         {
-          "fpr": 0.2727,
-          "tpr": 0.5098,
-          "threshold": 0.435
+          "fpr": 0.4314,
+          "tpr": 0.463,
+          "threshold": 0.4233
         },
         {
-          "fpr": 0.3091,
-          "tpr": 0.5098,
-          "threshold": 0.4327
+          "fpr": 0.4314,
+          "tpr": 0.4815,
+          "threshold": 0.4213
         },
         {
-          "fpr": 0.3091,
-          "tpr": 0.549,
-          "threshold": 0.4229
+          "fpr": 0.4706,
+          "tpr": 0.4815,
+          "threshold": 0.4133
         },
         {
-          "fpr": 0.4,
-          "tpr": 0.549,
-          "threshold": 0.4191
+          "fpr": 0.4706,
+          "tpr": 0.5,
+          "threshold": 0.4119
         },
         {
-          "fpr": 0.4,
-          "tpr": 0.5686,
-          "threshold": 0.4182
+          "fpr": 0.5294,
+          "tpr": 0.5,
+          "threshold": 0.4087
         },
         {
-          "fpr": 0.4182,
-          "tpr": 0.5686,
-          "threshold": 0.4127
+          "fpr": 0.5294,
+          "tpr": 0.5185,
+          "threshold": 0.3862
         },
         {
-          "fpr": 0.4182,
-          "tpr": 0.5882,
-          "threshold": 0.4009
+          "fpr": 0.549,
+          "tpr": 0.5185,
+          "threshold": 0.3832
         },
         {
-          "fpr": 0.4364,
-          "tpr": 0.5882,
-          "threshold": 0.3985
+          "fpr": 0.549,
+          "tpr": 0.5741,
+          "threshold": 0.3689
         },
         {
-          "fpr": 0.4364,
-          "tpr": 0.6275,
-          "threshold": 0.3702
+          "fpr": 0.5882,
+          "tpr": 0.5741,
+          "threshold": 0.3583
         },
         {
-          "fpr": 0.4727,
-          "tpr": 0.6275,
-          "threshold": 0.3526
+          "fpr": 0.5882,
+          "tpr": 0.5926,
+          "threshold": 0.3518
         },
         {
-          "fpr": 0.4727,
-          "tpr": 0.6471,
-          "threshold": 0.346
+          "fpr": 0.6078,
+          "tpr": 0.5926,
+          "threshold": 0.3486
         },
         {
-          "fpr": 0.4909,
-          "tpr": 0.6471,
-          "threshold": 0.3415
+          "fpr": 0.6078,
+          "tpr": 0.6111,
+          "threshold": 0.3406
         },
         {
-          "fpr": 0.4909,
+          "fpr": 0.6471,
+          "tpr": 0.6111,
+          "threshold": 0.3371
+        },
+        {
+          "fpr": 0.6471,
+          "tpr": 0.6296,
+          "threshold": 0.3368
+        },
+        {
+          "fpr": 0.6667,
+          "tpr": 0.6296,
+          "threshold": 0.3367
+        },
+        {
+          "fpr": 0.6667,
           "tpr": 0.6667,
-          "threshold": 0.3402
+          "threshold": 0.3242
         },
         {
-          "fpr": 0.5091,
+          "fpr": 0.7255,
           "tpr": 0.6667,
-          "threshold": 0.3329
+          "threshold": 0.3162
         },
         {
-          "fpr": 0.5091,
-          "tpr": 0.6863,
-          "threshold": 0.3292
+          "fpr": 0.7255,
+          "tpr": 0.6852,
+          "threshold": 0.3061
         },
         {
-          "fpr": 0.5455,
-          "tpr": 0.6863,
-          "threshold": 0.3217
+          "fpr": 0.7843,
+          "tpr": 0.6852,
+          "threshold": 0.2825
         },
         {
-          "fpr": 0.5455,
-          "tpr": 0.7451,
-          "threshold": 0.3108
+          "fpr": 0.7843,
+          "tpr": 0.7222,
+          "threshold": 0.2743
         },
         {
-          "fpr": 0.5818,
-          "tpr": 0.7451,
-          "threshold": 0.3014
+          "fpr": 0.8235,
+          "tpr": 0.7222,
+          "threshold": 0.2562
         },
         {
-          "fpr": 0.5818,
-          "tpr": 0.7647,
-          "threshold": 0.2974
+          "fpr": 0.8235,
+          "tpr": 0.7963,
+          "threshold": 0.2436
         },
         {
-          "fpr": 0.6,
-          "tpr": 0.7647,
-          "threshold": 0.2899
+          "fpr": 0.8824,
+          "tpr": 0.7963,
+          "threshold": 0.233
         },
         {
-          "fpr": 0.6,
-          "tpr": 0.8431,
-          "threshold": 0.2555
+          "fpr": 0.8824,
+          "tpr": 0.8704,
+          "threshold": 0.2083
         },
         {
-          "fpr": 0.6909,
-          "tpr": 0.8431,
-          "threshold": 0.2233
+          "fpr": 0.902,
+          "tpr": 0.8704,
+          "threshold": 0.2055
         },
         {
-          "fpr": 0.6909,
-          "tpr": 0.8627,
-          "threshold": 0.2231
+          "fpr": 0.902,
+          "tpr": 0.9259,
+          "threshold": 0.1911
         },
         {
-          "fpr": 0.7091,
-          "tpr": 0.8627,
-          "threshold": 0.2159
+          "fpr": 0.9608,
+          "tpr": 0.9259,
+          "threshold": 0.1601
         },
         {
-          "fpr": 0.7091,
-          "tpr": 0.902,
-          "threshold": 0.2044
+          "fpr": 0.9608,
+          "tpr": 0.963,
+          "threshold": 0.1423
         },
         {
-          "fpr": 0.7273,
-          "tpr": 0.902,
-          "threshold": 0.2039
+          "fpr": 0.9804,
+          "tpr": 0.963,
+          "threshold": 0.1173
         },
         {
-          "fpr": 0.7273,
-          "tpr": 0.9216,
-          "threshold": 0.2018
+          "fpr": 0.9804,
+          "tpr": 0.9815,
+          "threshold": 0.1032
         },
         {
-          "fpr": 0.8909,
-          "tpr": 0.9216,
-          "threshold": 0.1466
-        },
-        {
-          "fpr": 0.8909,
-          "tpr": 0.9412,
-          "threshold": 0.1395
-        },
-        {
-          "fpr": 0.9273,
-          "tpr": 0.9412,
-          "threshold": 0.1078
-        },
-        {
-          "fpr": 0.9273,
-          "tpr": 0.9608,
-          "threshold": 0.0987
-        },
-        {
-          "fpr": 0.9636,
-          "tpr": 0.9608,
-          "threshold": 0.0878
-        },
-        {
-          "fpr": 0.9636,
-          "tpr": 0.9804,
-          "threshold": 0.0877
-        },
-        {
-          "fpr": 0.9818,
-          "tpr": 0.9804,
-          "threshold": 0.0823
-        },
-        {
-          "fpr": 0.9818,
-          "tpr": 1.0,
-          "threshold": 0.0728
+          "fpr": 1.0,
+          "tpr": 0.9815,
+          "threshold": 0.0681
         },
         {
           "fpr": 1.0,
           "tpr": 1.0,
-          "threshold": 0.0664
+          "threshold": 0.0623
         }
       ],
-      "auc_where_it_ran": 0.6496,
-      "auc_on_target_attacks": 0.8443,
+      "auc_where_it_ran": 0.5396,
+      "auc_on_target_attacks": 0.6908,
       "target_attacks": [
         "generated_selfie",
         "synthetic_identity"
@@ -407,12 +512,12 @@
     },
     "liveness_video": {
       "label": "Liveness Video Analyzer",
-      "auc_all_rows": 0.6043,
+      "auc_all_rows": 0.5548,
       "coverage": 1.0,
       "errors": 0,
       "skipped": 0,
-      "mean_genuine": 0.189,
-      "mean_fraud": 0.2186,
+      "mean_genuine": 0.218,
+      "mean_fraud": 0.247,
       "roc": [
         {
           "fpr": 0.0,
@@ -420,315 +525,305 @@
           "threshold": 1.0
         },
         {
-          "fpr": 0.0182,
-          "tpr": 0.0,
-          "threshold": 0.487
+          "fpr": 0.0,
+          "tpr": 0.0185,
+          "threshold": 0.6054
         },
         {
-          "fpr": 0.0364,
-          "tpr": 0.0,
-          "threshold": 0.4019
+          "fpr": 0.0,
+          "tpr": 0.0556,
+          "threshold": 0.4972
         },
         {
-          "fpr": 0.0364,
-          "tpr": 0.0196,
-          "threshold": 0.4011
+          "fpr": 0.0392,
+          "tpr": 0.0556,
+          "threshold": 0.4224
         },
         {
-          "fpr": 0.0545,
-          "tpr": 0.0196,
-          "threshold": 0.3996
+          "fpr": 0.0392,
+          "tpr": 0.0741,
+          "threshold": 0.4163
         },
         {
-          "fpr": 0.0545,
-          "tpr": 0.0588,
-          "threshold": 0.397
+          "fpr": 0.0588,
+          "tpr": 0.0741,
+          "threshold": 0.4157
         },
         {
-          "fpr": 0.0727,
-          "tpr": 0.0588,
-          "threshold": 0.3941
+          "fpr": 0.0588,
+          "tpr": 0.1667,
+          "threshold": 0.393
         },
         {
-          "fpr": 0.0727,
-          "tpr": 0.1176,
-          "threshold": 0.3735
+          "fpr": 0.0784,
+          "tpr": 0.1667,
+          "threshold": 0.3916
         },
         {
-          "fpr": 0.1091,
-          "tpr": 0.1176,
-          "threshold": 0.3653
+          "fpr": 0.0784,
+          "tpr": 0.1852,
+          "threshold": 0.3765
         },
         {
-          "fpr": 0.1091,
-          "tpr": 0.1373,
-          "threshold": 0.3642
+          "fpr": 0.098,
+          "tpr": 0.1852,
+          "threshold": 0.3764
         },
         {
-          "fpr": 0.1273,
-          "tpr": 0.1373,
-          "threshold": 0.362
+          "fpr": 0.098,
+          "tpr": 0.2037,
+          "threshold": 0.3761
         },
         {
-          "fpr": 0.1273,
-          "tpr": 0.1569,
-          "threshold": 0.3616
+          "fpr": 0.1176,
+          "tpr": 0.2037,
+          "threshold": 0.3662
         },
         {
-          "fpr": 0.1636,
-          "tpr": 0.1765,
-          "threshold": 0.3506
+          "fpr": 0.1176,
+          "tpr": 0.2407,
+          "threshold": 0.3591
         },
         {
-          "fpr": 0.2,
-          "tpr": 0.1765,
-          "threshold": 0.3452
+          "fpr": 0.1569,
+          "tpr": 0.2407,
+          "threshold": 0.3562
         },
         {
-          "fpr": 0.2,
-          "tpr": 0.1961,
-          "threshold": 0.3253
+          "fpr": 0.1569,
+          "tpr": 0.2593,
+          "threshold": 0.3547
         },
         {
-          "fpr": 0.2182,
-          "tpr": 0.1961,
-          "threshold": 0.3111
+          "fpr": 0.1765,
+          "tpr": 0.2593,
+          "threshold": 0.3461
         },
         {
-          "fpr": 0.2182,
-          "tpr": 0.2549,
-          "threshold": 0.3021
+          "fpr": 0.1765,
+          "tpr": 0.2963,
+          "threshold": 0.3407
         },
         {
-          "fpr": 0.2364,
-          "tpr": 0.2549,
-          "threshold": 0.2939
+          "fpr": 0.2353,
+          "tpr": 0.2963,
+          "threshold": 0.3118
         },
         {
-          "fpr": 0.2364,
-          "tpr": 0.2745,
-          "threshold": 0.2913
+          "fpr": 0.2353,
+          "tpr": 0.3148,
+          "threshold": 0.3096
         },
         {
-          "fpr": 0.2545,
-          "tpr": 0.2745,
-          "threshold": 0.2912
+          "fpr": 0.2549,
+          "tpr": 0.3148,
+          "threshold": 0.3081
         },
         {
-          "fpr": 0.2545,
-          "tpr": 0.2941,
-          "threshold": 0.29
-        },
-        {
-          "fpr": 0.2727,
-          "tpr": 0.2941,
-          "threshold": 0.2855
-        },
-        {
-          "fpr": 0.2727,
-          "tpr": 0.3137,
-          "threshold": 0.2713
-        },
-        {
-          "fpr": 0.2909,
-          "tpr": 0.3137,
-          "threshold": 0.2698
-        },
-        {
-          "fpr": 0.3091,
+          "fpr": 0.2549,
           "tpr": 0.3333,
-          "threshold": 0.2611
+          "threshold": 0.3074
         },
         {
-          "fpr": 0.3091,
-          "tpr": 0.3529,
-          "threshold": 0.2595
+          "fpr": 0.2745,
+          "tpr": 0.3333,
+          "threshold": 0.3026
         },
         {
-          "fpr": 0.3273,
-          "tpr": 0.3529,
-          "threshold": 0.2504
+          "fpr": 0.2745,
+          "tpr": 0.4444,
+          "threshold": 0.2904
         },
         {
-          "fpr": 0.3273,
-          "tpr": 0.3922,
-          "threshold": 0.2354
+          "fpr": 0.2941,
+          "tpr": 0.4444,
+          "threshold": 0.2852
         },
         {
-          "fpr": 0.3455,
-          "tpr": 0.3922,
-          "threshold": 0.2327
+          "fpr": 0.2941,
+          "tpr": 0.463,
+          "threshold": 0.2834
         },
         {
-          "fpr": 0.3455,
-          "tpr": 0.451,
-          "threshold": 0.2272
+          "fpr": 0.3137,
+          "tpr": 0.463,
+          "threshold": 0.2825
         },
         {
-          "fpr": 0.3636,
-          "tpr": 0.451,
-          "threshold": 0.2271
+          "fpr": 0.3137,
+          "tpr": 0.4815,
+          "threshold": 0.2805
         },
         {
-          "fpr": 0.3636,
-          "tpr": 0.5098,
-          "threshold": 0.2116
+          "fpr": 0.3529,
+          "tpr": 0.4815,
+          "threshold": 0.2699
         },
         {
-          "fpr": 0.3818,
-          "tpr": 0.5098,
-          "threshold": 0.2106
+          "fpr": 0.3529,
+          "tpr": 0.5,
+          "threshold": 0.2639
         },
         {
-          "fpr": 0.3818,
-          "tpr": 0.5686,
-          "threshold": 0.1939
+          "fpr": 0.4118,
+          "tpr": 0.5,
+          "threshold": 0.2513
         },
         {
-          "fpr": 0.4182,
-          "tpr": 0.5686,
-          "threshold": 0.1902
+          "fpr": 0.4118,
+          "tpr": 0.5185,
+          "threshold": 0.2391
         },
         {
-          "fpr": 0.4182,
-          "tpr": 0.6275,
-          "threshold": 0.1873
+          "fpr": 0.4706,
+          "tpr": 0.5185,
+          "threshold": 0.2339
         },
         {
-          "fpr": 0.4545,
-          "tpr": 0.6471,
-          "threshold": 0.1746
+          "fpr": 0.4706,
+          "tpr": 0.5741,
+          "threshold": 0.2128
         },
         {
-          "fpr": 0.4727,
-          "tpr": 0.6471,
-          "threshold": 0.1743
+          "fpr": 0.5882,
+          "tpr": 0.5741,
+          "threshold": 0.1863
         },
         {
-          "fpr": 0.4727,
-          "tpr": 0.6667,
-          "threshold": 0.1707
+          "fpr": 0.5882,
+          "tpr": 0.6111,
+          "threshold": 0.1797
         },
         {
-          "fpr": 0.4909,
-          "tpr": 0.6667,
-          "threshold": 0.1486
+          "fpr": 0.6078,
+          "tpr": 0.6111,
+          "threshold": 0.1783
         },
         {
-          "fpr": 0.4909,
-          "tpr": 0.7059,
-          "threshold": 0.1416
+          "fpr": 0.6078,
+          "tpr": 0.6481,
+          "threshold": 0.1708
         },
         {
-          "fpr": 0.5091,
-          "tpr": 0.7059,
-          "threshold": 0.1392
+          "fpr": 0.6667,
+          "tpr": 0.6481,
+          "threshold": 0.1628
         },
         {
-          "fpr": 0.5091,
-          "tpr": 0.7255,
-          "threshold": 0.1383
+          "fpr": 0.6667,
+          "tpr": 0.7037,
+          "threshold": 0.1425
         },
         {
-          "fpr": 0.5273,
-          "tpr": 0.7255,
-          "threshold": 0.1375
+          "fpr": 0.6863,
+          "tpr": 0.7037,
+          "threshold": 0.1386
         },
         {
-          "fpr": 0.5273,
-          "tpr": 0.7451,
-          "threshold": 0.1286
+          "fpr": 0.6863,
+          "tpr": 0.7407,
+          "threshold": 0.1313
         },
         {
-          "fpr": 0.5455,
-          "tpr": 0.7451,
-          "threshold": 0.1263
+          "fpr": 0.7647,
+          "tpr": 0.7407,
+          "threshold": 0.1247
         },
         {
-          "fpr": 0.5455,
-          "tpr": 0.7843,
-          "threshold": 0.1204
+          "fpr": 0.7647,
+          "tpr": 0.7593,
+          "threshold": 0.1219
         },
         {
-          "fpr": 0.5636,
-          "tpr": 0.7843,
-          "threshold": 0.1187
+          "fpr": 0.8039,
+          "tpr": 0.7593,
+          "threshold": 0.1202
         },
         {
-          "fpr": 0.6182,
-          "tpr": 0.8627,
-          "threshold": 0.1064
+          "fpr": 0.8039,
+          "tpr": 0.8148,
+          "threshold": 0.1022
         },
         {
-          "fpr": 0.6182,
-          "tpr": 0.8824,
-          "threshold": 0.1015
+          "fpr": 0.8235,
+          "tpr": 0.8148,
+          "threshold": 0.1003
         },
         {
-          "fpr": 0.7091,
-          "tpr": 0.8824,
-          "threshold": 0.0936
+          "fpr": 0.8235,
+          "tpr": 0.8333,
+          "threshold": 0.0935
         },
         {
-          "fpr": 0.7091,
-          "tpr": 0.902,
-          "threshold": 0.0915
+          "fpr": 0.8627,
+          "tpr": 0.8333,
+          "threshold": 0.089
         },
         {
-          "fpr": 0.8364,
-          "tpr": 0.902,
-          "threshold": 0.0807
+          "fpr": 0.8627,
+          "tpr": 0.8889,
+          "threshold": 0.0793
         },
         {
-          "fpr": 0.8364,
-          "tpr": 0.9412,
-          "threshold": 0.0798
+          "fpr": 0.8824,
+          "tpr": 0.8889,
+          "threshold": 0.0793
         },
         {
-          "fpr": 0.8727,
-          "tpr": 0.9412,
-          "threshold": 0.0775
+          "fpr": 0.8824,
+          "tpr": 0.9259,
+          "threshold": 0.0788
         },
         {
-          "fpr": 0.8727,
-          "tpr": 0.9608,
-          "threshold": 0.0723
+          "fpr": 0.9216,
+          "tpr": 0.9259,
+          "threshold": 0.0753
         },
         {
-          "fpr": 0.8909,
-          "tpr": 0.9608,
-          "threshold": 0.0703
+          "fpr": 0.9216,
+          "tpr": 0.963,
+          "threshold": 0.0671
         },
         {
-          "fpr": 0.8909,
-          "tpr": 0.9804,
-          "threshold": 0.0684
+          "fpr": 0.9412,
+          "tpr": 0.963,
+          "threshold": 0.065
         },
         {
-          "fpr": 0.9636,
-          "tpr": 0.9804,
-          "threshold": 0.0581
+          "fpr": 0.9412,
+          "tpr": 0.9815,
+          "threshold": 0.0598
+        },
+        {
+          "fpr": 0.9608,
+          "tpr": 0.9815,
+          "threshold": 0.0594
+        },
+        {
+          "fpr": 0.9608,
+          "tpr": 1.0,
+          "threshold": 0.0528
         },
         {
           "fpr": 1.0,
           "tpr": 1.0,
-          "threshold": 0.0531
+          "threshold": 0.0494
         }
       ],
-      "auc_where_it_ran": 0.6043,
-      "auc_on_target_attacks": 0.56,
+      "auc_where_it_ran": 0.5548,
+      "auc_on_target_attacks": 0.4771,
       "target_attacks": [
         "face_swap_liveness"
       ]
     },
     "id_forensics": {
       "label": "ID Document Forensics",
-      "auc_all_rows": 0.5729,
+      "auc_all_rows": 0.3882,
       "coverage": 1.0,
       "errors": 0,
       "skipped": 0,
-      "mean_genuine": 0.1069,
-      "mean_fraud": 0.1301,
+      "mean_genuine": 0.1626,
+      "mean_fraud": 0.1082,
       "roc": [
         {
           "fpr": 0.0,
@@ -736,263 +831,303 @@
           "threshold": 1.0
         },
         {
-          "fpr": 0.0,
-          "tpr": 0.0196,
-          "threshold": 0.5333
+          "fpr": 0.0196,
+          "tpr": 0.0,
+          "threshold": 0.4446
         },
         {
-          "fpr": 0.0,
-          "tpr": 0.0392,
-          "threshold": 0.443
+          "fpr": 0.1373,
+          "tpr": 0.0,
+          "threshold": 0.3386
         },
         {
-          "fpr": 0.0364,
-          "tpr": 0.0392,
-          "threshold": 0.3894
+          "fpr": 0.1373,
+          "tpr": 0.037,
+          "threshold": 0.3259
         },
         {
-          "fpr": 0.0364,
-          "tpr": 0.098,
-          "threshold": 0.3399
+          "fpr": 0.1765,
+          "tpr": 0.037,
+          "threshold": 0.3168
         },
         {
-          "fpr": 0.0909,
-          "tpr": 0.098,
-          "threshold": 0.308
+          "fpr": 0.1765,
+          "tpr": 0.0556,
+          "threshold": 0.3139
         },
         {
-          "fpr": 0.0909,
-          "tpr": 0.1176,
-          "threshold": 0.2625
+          "fpr": 0.2549,
+          "tpr": 0.0556,
+          "threshold": 0.2627
         },
         {
-          "fpr": 0.1091,
-          "tpr": 0.1176,
-          "threshold": 0.2366
+          "fpr": 0.2549,
+          "tpr": 0.0741,
+          "threshold": 0.2275
         },
         {
-          "fpr": 0.1091,
-          "tpr": 0.1569,
-          "threshold": 0.209
+          "fpr": 0.2745,
+          "tpr": 0.0741,
+          "threshold": 0.2274
         },
         {
-          "fpr": 0.1455,
-          "tpr": 0.1569,
-          "threshold": 0.2021
+          "fpr": 0.2745,
+          "tpr": 0.1111,
+          "threshold": 0.2014
         },
         {
-          "fpr": 0.1455,
-          "tpr": 0.2157,
-          "threshold": 0.1938
+          "fpr": 0.2941,
+          "tpr": 0.1111,
+          "threshold": 0.1969
         },
         {
-          "fpr": 0.2182,
-          "tpr": 0.2157,
-          "threshold": 0.1855
+          "fpr": 0.2941,
+          "tpr": 0.1296,
+          "threshold": 0.1968
         },
         {
-          "fpr": 0.2182,
-          "tpr": 0.2353,
-          "threshold": 0.1834
+          "fpr": 0.3137,
+          "tpr": 0.1296,
+          "threshold": 0.1968
         },
         {
-          "fpr": 0.2364,
-          "tpr": 0.2353,
-          "threshold": 0.1833
+          "fpr": 0.3137,
+          "tpr": 0.1481,
+          "threshold": 0.1929
         },
         {
-          "fpr": 0.2364,
-          "tpr": 0.2941,
-          "threshold": 0.1704
+          "fpr": 0.3529,
+          "tpr": 0.1481,
+          "threshold": 0.1868
         },
         {
-          "fpr": 0.2545,
-          "tpr": 0.2941,
-          "threshold": 0.1673
+          "fpr": 0.3529,
+          "tpr": 0.2407,
+          "threshold": 0.1757
         },
         {
-          "fpr": 0.2545,
+          "fpr": 0.3725,
+          "tpr": 0.2407,
+          "threshold": 0.1742
+        },
+        {
+          "fpr": 0.3725,
+          "tpr": 0.2593,
+          "threshold": 0.1712
+        },
+        {
+          "fpr": 0.3922,
+          "tpr": 0.2593,
+          "threshold": 0.1689
+        },
+        {
+          "fpr": 0.3922,
+          "tpr": 0.2778,
+          "threshold": 0.1669
+        },
+        {
+          "fpr": 0.4118,
+          "tpr": 0.2778,
+          "threshold": 0.1576
+        },
+        {
+          "fpr": 0.4118,
+          "tpr": 0.3148,
+          "threshold": 0.153
+        },
+        {
+          "fpr": 0.451,
+          "tpr": 0.3148,
+          "threshold": 0.1516
+        },
+        {
+          "fpr": 0.451,
           "tpr": 0.3333,
-          "threshold": 0.151
+          "threshold": 0.1506
         },
         {
-          "fpr": 0.2727,
+          "fpr": 0.4706,
           "tpr": 0.3333,
-          "threshold": 0.149
+          "threshold": 0.1463
         },
         {
-          "fpr": 0.2727,
-          "tpr": 0.3529,
-          "threshold": 0.1466
+          "fpr": 0.4706,
+          "tpr": 0.3519,
+          "threshold": 0.1444
         },
         {
-          "fpr": 0.2909,
-          "tpr": 0.3529,
-          "threshold": 0.1458
+          "fpr": 0.5098,
+          "tpr": 0.3519,
+          "threshold": 0.1365
         },
         {
-          "fpr": 0.2909,
-          "tpr": 0.4118,
-          "threshold": 0.1366
+          "fpr": 0.5098,
+          "tpr": 0.4074,
+          "threshold": 0.1279
         },
         {
-          "fpr": 0.3455,
-          "tpr": 0.4118,
-          "threshold": 0.1274
+          "fpr": 0.5294,
+          "tpr": 0.4074,
+          "threshold": 0.127
         },
         {
-          "fpr": 0.3455,
-          "tpr": 0.451,
-          "threshold": 0.1233
+          "fpr": 0.5294,
+          "tpr": 0.4259,
+          "threshold": 0.1219
         },
         {
-          "fpr": 0.3636,
-          "tpr": 0.451,
+          "fpr": 0.549,
+          "tpr": 0.4259,
           "threshold": 0.1194
         },
         {
-          "fpr": 0.3636,
-          "tpr": 0.5098,
-          "threshold": 0.1113
+          "fpr": 0.549,
+          "tpr": 0.463,
+          "threshold": 0.1128
         },
         {
-          "fpr": 0.4,
-          "tpr": 0.5098,
-          "threshold": 0.1056
+          "fpr": 0.5686,
+          "tpr": 0.463,
+          "threshold": 0.1085
         },
         {
-          "fpr": 0.4,
-          "tpr": 0.5294,
-          "threshold": 0.0986
+          "fpr": 0.5686,
+          "tpr": 0.4815,
+          "threshold": 0.099
         },
         {
-          "fpr": 0.4364,
-          "tpr": 0.5294,
-          "threshold": 0.0952
+          "fpr": 0.6667,
+          "tpr": 0.4815,
+          "threshold": 0.0832
         },
         {
-          "fpr": 0.4364,
-          "tpr": 0.5686,
-          "threshold": 0.089
+          "fpr": 0.6667,
+          "tpr": 0.5185,
+          "threshold": 0.0813
         },
         {
-          "fpr": 0.4909,
-          "tpr": 0.5686,
-          "threshold": 0.072
+          "fpr": 0.6863,
+          "tpr": 0.5185,
+          "threshold": 0.081
         },
         {
-          "fpr": 0.4909,
-          "tpr": 0.6667,
-          "threshold": 0.0592
+          "fpr": 0.6863,
+          "tpr": 0.537,
+          "threshold": 0.0749
         },
         {
-          "fpr": 0.5091,
-          "tpr": 0.6667,
-          "threshold": 0.0581
+          "fpr": 0.7059,
+          "tpr": 0.537,
+          "threshold": 0.0711
         },
         {
-          "fpr": 0.5091,
-          "tpr": 0.6863,
-          "threshold": 0.0575
+          "fpr": 0.7059,
+          "tpr": 0.5741,
+          "threshold": 0.0674
         },
         {
-          "fpr": 0.5636,
-          "tpr": 0.6863,
-          "threshold": 0.0517
+          "fpr": 0.7255,
+          "tpr": 0.5741,
+          "threshold": 0.0658
         },
         {
-          "fpr": 0.5636,
-          "tpr": 0.7059,
-          "threshold": 0.0499
+          "fpr": 0.7255,
+          "tpr": 0.5926,
+          "threshold": 0.0657
         },
         {
-          "fpr": 0.6182,
-          "tpr": 0.7059,
-          "threshold": 0.0453
+          "fpr": 0.7451,
+          "tpr": 0.5926,
+          "threshold": 0.0544
         },
         {
-          "fpr": 0.6182,
-          "tpr": 0.7255,
-          "threshold": 0.0409
+          "fpr": 0.7451,
+          "tpr": 0.7037,
+          "threshold": 0.0417
         },
         {
-          "fpr": 0.6364,
-          "tpr": 0.7255,
-          "threshold": 0.0389
+          "fpr": 0.8235,
+          "tpr": 0.7037,
+          "threshold": 0.0372
         },
         {
-          "fpr": 0.6364,
-          "tpr": 0.7451,
-          "threshold": 0.0389
+          "fpr": 0.8235,
+          "tpr": 0.7407,
+          "threshold": 0.0349
         },
         {
-          "fpr": 0.6727,
-          "tpr": 0.7451,
-          "threshold": 0.0371
+          "fpr": 0.8627,
+          "tpr": 0.7407,
+          "threshold": 0.033
         },
         {
-          "fpr": 0.6727,
-          "tpr": 0.8039,
-          "threshold": 0.0353
+          "fpr": 0.8627,
+          "tpr": 0.8148,
+          "threshold": 0.0294
         },
         {
-          "fpr": 0.6909,
-          "tpr": 0.8039,
-          "threshold": 0.0345
-        },
-        {
-          "fpr": 0.6909,
-          "tpr": 0.8627,
-          "threshold": 0.0332
-        },
-        {
-          "fpr": 0.8,
-          "tpr": 0.8627,
+          "fpr": 0.8824,
+          "tpr": 0.8148,
           "threshold": 0.0287
         },
         {
-          "fpr": 0.8,
-          "tpr": 0.8824,
+          "fpr": 0.8824,
+          "tpr": 0.8519,
+          "threshold": 0.0278
+        },
+        {
+          "fpr": 0.902,
+          "tpr": 0.8519,
           "threshold": 0.0275
         },
         {
-          "fpr": 0.8727,
-          "tpr": 0.8824,
-          "threshold": 0.0257
+          "fpr": 0.902,
+          "tpr": 0.8704,
+          "threshold": 0.0264
         },
         {
-          "fpr": 0.8727,
-          "tpr": 0.9216,
-          "threshold": 0.0241
+          "fpr": 0.9216,
+          "tpr": 0.8704,
+          "threshold": 0.0263
         },
         {
-          "fpr": 0.9636,
-          "tpr": 0.9216,
-          "threshold": 0.0204
+          "fpr": 0.9216,
+          "tpr": 0.8889,
+          "threshold": 0.0261
         },
         {
-          "fpr": 0.9636,
-          "tpr": 0.9804,
-          "threshold": 0.0194
+          "fpr": 0.9608,
+          "tpr": 0.8889,
+          "threshold": 0.0249
         },
         {
-          "fpr": 0.9818,
-          "tpr": 0.9804,
-          "threshold": 0.0192
+          "fpr": 0.9608,
+          "tpr": 0.9444,
+          "threshold": 0.024
         },
         {
-          "fpr": 0.9818,
-          "tpr": 1.0,
-          "threshold": 0.0189
+          "fpr": 0.9804,
+          "tpr": 0.9444,
+          "threshold": 0.0232
+        },
+        {
+          "fpr": 0.9804,
+          "tpr": 0.963,
+          "threshold": 0.0221
+        },
+        {
+          "fpr": 1.0,
+          "tpr": 0.963,
+          "threshold": 0.0196
         },
         {
           "fpr": 1.0,
           "tpr": 1.0,
-          "threshold": 0.0167
+          "threshold": 0.0195
         }
       ],
-      "auc_where_it_ran": 0.5729,
-      "auc_on_target_attacks": 0.7023,
+      "auc_where_it_ran": 0.3882,
+      "auc_on_target_attacks": 0.4392,
       "target_attacks": [
         "invalid_document",
         "synthetic_identity",
@@ -1001,12 +1136,12 @@
     },
     "face_match": {
       "label": "Face Match (Selfie vs ID)",
-      "auc_all_rows": 0.7048,
+      "auc_all_rows": 0.6383,
       "coverage": 1.0,
       "errors": 0,
       "skipped": 0,
-      "mean_genuine": 0.2026,
-      "mean_fraud": 0.4465,
+      "mean_genuine": 0.2121,
+      "mean_fraud": 0.4046,
       "roc": [
         {
           "fpr": 0.0,
@@ -1015,217 +1150,237 @@
         },
         {
           "fpr": 0.0,
-          "tpr": 0.2157,
+          "tpr": 0.2037,
           "threshold": 1.0
         },
         {
           "fpr": 0.0,
+          "tpr": 0.2963,
+          "threshold": 0.2499
+        },
+        {
+          "fpr": 0.0196,
+          "tpr": 0.2963,
+          "threshold": 0.249
+        },
+        {
+          "fpr": 0.0196,
           "tpr": 0.3333,
-          "threshold": 0.2425
+          "threshold": 0.2422
         },
         {
-          "fpr": 0.0182,
+          "fpr": 0.0588,
           "tpr": 0.3333,
-          "threshold": 0.2418
+          "threshold": 0.2412
         },
         {
-          "fpr": 0.0182,
-          "tpr": 0.3529,
-          "threshold": 0.2397
+          "fpr": 0.0588,
+          "tpr": 0.3519,
+          "threshold": 0.2408
         },
         {
-          "fpr": 0.0727,
-          "tpr": 0.3529,
-          "threshold": 0.2365
+          "fpr": 0.0784,
+          "tpr": 0.3519,
+          "threshold": 0.2401
         },
         {
-          "fpr": 0.0727,
-          "tpr": 0.4314,
-          "threshold": 0.2346
+          "fpr": 0.0784,
+          "tpr": 0.3704,
+          "threshold": 0.2383
         },
         {
-          "fpr": 0.0909,
-          "tpr": 0.4314,
-          "threshold": 0.234
+          "fpr": 0.1961,
+          "tpr": 0.3704,
+          "threshold": 0.2343
         },
         {
-          "fpr": 0.0909,
-          "tpr": 0.451,
-          "threshold": 0.233
+          "fpr": 0.1961,
+          "tpr": 0.4259,
+          "threshold": 0.2332
         },
         {
-          "fpr": 0.1091,
-          "tpr": 0.451,
-          "threshold": 0.2305
+          "fpr": 0.2549,
+          "tpr": 0.4259,
+          "threshold": 0.2286
         },
         {
-          "fpr": 0.1091,
-          "tpr": 0.4902,
-          "threshold": 0.2292
+          "fpr": 0.2549,
+          "tpr": 0.4444,
+          "threshold": 0.2281
         },
         {
-          "fpr": 0.1273,
-          "tpr": 0.4902,
-          "threshold": 0.2285
+          "fpr": 0.2941,
+          "tpr": 0.4444,
+          "threshold": 0.2276
         },
         {
-          "fpr": 0.1273,
-          "tpr": 0.5294,
-          "threshold": 0.2278
+          "fpr": 0.2941,
+          "tpr": 0.4815,
+          "threshold": 0.2274
         },
         {
-          "fpr": 0.2182,
-          "tpr": 0.5294,
+          "fpr": 0.3333,
+          "tpr": 0.4815,
+          "threshold": 0.2271
+        },
+        {
+          "fpr": 0.3333,
+          "tpr": 0.5,
+          "threshold": 0.2252
+        },
+        {
+          "fpr": 0.3725,
+          "tpr": 0.5,
+          "threshold": 0.225
+        },
+        {
+          "fpr": 0.3725,
+          "tpr": 0.537,
+          "threshold": 0.2246
+        },
+        {
+          "fpr": 0.3922,
+          "tpr": 0.537,
+          "threshold": 0.2243
+        },
+        {
+          "fpr": 0.3922,
+          "tpr": 0.5556,
+          "threshold": 0.2241
+        },
+        {
+          "fpr": 0.4314,
+          "tpr": 0.5556,
+          "threshold": 0.2225
+        },
+        {
+          "fpr": 0.4314,
+          "tpr": 0.5926,
           "threshold": 0.222
         },
         {
-          "fpr": 0.2182,
-          "tpr": 0.549,
-          "threshold": 0.2213
+          "fpr": 0.4706,
+          "tpr": 0.5926,
+          "threshold": 0.2215
         },
         {
-          "fpr": 0.2364,
-          "tpr": 0.549,
-          "threshold": 0.2207
+          "fpr": 0.4706,
+          "tpr": 0.6481,
+          "threshold": 0.22
         },
         {
-          "fpr": 0.2364,
-          "tpr": 0.5882,
-          "threshold": 0.2205
+          "fpr": 0.5098,
+          "tpr": 0.6481,
+          "threshold": 0.2192
         },
         {
-          "fpr": 0.2545,
-          "tpr": 0.5882,
-          "threshold": 0.2204
+          "fpr": 0.5098,
+          "tpr": 0.7222,
+          "threshold": 0.2186
         },
         {
-          "fpr": 0.2545,
-          "tpr": 0.6078,
-          "threshold": 0.2204
+          "fpr": 0.549,
+          "tpr": 0.7222,
+          "threshold": 0.218
         },
         {
-          "fpr": 0.2909,
-          "tpr": 0.6078,
-          "threshold": 0.2173
-        },
-        {
-          "fpr": 0.2909,
-          "tpr": 0.6275,
+          "fpr": 0.549,
+          "tpr": 0.7593,
           "threshold": 0.2167
         },
         {
-          "fpr": 0.3091,
-          "tpr": 0.6275,
-          "threshold": 0.2166
+          "fpr": 0.5686,
+          "tpr": 0.7593,
+          "threshold": 0.2167
         },
         {
-          "fpr": 0.3091,
-          "tpr": 0.6471,
-          "threshold": 0.2163
+          "fpr": 0.5686,
+          "tpr": 0.7778,
+          "threshold": 0.2129
         },
         {
-          "fpr": 0.4,
-          "tpr": 0.6471,
-          "threshold": 0.2147
+          "fpr": 0.5882,
+          "tpr": 0.7778,
+          "threshold": 0.2125
         },
         {
-          "fpr": 0.4,
-          "tpr": 0.6667,
-          "threshold": 0.2146
+          "fpr": 0.5882,
+          "tpr": 0.7963,
+          "threshold": 0.2124
         },
         {
-          "fpr": 0.4182,
-          "tpr": 0.6667,
-          "threshold": 0.2134
+          "fpr": 0.7843,
+          "tpr": 0.7963,
+          "threshold": 0.1971
         },
         {
-          "fpr": 0.4182,
-          "tpr": 0.6863,
-          "threshold": 0.213
+          "fpr": 0.7843,
+          "tpr": 0.8148,
+          "threshold": 0.1971
         },
         {
-          "fpr": 0.4909,
-          "tpr": 0.6863,
-          "threshold": 0.2107
+          "fpr": 0.8039,
+          "tpr": 0.8148,
+          "threshold": 0.1952
         },
         {
-          "fpr": 0.4909,
-          "tpr": 0.7451,
-          "threshold": 0.2072
+          "fpr": 0.8039,
+          "tpr": 0.8519,
+          "threshold": 0.1933
         },
         {
-          "fpr": 0.5273,
-          "tpr": 0.7451,
-          "threshold": 0.2069
+          "fpr": 0.8627,
+          "tpr": 0.8519,
+          "threshold": 0.1871
         },
         {
-          "fpr": 0.5273,
-          "tpr": 0.8039,
-          "threshold": 0.2047
+          "fpr": 0.8627,
+          "tpr": 0.8704,
+          "threshold": 0.1864
         },
         {
-          "fpr": 0.7455,
-          "tpr": 0.8039,
-          "threshold": 0.1932
+          "fpr": 0.8824,
+          "tpr": 0.8704,
+          "threshold": 0.1864
         },
         {
-          "fpr": 0.7455,
-          "tpr": 0.8235,
-          "threshold": 0.1918
+          "fpr": 0.8824,
+          "tpr": 0.8889,
+          "threshold": 0.181
         },
         {
-          "fpr": 0.8,
-          "tpr": 0.8235,
-          "threshold": 0.1889
+          "fpr": 0.902,
+          "tpr": 0.8889,
+          "threshold": 0.1804
         },
         {
-          "fpr": 0.8,
-          "tpr": 0.8627,
-          "threshold": 0.1861
+          "fpr": 0.902,
+          "tpr": 0.9074,
+          "threshold": 0.1792
         },
         {
-          "fpr": 0.8182,
-          "tpr": 0.8627,
-          "threshold": 0.185
+          "fpr": 0.9608,
+          "tpr": 0.9074,
+          "threshold": 0.1691
         },
         {
-          "fpr": 0.8182,
-          "tpr": 0.8824,
-          "threshold": 0.1799
-        },
-        {
-          "fpr": 0.8909,
-          "tpr": 0.8824,
-          "threshold": 0.1758
-        },
-        {
-          "fpr": 0.8909,
-          "tpr": 0.9412,
-          "threshold": 0.1685
-        },
-        {
-          "fpr": 0.9636,
-          "tpr": 0.9412,
-          "threshold": 0.1423
-        },
-        {
-          "fpr": 0.9636,
-          "tpr": 0.9804,
-          "threshold": 0.1357
+          "fpr": 0.9608,
+          "tpr": 0.9815,
+          "threshold": 0.1516
         },
         {
           "fpr": 1.0,
-          "tpr": 0.9804,
-          "threshold": 0.1241
+          "tpr": 0.9815,
+          "threshold": 0.1235
         },
         {
           "fpr": 1.0,
           "tpr": 1.0,
-          "threshold": 0.1236
+          "threshold": 0.0293
         }
       ],
-      "auc_where_it_ran": 0.7048,
-      "auc_on_target_attacks": 0.776,
+      "auc_where_it_ran": 0.6383,
+      "auc_on_target_attacks": 0.8163,
       "target_attacks": [
         "generated_selfie",
         "impersonation",
@@ -1234,12 +1389,12 @@
     },
     "metadata_exif": {
       "label": "Metadata / EXIF Auditor",
-      "auc_all_rows": 0.8738,
+      "auc_all_rows": 0.7444,
       "coverage": 1.0,
       "errors": 0,
       "skipped": 0,
-      "mean_genuine": 0.3521,
-      "mean_fraud": 0.7112,
+      "mean_genuine": 0.4288,
+      "mean_fraud": 0.6865,
       "roc": [
         {
           "fpr": 0.0,
@@ -1248,127 +1403,132 @@
         },
         {
           "fpr": 0.0,
-          "tpr": 0.0196,
-          "threshold": 0.9956
+          "tpr": 0.0185,
+          "threshold": 0.9966
         },
         {
           "fpr": 0.0,
-          "tpr": 0.0784,
-          "threshold": 0.9657
+          "tpr": 0.1481,
+          "threshold": 0.956
         },
         {
-          "fpr": 0.0,
-          "tpr": 0.4902,
+          "fpr": 0.1569,
+          "tpr": 0.4074,
           "threshold": 0.82
         },
         {
-          "fpr": 0.0,
-          "tpr": 0.5098,
-          "threshold": 0.811
+          "fpr": 0.1765,
+          "tpr": 0.4074,
+          "threshold": 0.814
         },
         {
-          "fpr": 0.0182,
-          "tpr": 0.5686,
-          "threshold": 0.7747
+          "fpr": 0.1765,
+          "tpr": 0.5185,
+          "threshold": 0.7436
         },
         {
-          "fpr": 0.0182,
-          "tpr": 0.5882,
-          "threshold": 0.7716
+          "fpr": 0.2157,
+          "tpr": 0.5556,
+          "threshold": 0.7325
         },
         {
-          "fpr": 0.0364,
-          "tpr": 0.6078,
-          "threshold": 0.7688
+          "fpr": 0.2157,
+          "tpr": 0.5926,
+          "threshold": 0.7176
         },
         {
-          "fpr": 0.0364,
-          "tpr": 0.6275,
-          "threshold": 0.7653
+          "fpr": 0.2353,
+          "tpr": 0.5926,
+          "threshold": 0.7064
         },
         {
-          "fpr": 0.0727,
-          "tpr": 0.6275,
-          "threshold": 0.7459
-        },
-        {
-          "fpr": 0.0727,
-          "tpr": 0.6471,
-          "threshold": 0.7426
-        },
-        {
-          "fpr": 0.1273,
-          "tpr": 0.6863,
+          "fpr": 0.2549,
+          "tpr": 0.6296,
           "threshold": 0.7036
         },
         {
-          "fpr": 0.1273,
-          "tpr": 0.7059,
-          "threshold": 0.688
+          "fpr": 0.2549,
+          "tpr": 0.6481,
+          "threshold": 0.699
         },
         {
-          "fpr": 0.1636,
-          "tpr": 0.7059,
-          "threshold": 0.6656
+          "fpr": 0.2941,
+          "tpr": 0.6481,
+          "threshold": 0.696
         },
         {
-          "fpr": 0.1636,
-          "tpr": 0.7255,
-          "threshold": 0.6486
+          "fpr": 0.2941,
+          "tpr": 0.6852,
+          "threshold": 0.678
         },
         {
-          "fpr": 0.1636,
-          "tpr": 0.7647,
+          "fpr": 0.3137,
+          "tpr": 0.6852,
+          "threshold": 0.6549
+        },
+        {
+          "fpr": 0.3529,
+          "tpr": 0.6852,
           "threshold": 0.648
         },
         {
-          "fpr": 0.2909,
-          "tpr": 0.8235,
+          "fpr": 0.4118,
+          "tpr": 0.7407,
           "threshold": 0.62
         },
         {
-          "fpr": 0.2909,
-          "tpr": 0.8627,
-          "threshold": 0.5776
+          "fpr": 0.4314,
+          "tpr": 0.7407,
+          "threshold": 0.6122
         },
         {
-          "fpr": 0.3091,
-          "tpr": 0.8627,
-          "threshold": 0.5376
+          "fpr": 0.4314,
+          "tpr": 0.7593,
+          "threshold": 0.6035
         },
         {
-          "fpr": 0.3455,
-          "tpr": 0.8627,
-          "threshold": 0.4224
+          "fpr": 0.4706,
+          "tpr": 0.7593,
+          "threshold": 0.5622
         },
         {
-          "fpr": 0.4364,
-          "tpr": 0.8824,
+          "fpr": 0.4706,
+          "tpr": 0.7963,
+          "threshold": 0.532
+        },
+        {
+          "fpr": 0.5294,
+          "tpr": 0.8333,
           "threshold": 0.4072
         },
         {
-          "fpr": 0.4727,
-          "tpr": 0.902,
+          "fpr": 0.549,
+          "tpr": 0.8889,
           "threshold": 0.3916
         },
         {
-          "fpr": 0.5455,
-          "tpr": 0.902,
+          "fpr": 0.5686,
+          "tpr": 0.9074,
           "threshold": 0.3312
         },
         {
-          "fpr": 0.6727,
-          "tpr": 0.9608,
+          "fpr": 0.5882,
+          "tpr": 0.9074,
+          "threshold": 0.3136
+        },
+        {
+          "fpr": 0.6275,
+          "tpr": 0.9074,
           "threshold": 0.24
         },
         {
-          "fpr": 0.7636,
-          "tpr": 0.9804,
+          "fpr": 0.7647,
+          "tpr": 0.963,
           "threshold": 0.22
         },
         {
-          "fpr": 0.8,
-          "tpr": 1.0,
+          "fpr": 0.8235,
+          "tpr": 0.9815,
           "threshold": 0.12
         },
         {
@@ -1377,8 +1537,8 @@
           "threshold": 0.0
         }
       ],
-      "auc_where_it_ran": 0.8738,
-      "auc_on_target_attacks": 1.0,
+      "auc_where_it_ran": 0.7444,
+      "auc_on_target_attacks": 0.902,
       "target_attacks": [
         "recaptured_screen",
         "stale_or_edited_media"
@@ -1387,146 +1547,152 @@
   },
   "per_attack_type": {
     "face_swap_liveness": {
-      "n": 5,
-      "mean_score": 0.74,
-      "caught_at_review": 1.0,
-      "caught_at_reject": 0.4,
-      "auc_vs_genuine": 0.92
+      "n": 3,
+      "mean_score": 0.4198,
+      "caught_at_review": 0.3333,
+      "caught_at_reject": 0.0,
+      "auc_vs_genuine": 0.5359
     },
     "generated_selfie": {
-      "n": 9,
-      "mean_score": 1.0,
+      "n": 6,
+      "mean_score": 0.8335,
       "caught_at_review": 1.0,
       "caught_at_reject": 1.0,
-      "auc_vs_genuine": 1.0
+      "auc_vs_genuine": 0.9967
     },
     "impersonation": {
       "n": 7,
-      "mean_score": 1.0,
-      "caught_at_review": 1.0,
-      "caught_at_reject": 1.0,
-      "auc_vs_genuine": 1.0
+      "mean_score": 0.7556,
+      "caught_at_review": 0.8571,
+      "caught_at_reject": 0.8571,
+      "auc_vs_genuine": 0.9188
     },
     "invalid_document": {
-      "n": 4,
-      "mean_score": 0.797,
-      "caught_at_review": 1.0,
-      "caught_at_reject": 0.75,
-      "auc_vs_genuine": 0.925
+      "n": 6,
+      "mean_score": 0.5139,
+      "caught_at_review": 0.6667,
+      "caught_at_reject": 0.3333,
+      "auc_vs_genuine": 0.6438
+    },
+    "recaptured_screen": {
+      "n": 5,
+      "mean_score": 0.4662,
+      "caught_at_review": 0.8,
+      "caught_at_reject": 0.0,
+      "auc_vs_genuine": 0.6314
     },
     "reused_id_selfie": {
       "n": 6,
-      "mean_score": 0.7597,
-      "caught_at_review": 1.0,
-      "caught_at_reject": 0.5,
-      "auc_vs_genuine": 0.9258
+      "mean_score": 0.4605,
+      "caught_at_review": 0.6667,
+      "caught_at_reject": 0.0,
+      "auc_vs_genuine": 0.6078
     },
     "stale_or_edited_media": {
-      "n": 8,
-      "mean_score": 0.7544,
+      "n": 7,
+      "mean_score": 0.7451,
       "caught_at_review": 1.0,
-      "caught_at_reject": 0.625,
-      "auc_vs_genuine": 0.9159
+      "caught_at_reject": 0.7143,
+      "auc_vs_genuine": 0.916
     },
     "synthetic_identity": {
       "n": 7,
-      "mean_score": 0.6481,
-      "caught_at_review": 0.7143,
-      "caught_at_reject": 0.5714,
-      "auc_vs_genuine": 0.8078
+      "mean_score": 0.5854,
+      "caught_at_review": 1.0,
+      "caught_at_reject": 0.1429,
+      "auc_vs_genuine": 0.7647
     },
     "tampered_document": {
-      "n": 5,
-      "mean_score": 0.6454,
-      "caught_at_review": 0.6,
-      "caught_at_reject": 0.6,
-      "auc_vs_genuine": 0.7255
+      "n": 7,
+      "mean_score": 0.5257,
+      "caught_at_review": 0.5714,
+      "caught_at_reject": 0.2857,
+      "auc_vs_genuine": 0.5994
     }
   },
   "per_capture_mode": {
     "photo": {
-      "n": 57,
-      "id_forensics_auc": 0.555,
-      "tamper_only_auc": 0.6875,
-      "fusion_auc": 0.8862
+      "n": 58,
+      "id_forensics_auc": 0.2857,
+      "tamper_only_auc": 0.1,
+      "fusion_auc": 0.7452
     },
     "scan": {
-      "n": 49,
-      "id_forensics_auc": 0.6739,
-      "tamper_only_auc": 0.6957,
-      "fusion_auc": 0.9323
+      "n": 47,
+      "id_forensics_auc": 0.5128,
+      "tamper_only_auc": 0.4841,
+      "fusion_auc": 0.804
     }
   },
   "bias_audit": {
     "method": "ITA\u00b0 skin-tone proxy computed from selfie pixels",
     "buckets": {
       "brown": {
-        "n": 33,
-        "auc": 0.8985,
-        "false_reject_rate": 0.0526,
-        "false_accept_rate": 0.2857,
-        "mean_score_genuine": 0.2237
+        "n": 37,
+        "auc": 0.803,
+        "false_reject_rate": 0.1364,
+        "false_accept_rate": 0.4667,
+        "mean_score_genuine": 0.4374
       },
       "dark": {
         "n": 15,
-        "auc": 0.9107,
+        "auc": 0.9286,
         "false_reject_rate": 0.0,
-        "false_accept_rate": 0.375,
-        "mean_score_genuine": 0.2269
+        "false_accept_rate": 0.5714,
+        "mean_score_genuine": 0.31
       },
       "intermediate": {
-        "n": 19,
-        "auc": 0.9944,
+        "n": 11,
+        "auc": 0.7,
         "false_reject_rate": 0.0,
-        "false_accept_rate": 0.2,
-        "mean_score_genuine": 0.1971
+        "false_accept_rate": 0.6,
+        "mean_score_genuine": 0.4061
       },
       "light": {
         "n": 11,
-        "auc": 0.8833,
+        "auc": 0.75,
         "false_reject_rate": 0.0,
-        "false_accept_rate": 0.4,
-        "mean_score_genuine": 0.2022
+        "false_accept_rate": 0.8571,
+        "mean_score_genuine": 0.4333
       },
       "tan": {
-        "n": 17,
-        "auc": 0.9583,
-        "false_reject_rate": 0.1111,
-        "false_accept_rate": 0.125,
-        "mean_score_genuine": 0.3127
+        "n": 23,
+        "auc": 0.8039,
+        "false_reject_rate": 0.1667,
+        "false_accept_rate": 0.5882,
+        "mean_score_genuine": 0.3797
       },
       "unknown": {
         "n": 1,
         "note": "too few samples to report a rate"
       },
       "very_light": {
-        "n": 10,
-        "auc": 0.74,
+        "n": 7,
+        "auc": 0.3,
         "false_reject_rate": 0.2,
-        "false_accept_rate": 0.4,
-        "mean_score_genuine": 0.6032
+        "false_accept_rate": 1.0,
+        "mean_score_genuine": 0.5633
       }
     },
-    "caveat": "ITA\u00b0 is an image-derived proxy for skin tone, not self-reported demographic data, and it is confounded by lighting. With 6 bucket(s) above the reporting threshold on 106 held-out packets, this audit is a harness and a direction, not a powered conclusion."
+    "caveat": "ITA\u00b0 is an image-derived proxy for skin tone, not self-reported demographic data, and it is confounded by lighting. With 6 bucket(s) above the reporting threshold on 105 held-out packets, this audit is a harness and a direction, not a powered conclusion."
   },
   "latency_ms": {
     "note": "measured in batch mode, detectors run sequentially; the API runs them concurrently",
-    "p50": 11107.9,
-    "p90": 11977.2,
-    "p99": 12798.3,
+    "p50": 10442.2,
+    "p90": 11625.6,
+    "p99": 12004.7,
     "per_detector_median": {
-      "selfie_deepfake": 229.7,
-      "liveness_video": 1023.1,
-      "id_forensics": 9762.1,
-      "face_match": 40.8,
-      "metadata_exif": 44.6
+      "selfie_deepfake": 278.2,
+      "liveness_video": 1216.9,
+      "id_forensics": 8772.6,
+      "face_match": 48.7,
+      "metadata_exif": 40.9
     }
   },
   "raw_scores": {
     "y_true": [
       0,
       0,
-      1,
       0,
       0,
       0,
@@ -1536,35 +1702,11 @@
       0,
       0,
       0,
-      1,
-      1,
-      0,
       0,
       1,
       1,
       0,
-      1,
-      1,
-      1,
       0,
-      0,
-      0,
-      0,
-      1,
-      1,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-      1,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
       0,
       1,
       1,
@@ -1572,10 +1714,34 @@
       1,
       1,
       0,
+      1,
+      1,
+      1,
+      0,
       0,
       0,
       1,
+      1,
       0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
       1,
       0,
       1,
@@ -1632,167 +1798,165 @@
       1
     ],
     "y_score": [
-      0.454545,
-      0.157895,
-      0.666667,
-      0.454545,
-      0.068966,
-      0.157895,
-      0.666667,
-      0.157895,
-      0.266385,
-      0.625,
-      0.181533,
-      0.068966,
-      0.468416,
-      1.0,
-      0.157895,
-      0.068966,
-      0.666667,
-      1.0,
-      0.454545,
-      1.0,
-      1.0,
-      1.0,
-      0.157895,
-      0.216336,
-      0.157895,
-      0.666667,
-      0.866667,
-      1.0,
-      0.068966,
-      0.866667,
-      0.068966,
-      0.333333,
-      0.333333,
-      1.0,
-      0.866667,
-      1.0,
-      0.068966,
-      0.157895,
-      0.666667,
-      0.157895,
-      1.0,
-      0.157895,
-      1.0,
-      0.866667,
-      0.47894,
-      1.0,
-      0.9,
-      0.391184,
-      0.068966,
-      0.068966,
-      0.454545,
-      0.463733,
-      1.0,
-      0.157895,
-      0.6,
-      0.068966,
-      0.068966,
-      0.068966,
-      1.0,
-      0.9,
-      0.625,
-      0.9,
-      0.068966,
-      0.866667,
-      1.0,
-      1.0,
-      0.068966,
-      0.068966,
-      0.591446,
-      0.157895,
-      0.068966,
-      0.866667,
-      1.0,
-      0.167612,
-      0.666667,
-      0.6,
-      0.157895,
-      0.157895,
-      0.9,
-      0.866667,
-      0.666667,
-      0.157895,
-      1.0,
-      0.0,
-      0.866667,
-      0.157895,
-      1.0,
-      0.454545,
-      0.157895,
-      0.157895,
-      1.0,
-      0.068966,
-      1.0,
-      1.0,
-      0.157895,
-      1.0,
-      0.157895,
-      0.666667,
-      0.454545,
-      0.9,
-      0.157895,
-      1.0,
-      0.068966,
-      0.866667,
-      1.0,
-      0.866667
+      0.494675,
+      0.788105,
+      0.312277,
+      0.171386,
+      0.180553,
+      0.513571,
+      0.243444,
+      0.291256,
+      0.219682,
+      0.483243,
+      0.179064,
+      0.291349,
+      0.824553,
+      0.817957,
+      0.29765,
+      0.732585,
+      0.719614,
+      0.451947,
+      0.828371,
+      0.480269,
+      0.487177,
+      0.261264,
+      0.244013,
+      0.832739,
+      0.480068,
+      0.773556,
+      0.216572,
+      0.695866,
+      0.596423,
+      0.386492,
+      0.826611,
+      0.356806,
+      0.202794,
+      0.561594,
+      0.170774,
+      0.553293,
+      0.531145,
+      0.377481,
+      0.833398,
+      0.35553,
+      0.323484,
+      0.576804,
+      0.74725,
+      0.814928,
+      0.588265,
+      0.266729,
+      0.231313,
+      0.30763,
+      0.828958,
+      0.455595,
+      0.801909,
+      0.428406,
+      0.501618,
+      0.273467,
+      0.752538,
+      0.180685,
+      0.224852,
+      0.833687,
+      0.825896,
+      0.461975,
+      0.684516,
+      0.5595,
+      0.288584,
+      0.831344,
+      0.836795,
+      0.779019,
+      0.361379,
+      0.610926,
+      0.512251,
+      0.317681,
+      0.755636,
+      0.837168,
+      0.282884,
+      0.202709,
+      0.396397,
+      0.351494,
+      0.570675,
+      0.398806,
+      0.503024,
+      0.305883,
+      0.312639,
+      0.355605,
+      0.439319,
+      0.587078,
+      0.659972,
+      0.839542,
+      0.516629,
+      0.279964,
+      0.462644,
+      0.839491,
+      0.216386,
+      0.836986,
+      0.794142,
+      0.343431,
+      0.829349,
+      0.429655,
+      0.49403,
+      0.839239,
+      0.835055,
+      0.600017,
+      0.749105,
+      0.180659,
+      0.817162,
+      0.53379,
+      0.41712
     ],
     "ids": [
-      "pkt_0097",
-      "pkt_0098",
-      "pkt_0099",
-      "pkt_0100",
-      "pkt_0101",
-      "pkt_0102",
-      "pkt_0103",
-      "pkt_0104",
-      "pkt_0105",
-      "pkt_0106",
-      "pkt_0107",
-      "pkt_0108",
-      "pkt_0109",
-      "pkt_0110",
-      "pkt_0111",
-      "pkt_0112",
-      "pkt_0113",
-      "pkt_0114",
-      "pkt_0115",
-      "pkt_0116",
-      "pkt_0117",
-      "pkt_0118",
-      "pkt_0119",
-      "pkt_0120",
-      "pkt_0121",
-      "pkt_0122",
-      "pkt_0123",
-      "pkt_0124",
-      "pkt_0125",
-      "pkt_0126",
-      "pkt_0127",
-      "pkt_0128",
-      "pkt_0129",
-      "pkt_0130",
-      "pkt_0131",
-      "pkt_0132",
-      "pkt_0133",
-      "pkt_0134",
-      "pkt_0135",
-      "pkt_0136",
-      "pkt_0137",
-      "pkt_0138",
-      "pkt_0139",
-      "pkt_0140",
-      "pkt_0141",
-      "pkt_0142",
-      "pkt_0143",
-      "pkt_0144",
-      "pkt_0145",
-      "pkt_0146",
-      "pkt_0147",
-      "pkt_0148",
-      "pkt_0149",
+      "pkt_0195",
+      "pkt_0196",
+      "pkt_0197",
+      "pkt_0198",
+      "pkt_0199",
+      "pkt_0200",
+      "pkt_0201",
+      "pkt_0202",
+      "pkt_0203",
+      "pkt_0204",
+      "pkt_0205",
+      "pkt_0206",
+      "pkt_0207",
+      "pkt_0208",
+      "pkt_0209",
+      "pkt_0210",
+      "pkt_0211",
+      "pkt_0212",
+      "pkt_0213",
+      "pkt_0214",
+      "pkt_0215",
+      "pkt_0216",
+      "pkt_0217",
+      "pkt_0218",
+      "pkt_0219",
+      "pkt_0220",
+      "pkt_0221",
+      "pkt_0222",
+      "pkt_0223",
+      "pkt_0224",
+      "pkt_0225",
+      "pkt_0226",
+      "pkt_0227",
+      "pkt_0228",
+      "pkt_0229",
+      "pkt_0230",
+      "pkt_0231",
+      "pkt_0232",
+      "pkt_0233",
+      "pkt_0234",
+      "pkt_0235",
+      "pkt_0236",
+      "pkt_0237",
+      "pkt_0238",
+      "pkt_0239",
+      "pkt_0240",
+      "pkt_0241",
+      "pkt_0242",
+      "pkt_0243",
+      "pkt_0244",
+      "pkt_0245",
+      "pkt_0246",
       "pkt_0247",
       "pkt_0248",
       "pkt_0249",
