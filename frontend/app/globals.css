@@ -2,34 +2,119 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: dark; }
+:root {
+  color-scheme: dark;
+}
 
 body {
-  @apply bg-ink-950 text-slate-200 antialiased;
-  background-image:
-    radial-gradient(900px 500px at 12% -8%, rgba(91, 140, 255, 0.10), transparent 60%),
-    radial-gradient(700px 420px at 92% 4%, rgba(45, 212, 167, 0.07), transparent 60%);
+  @apply bg-ink-950 text-slate-300 antialiased;
+  /* One very soft cool wash from the top-left, and nothing else. The previous
+     pair of coloured radial gradients competed with the verdict colours, which
+     are the only things on the page that are supposed to be coloured. */
+  background-image: radial-gradient(1200px 600px at 15% -20%, rgba(109, 140, 255, 0.055), transparent 70%);
   background-attachment: fixed;
 }
 
 @layer components {
-  .card { @apply rounded-xl border border-edge bg-ink-900/70 backdrop-blur-sm; }
-  .card-pad { @apply card p-5; }
-  .label { @apply text-[11px] font-medium uppercase tracking-[0.13em] text-slate-500; }
-  .stat { @apply font-mono text-2xl font-semibold tabular-nums text-slate-100; }
+  /* --- surfaces ----------------------------------------------------------- */
+  /* The top inset highlight is what separates a card from the page without
+     spending a border on it: one hairline of light where a raised surface would
+     catch it. It is why these read as panels rather than as outlined boxes. */
+  .card {
+    @apply rounded-lg border border-edge bg-ink-900;
+    box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.03);
+  }
+  .card-pad {
+    @apply card p-4;
+  }
+  .card-hover {
+    @apply transition-colors duration-150 hover:border-edge-strong hover:bg-ink-850;
+  }
+
+  /* --- type --------------------------------------------------------------- */
+  .label {
+    @apply text-2xs font-medium uppercase tracking-[0.14em] text-slate-500;
+  }
+  .stat {
+    @apply font-mono text-2xl font-medium tabular-nums text-slate-100;
+  }
+  .num {
+    @apply font-mono tabular-nums;
+  }
+  .prose-note {
+    @apply text-sm leading-relaxed text-slate-400;
+  }
+
+  /* --- controls ----------------------------------------------------------- */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-edge bg-ink-800
-           px-4 py-2 text-sm font-medium text-slate-200 transition
-           hover:border-accent/60 hover:bg-ink-700 disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-edge bg-ink-800
+           px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors duration-150
+           hover:border-edge-strong hover:bg-ink-750 hover:text-slate-100
+           focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent
+           disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ink-800;
   }
   .btn-primary {
-    @apply btn border-accent/50 bg-accent/15 text-accent hover:border-accent hover:bg-accent/25;
+    @apply btn border-accent/40 bg-accent/10 text-accent
+           hover:border-accent/70 hover:bg-accent/20 hover:text-accent;
   }
-  .chip { @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium; }
-  .scroll-x { @apply overflow-x-auto; scrollbar-width: thin; }
+  .btn-ghost {
+    @apply btn border-transparent bg-transparent text-slate-400 hover:bg-ink-800;
+  }
+  .input {
+    @apply w-full rounded-md border border-edge bg-ink-900 px-3 py-1.5 text-sm text-slate-200
+           placeholder:text-slate-600 focus:border-accent/50 focus:outline-none;
+  }
+
+  /* --- fragments ---------------------------------------------------------- */
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-xs font-medium;
+  }
+  /* A segmented control: one bordered track, borderless children. */
+  .segment {
+    @apply inline-flex rounded-md border border-edge bg-ink-900 p-0.5;
+  }
+  .segment > button {
+    @apply rounded-[5px] px-2.5 py-1 text-xs text-slate-400 transition-colors duration-150 hover:text-slate-200;
+  }
+  .segment > button[data-active="true"] {
+    @apply bg-ink-750 text-slate-100;
+  }
+  .hairline {
+    @apply border-t border-edge;
+  }
+  .scroll-x {
+    @apply overflow-x-auto;
+    scrollbar-width: thin;
+  }
 }
 
-::-webkit-scrollbar { width: 9px; height: 9px; }
-::-webkit-scrollbar-track { background: #0b0e16; }
-::-webkit-scrollbar-thumb { background: #2a3142; border-radius: 6px; }
-::-webkit-scrollbar-thumb:hover { background: #3a4258; }
+/* Numeric columns should not jitter as digits change. */
+table {
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #232935;
+  border: 3px solid #08090c;
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2f3644;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

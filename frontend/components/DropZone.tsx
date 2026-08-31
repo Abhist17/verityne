@@ -3,14 +3,28 @@
 import { useCallback, useRef, useState } from "react";
 import clsx from "clsx";
 
+const KB = 1024;
+const fmtSize = (n: number) => (n < KB * KB ? `${(n / KB).toFixed(0)} KB` : `${(n / KB / KB).toFixed(1)} MB`);
+
+/**
+ * A file slot. Empty it is a dashed target; filled it becomes the thumbnail
+ * itself, so the input column shows the packet you are about to submit rather
+ * than a column of identical grey boxes with filenames in them.
+ */
 export function DropZone({
-  label, hint, accept, file, onFile,
+  label,
+  hint,
+  accept,
+  file,
+  onFile,
+  className,
 }: {
   label: string;
   hint: string;
   accept: string;
   file: File | null;
   onFile: (f: File | null) => void;
+  className?: string;
 }) {
   const [over, setOver] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -21,17 +35,20 @@ export function DropZone({
       onFile(f);
       setPreview((old) => {
         if (old) URL.revokeObjectURL(old);
-        return f && f.type.startsWith("image/") ? URL.createObjectURL(f) : null;
+        return f && (f.type.startsWith("image/") || f.type.startsWith("video/")) ? URL.createObjectURL(f) : null;
       });
     },
     [onFile]
   );
 
-  const isVideo = file?.type.startsWith("video/");
+  const isVideo = !!file?.type.startsWith("video/");
 
   return (
     <div
-      onDragOver={(e) => { e.preventDefault(); setOver(true); }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setOver(true);
+      }}
       onDragLeave={() => setOver(false)}
       onDrop={(e) => {
         e.preventDefault();
@@ -42,10 +59,16 @@ export function DropZone({
       onClick={() => inputRef.current?.click()}
       role="button"
       tabIndex={0}
+      aria-label={file ? `${label}: ${file.name}. Click to replace.` : `Add ${label}`}
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && inputRef.current?.click()}
       className={clsx(
-        "group relative flex h-44 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed p-4 text-center transition",
-        over ? "border-accent bg-accent/10" : "border-edge bg-ink-900/50 hover:border-accent/50 hover:bg-ink-850"
+        "group relative cursor-pointer overflow-hidden rounded-lg transition-colors duration-150",
+        "focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent",
+        file
+          ? "border border-edge bg-ink-900"
+          : "border border-dashed bg-ink-900/60 " +
+              (over ? "border-accent bg-accent/[0.07]" : "border-edge hover:border-edge-strong hover:bg-ink-850"),
+        className
       )}
     >
       <input
@@ -56,35 +79,48 @@ export function DropZone({
         onChange={(e) => take(e.target.files?.[0] ?? null)}
       />
 
-      {preview ? (
-        <img src={preview} alt={label} className="h-full w-full rounded-lg object-cover" />
-      ) : isVideo ? (
-        <div className="flex flex-col items-center gap-2">
-          <svg viewBox="0 0 24 24" className="h-7 w-7 text-accent" fill="none" stroke="currentColor" strokeWidth="1.6">
-            <rect x="3" y="6" width="13" height="12" rx="2" />
-            <path d="M16 10l5-3v10l-5-3" />
-          </svg>
-          <span className="text-xs text-slate-300">{file?.name}</span>
-        </div>
-      ) : (
+      {file ? (
         <>
-          <svg viewBox="0 0 24 24" className="h-6 w-6 text-slate-600 transition group-hover:text-accent"
-            fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-            <path d="M12 16V4M8 8l4-4 4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
-          </svg>
-          <div className="mt-2 text-sm font-medium text-slate-300">{label}</div>
-          <div className="mt-0.5 text-[11px] text-slate-500">{hint}</div>
+          {preview &&
+            (isVideo ? (
+              <video src={preview} muted playsInline className="h-full w-full object-cover" />
+            ) : (
+              <img src={preview} alt="" className="h-full w-full object-cover" />
+            ))}
+          {/* Scrim only under the caption, so the thumbnail stays legible. */}
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink-950 via-ink-950/85 to-transparent px-2.5 pb-1.5 pt-6">
+            <div className="truncate text-xs font-medium text-slate-200">{file.name}</div>
+            <div className="num text-2xs text-slate-500">
+              {label} · {fmtSize(file.size)}
+            </div>
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              take(null);
+            }}
+            className="absolute right-1.5 top-1.5 rounded bg-ink-950/75 px-1.5 py-0.5 text-2xs text-slate-400 ring-1 ring-edge backdrop-blur-sm transition-colors hover:text-reject"
+            aria-label={`Remove ${label}`}
+          >
+            clear
+          </button>
         </>
-      )}
-
-      {file && (
-        <button
-          onClick={(e) => { e.stopPropagation(); take(null); }}
-          className="absolute right-2 top-2 rounded-md bg-ink-950/80 px-1.5 py-0.5 text-[11px] text-slate-400 ring-1 ring-edge hover:text-reject"
-          aria-label={`Remove ${label}`}
-        >
-          clear
-        </button>
+      ) : (
+        <div className="flex h-full flex-col items-center justify-center gap-1 p-3 text-center">
+          <svg
+            viewBox="0 0 24 24"
+            className={clsx("h-4 w-4 transition-colors", over ? "text-accent" : "text-slate-600 group-hover:text-slate-400")}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 15V4M8.5 7.5L12 4l3.5 3.5M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" />
+          </svg>
+          <div className="text-xs font-medium text-slate-300">{label}</div>
+          <div className="text-2xs leading-tight text-slate-600">{hint}</div>
+        </div>
       )}
     </div>
   );

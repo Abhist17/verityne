@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import clsx from "clsx";
 import { api, fmtPct } from "@/lib/api";
-import { Empty, ErrorBox, ScoreBar, Spinner, StatTile, VerdictBadge } from "@/components/ui";
+import { Empty, ErrorBox, PageHeader, ScoreBar, Spinner, VerdictBadge } from "@/components/ui";
 
 export default function ReviewQueuePage() {
   const [queue, setQueue] = useState<any>(null);
@@ -40,27 +40,26 @@ export default function ReviewQueuePage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-100">Review Queue</h1>
-          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-400">
-            Cases Verityne declined to decide. The evidence is already surfaced — heatmaps, reasons, detector
-            scores — so a reviewer confirms a judgement rather than starting an investigation.
-          </p>
-        </div>
-        <div className="flex gap-4">
-          <div className="text-right">
-            <div className="label">Pending</div>
-            <div className="stat">{queue?.pending ?? "—"}</div>
-          </div>
-          {agreement?.decisions > 0 && (
+      <PageHeader
+        title="Review Queue"
+        actions={
+          <div className="flex gap-5">
             <div className="text-right">
-              <div className="label">Analyst agreement</div>
-              <div className="stat">{fmtPct(agreement.agreement_rate, 0)}</div>
+              <div className="label">Pending</div>
+              <div className="stat mt-0.5 text-xl">{queue?.pending ?? "—"}</div>
             </div>
-          )}
-        </div>
-      </header>
+            {agreement?.decisions > 0 && (
+              <div className="text-right">
+                <div className="label">Analyst agreement</div>
+                <div className="stat mt-0.5 text-xl">{fmtPct(agreement.agreement_rate, 0)}</div>
+              </div>
+            )}
+          </div>
+        }
+      >
+        Cases Verityne declined to decide. The evidence is already surfaced — heatmaps, reasons, detector
+        scores — so a reviewer confirms a judgement rather than starting an investigation.
+      </PageHeader>
 
       {error && <ErrorBox error={error} />}
       {!queue && !error && <div className="py-24"><Spinner label="Loading queue…" /></div>}
@@ -73,27 +72,27 @@ export default function ReviewQueuePage() {
       )}
 
       {items.length > 0 && (
-        <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
+        <div className="grid gap-5 wide:grid-cols-[290px_minmax(0,1fr)]">
           <div className="space-y-2">
             {items.map((it) => (
               <button
                 key={it.submission_id}
                 onClick={() => setActive(it.submission_id)}
                 className={clsx(
-                  "w-full rounded-lg border p-3 text-left transition",
+                  "w-full rounded border p-2.5 text-left transition-colors duration-150",
                   it.submission_id === current?.submission_id
-                    ? "border-accent/60 bg-accent/8"
-                    : "border-edge bg-ink-900 hover:border-edge/80 hover:bg-ink-850"
+                    ? "border-accent/50 bg-accent/[0.07]"
+                    : "border-edge bg-ink-900 hover:border-edge-strong hover:bg-ink-850"
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-sm text-slate-200">{it.claimed_name ?? "unnamed"}</span>
-                  <span className="font-mono text-sm text-review">{it.score.toFixed(2)}</span>
+                  <span className="num text-sm text-review">{it.score.toFixed(2)}</span>
                 </div>
                 <div className="mt-1.5"><ScoreBar score={it.score} /></div>
-                <div className="mt-1.5 flex items-center gap-2 text-[10px] text-slate-500">
+                <div className="mt-1.5 flex items-center gap-2 text-2xs text-slate-500">
                   <span>{it.pattern_label ?? it.attack_pattern ?? "unclassified"}</span>
-                  {it.abstained && <span className="chip bg-accent/12 px-1.5 py-0 text-accent">abstained</span>}
+                  {it.abstained && <span className="chip bg-accent/10 px-1.5 py-0 text-accent">abstained</span>}
                 </div>
               </button>
             ))}
@@ -112,11 +111,11 @@ export default function ReviewQueuePage() {
                 <div className="card-pad">
                   <div className="flex flex-wrap items-center gap-3">
                     <VerdictBadge verdict="REVIEW" size="lg" />
-                    <span className="font-mono text-lg text-slate-100">{current.score.toFixed(3)}</span>
+                    <span className="num text-lg text-slate-100">{current.score.toFixed(3)}</span>
                     <span className="chip bg-ink-800 text-slate-300 ring-1 ring-edge">
                       {current.pattern_label ?? "unclassified"}
                     </span>
-                    <span className="ml-auto font-mono text-[11px] text-slate-600">{current.submission_id}</span>
+                    <span className="ml-auto num text-xs text-slate-600">{current.submission_id}</span>
                   </div>
                   <p className="mt-3 text-sm leading-relaxed text-slate-300">{current.explanation}</p>
                 </div>
@@ -128,7 +127,7 @@ export default function ReviewQueuePage() {
                     if (!asset && !heat) return null;
                     return (
                       <div key={k} className="card overflow-hidden">
-                        <div className="border-b border-edge px-3 py-2 text-[11px] uppercase tracking-wider text-slate-500">
+                        <div className="border-b border-edge px-3 py-2 text-xs uppercase tracking-wider text-slate-500">
                           {k.replace("_", " ")}
                         </div>
                         <div className="grid grid-cols-2">
@@ -145,19 +144,19 @@ export default function ReviewQueuePage() {
                   <ol className="mt-2 space-y-2">
                     {current.top_reasons?.map((r: string, i: number) => (
                       <li key={i} className="flex gap-3 text-sm leading-relaxed text-slate-300">
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink-800 font-mono text-[11px] text-slate-400 ring-1 ring-edge">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink-800 num text-xs text-slate-400 ring-1 ring-edge">
                           {i + 1}
                         </span>
                         {r}
                       </li>
                     ))}
                   </ol>
-                  <div className="mt-4 grid gap-2 border-t border-edge pt-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="mt-4 grid gap-2 border-t border-edge pt-3 sm:grid-cols-2 xl:grid-cols-3">
                     {Object.entries(current.detector_summary ?? {}).map(([k, d]: any) => (
-                      <div key={k} className="flex items-center gap-2 text-[11px]">
+                      <div key={k} className="flex items-center gap-2 text-xs">
                         <span className="w-32 truncate text-slate-500">{d.label}</span>
                         <span className="flex-1"><ScoreBar score={d.score} status={d.status} /></span>
-                        <span className="w-8 text-right font-mono text-slate-400">{d.score.toFixed(2)}</span>
+                        <span className="w-8 text-right num text-slate-400">{d.score.toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
@@ -170,15 +169,15 @@ export default function ReviewQueuePage() {
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="Optional note for the audit log…"
                     rows={2}
-                    className="mt-2 w-full resize-none rounded-lg border border-edge bg-ink-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-accent/60 focus:outline-none"
+                    className="input mt-2 resize-none bg-ink-950"
                   />
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button onClick={() => decide(current.submission_id, "approve")} disabled={!!busy}
-                      className="btn border-pass/50 bg-pass/12 text-pass hover:bg-pass/20">
+                      className="btn border-pass/50 bg-pass/10 text-pass hover:bg-pass/20">
                       Approve merchant
                     </button>
                     <button onClick={() => decide(current.submission_id, "reject")} disabled={!!busy}
-                      className="btn border-reject/50 bg-reject/12 text-reject hover:bg-reject/20">
+                      className="btn border-reject/50 bg-reject/10 text-reject hover:bg-reject/20">
                       Reject
                     </button>
                     <button onClick={() => decide(current.submission_id, "escalate")} disabled={!!busy} className="btn">
@@ -186,7 +185,7 @@ export default function ReviewQueuePage() {
                     </button>
                     {busy === current.submission_id && <Spinner />}
                   </div>
-                  <p className="mt-2.5 text-[11px] leading-relaxed text-slate-600">
+                  <p className="mt-2.5 text-xs leading-relaxed text-slate-600">
                     Decisions are written to the audit log with the model&apos;s score attached — that pairing is the
                     label source for the next retrain, and it is how analyst-vs-model agreement is measured.
                   </p>

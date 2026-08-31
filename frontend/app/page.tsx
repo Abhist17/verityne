@@ -2,13 +2,19 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { api, fmtPct, type VerifyResponse } from "@/lib/api";
+import { api, type VerifyResponse } from "@/lib/api";
 import { DropZone } from "@/components/DropZone";
 import { LiveFaceMatch } from "@/components/LiveFaceMatch";
 import { DetectorPanel, PipelineRunning } from "@/components/DetectorPanel";
-import { ErrorBox, ScoreDial, Spinner, VerdictBadge } from "@/components/ui";
+import { ErrorBox, PageHeader, ScoreDial, Spinner, VerdictBadge } from "@/components/ui";
 
 const DETECTOR_ORDER = ["selfie_deepfake", "liveness_video", "id_forensics", "face_match", "metadata_exif"];
+
+const POLICIES = [
+  { id: "default", label: "default" },
+  { id: "crypto_exchange_01", label: "crypto (strict)" },
+  { id: "gig_marketplace_02", label: "gig (lenient)" },
+];
 
 export default function LiveVerifyPage() {
   const [selfie, setSelfie] = useState<File | null>(null);
@@ -26,6 +32,7 @@ export default function LiveVerifyPage() {
 
   useEffect(() => {
     api.gauntletManifest().then((m) => setSamples(m.items ?? [])).catch(() => setSamples([]));
+    return () => timer.current && clearInterval(timer.current);
   }, []);
 
   const startTimer = () => {
@@ -66,12 +73,7 @@ export default function LiveVerifyPage() {
     setRunning(true);
     startTimer();
     try {
-      const res = await fetch(`/api/submissions/${id}/rescore`, {
-        method: "POST",
-        headers: { "X-API-Key": process.env.NEXT_PUBLIC_API_KEY || "verityne-demo-key" },
-      });
-      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-      setResult(await res.json());
+      setResult(await api.rescore(id));
     } catch (e: any) {
       setError(e.message ?? String(e));
     } finally {
@@ -83,64 +85,69 @@ export default function LiveVerifyPage() {
   const reviewAt = result?.policy?.min_risk_for_review ?? 0.4;
   const rejectAt = result?.policy?.min_risk_for_reject ?? 0.75;
   const linkage = result?.policy?.linkage;
+  const hasInput = !!(selfie || idDoc || video);
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-100">Live Verify</h1>
-          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-400">
-            Drop a KYC packet and watch all five detectors run. Every verdict comes back with the evidence
-            behind it — no score without a reason.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="label">Merchant policy</label>
-          <select
-            value={merchantId}
-            onChange={(e) => setMerchantId(e.target.value)}
-            className="rounded-lg border border-edge bg-ink-800 px-3 py-1.5 text-sm text-slate-200"
-          >
-            <option value="default">default</option>
-            <option value="crypto_exchange_01">crypto_exchange_01 (strict)</option>
-            <option value="gig_marketplace_02">gig_marketplace_02 (lenient)</option>
-          </select>
-        </div>
-      </header>
+    <div className="space-y-5">
+      <PageHeader
+        title="Verify"
+        actions={
+          <div className="segment" role="group" aria-label="Merchant policy">
+            {POLICIES.map((p) => (
+              <button key={p.id} data-active={merchantId === p.id} onClick={() => setMerchantId(p.id)}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+        }
+      >
+        Drop a KYC packet and watch all five detectors run. Every verdict comes back with the evidence behind
+        it — no score without a reason.
+      </PageHeader>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_1fr]">
+      {/* The split has to survive a ~1000px laptop viewport, which is below
+          Tailwind's `lg`. Splitting at `md` with a fixed left column is what
+          keeps the result panel beside the inputs instead of a screen below. */}
+      <div className="grid gap-5 md:grid-cols-[330px_minmax(0,1fr)] xl:grid-cols-[380px_minmax(0,1fr)]">
         {/* ---------- input column ---------- */}
-        <div className="space-y-4">
-          <div className="grid gap-3">
-            <DropZone label="Selfie" hint="JPG / PNG — the live capture" accept="image/*" file={selfie} onFile={setSelfie} />
-            <div className="grid grid-cols-2 gap-3">
-              <DropZone label="ID document" hint="PAN / Aadhaar" accept="image/*" file={idDoc} onFile={setIdDoc} />
-              <DropZone label="Liveness clip" hint="MP4 / WebM" accept="video/*" file={video} onFile={setVideo} />
-            </div>
+        <div className="space-y-3">
+          <DropZone
+            label="Selfie"
+            hint="JPG / PNG — the live capture"
+            accept="image/*"
+            file={selfie}
+            onFile={setSelfie}
+            className="h-[150px]"
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <DropZone
+              label="ID document"
+              hint="PAN / Aadhaar"
+              accept="image/*"
+              file={idDoc}
+              onFile={setIdDoc}
+              className="h-[110px]"
+            />
+            <DropZone
+              label="Liveness clip"
+              hint="MP4 / WebM"
+              accept="video/*"
+              file={video}
+              onFile={setVideo}
+              className="h-[110px]"
+            />
           </div>
 
           <input
             value={claimedName}
             onChange={(e) => setClaimedName(e.target.value)}
-            placeholder="Claimed name (optional — enables PAN surname validation)"
-            className="w-full rounded-lg border border-edge bg-ink-900 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-accent/60 focus:outline-none"
+            placeholder="Claimed name (optional — enables PAN surname check)"
+            className="input"
           />
 
-          <button onClick={run} disabled={running} className="btn-primary w-full py-2.5">
+          <button onClick={run} disabled={running || !hasInput} className="btn-primary w-full py-2">
             {running ? <Spinner label="Verifying…" /> : "Run verification"}
           </button>
-
-          {/* Live capture. Separate from the pipeline above on purpose: this
-              answers only "is this the person on the card", in real time, and
-              stores nothing. The full verdict still comes from /verify. */}
-          <div className="card-pad">
-            <div className="label">Live face match</div>
-            <p className="mb-3 mt-1 text-[11px] leading-relaxed text-slate-500">
-              Match your camera against the uploaded ID portrait, live. This is the identity
-              check alone — it does not produce a verdict.
-            </p>
-            <LiveFaceMatch reference={idDoc} />
-          </div>
 
           {samples.length > 0 && (
             <div className="card-pad">
@@ -151,18 +158,33 @@ export default function LiveVerifyPage() {
                     key={s.submission_id}
                     onClick={() => runSample(s.submission_id)}
                     disabled={running}
-                    className="rounded-md border border-edge bg-ink-800 px-2 py-1 text-[11px] text-slate-400 transition hover:border-accent/50 hover:text-slate-200 disabled:opacity-40"
                     title={s.attack_type ?? "genuine"}
+                    className="flex items-center gap-1.5 rounded border border-edge bg-ink-850 px-1.5 py-1 text-2xs text-slate-400 transition-colors hover:border-edge-strong hover:text-slate-200 disabled:opacity-40"
                   >
-                    {s.truth === "fake" ? "▲" : "●"} {s.name}
+                    <span className={s.truth === "fake" ? "text-reject" : "text-pass"}>
+                      {s.truth === "fake" ? "▲" : "●"}
+                    </span>
+                    {s.name}
                   </button>
                 ))}
               </div>
-              <p className="mt-2 text-[11px] leading-relaxed text-slate-600">
-                ▲ fake · ● genuine — ground truth is shown here only because these are eval fixtures.
+              <p className="mt-2 text-2xs leading-relaxed text-slate-600">
+                Ground truth is shown only because these are eval fixtures.
               </p>
             </div>
           )}
+
+          {/* Live capture. Separate from the pipeline above on purpose: this
+              answers only "is this the person on the card", in real time, and
+              stores nothing. The full verdict still comes from /verify. */}
+          <div className="card-pad">
+            <div className="label">Live face match</div>
+            <p className="mb-3 mt-1 text-2xs leading-relaxed text-slate-500">
+              Match your camera against the uploaded ID portrait. Identity alone — this does not produce a
+              verdict.
+            </p>
+            <LiveFaceMatch reference={idDoc} />
+          </div>
         </div>
 
         {/* ---------- result column ---------- */}
@@ -171,27 +193,39 @@ export default function LiveVerifyPage() {
           {running && <PipelineRunning elapsed={elapsed} />}
 
           {!running && !result && !error && (
-            <div className="card flex h-full min-h-[380px] flex-col items-center justify-center gap-3 p-8 text-center">
-              <svg viewBox="0 0 24 24" className="h-8 w-8 text-slate-700" fill="none" stroke="currentColor" strokeWidth="1.4">
+            <div className="card flex min-h-[420px] flex-col items-center justify-center gap-2.5 p-8 text-center">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-7 w-7 text-slate-700"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.3"
+              >
                 <path d="M12 3l7 3v6c0 4.2-2.9 7.7-7 9-4.1-1.3-7-4.8-7-9V6l7-3z" strokeLinejoin="round" />
               </svg>
-              <div className="text-sm text-slate-400">No submission scored yet</div>
-              <div className="max-w-sm text-xs leading-relaxed text-slate-600">
-                Attach a packet on the left, or click one of the loaded fixtures to see the full pipeline output.
+              <div className="text-sm text-slate-400">Nothing scored yet</div>
+              <div className="max-w-[46ch] text-xs leading-relaxed text-slate-600">
+                Attach a packet on the left, or score one of the loaded fixtures to see the full pipeline
+                output — verdict, reasons, heatmaps and every detector&apos;s raw signals.
               </div>
             </div>
           )}
 
           {result && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
+              className="space-y-4"
+            >
               <div className="card-pad">
-                <div className="flex flex-wrap items-center gap-6">
+                <div className="flex flex-wrap items-center gap-5">
                   <ScoreDial score={result.final_score} verdict={result.verdict} reviewAt={reviewAt} rejectAt={rejectAt} />
-                  <div className="min-w-[260px] flex-1 space-y-3">
-                    <div className="flex flex-wrap items-center gap-2">
+                  <div className="min-w-[240px] flex-1 space-y-2.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <VerdictBadge verdict={result.verdict} size="lg" />
                       {result.abstained && (
-                        <span className="chip bg-accent/12 text-accent ring-1 ring-accent/30">abstained → human</span>
+                        <span className="chip bg-accent/10 text-accent ring-1 ring-accent/30">abstained → human</span>
                       )}
                       {result.attack_pattern && result.attack_pattern !== "clean" && (
                         <span className="chip bg-ink-800 text-slate-300 ring-1 ring-edge">
@@ -203,10 +237,12 @@ export default function LiveVerifyPage() {
                       )}
                     </div>
                     <p className="text-sm leading-relaxed text-slate-300">{result.explanation}</p>
-                    <div className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-[11px] text-slate-500">
-                      <span>{result.latency_ms.toFixed(0)} ms end-to-end</span>
-                      <span>fusion: {result.fusion_model}</span>
-                      <span>review ≥ {reviewAt} · reject ≥ {rejectAt}</span>
+                    <div className="num flex flex-wrap gap-x-4 gap-y-1 text-2xs text-slate-600">
+                      <span>{result.latency_ms.toFixed(0)} ms</span>
+                      <span>{result.fusion_model}</span>
+                      <span>
+                        review ≥ {reviewAt} · reject ≥ {rejectAt}
+                      </span>
                       <span className="truncate">{result.submission_id}</span>
                     </div>
                   </div>
@@ -218,8 +254,8 @@ export default function LiveVerifyPage() {
                   <div className="label">Top reasons</div>
                   <ol className="mt-2.5 space-y-2">
                     {result.top_reasons.map((r, i) => (
-                      <li key={i} className="flex gap-3 text-sm leading-relaxed text-slate-300">
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink-800 font-mono text-[11px] text-slate-400 ring-1 ring-edge">
+                      <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-slate-300">
+                        <span className="num mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded bg-ink-800 text-2xs text-slate-500 ring-1 ring-edge">
                           {i + 1}
                         </span>
                         {r}
@@ -230,37 +266,48 @@ export default function LiveVerifyPage() {
               )}
 
               {linkage && (linkage.face_links?.length > 0 || linkage.asset_links?.length > 0) && (
-                <div className="card-pad border-reject/40">
-                  <div className="label text-reject">Cross-submission linkage</div>
-                  <div className="mt-2 space-y-1.5 text-xs text-slate-300">
+                <div className="card-pad border-review/30">
+                  <div className="label text-review">Cross-submission linkage</div>
+                  <div className="num mt-2 space-y-1.5 text-xs text-slate-300">
                     {linkage.face_links?.map((l: any) => (
-                      <div key={l.submission_id} className="flex flex-wrap items-center gap-2 font-mono">
-                        <span className="text-slate-500">face</span>
-                        <span className="text-reject">{(l.similarity * 100).toFixed(1)}%</span>
+                      <div key={l.submission_id} className="flex flex-wrap items-center gap-2">
+                        <span className="text-slate-600">face</span>
+                        <span className="text-review">{(l.similarity * 100).toFixed(1)}%</span>
                         <span>→ {l.claimed_name ?? "unknown"}</span>
-                        <span className="text-slate-500">@ {l.merchant_id}</span>
-                        {l.name_differs && <span className="chip bg-reject/15 text-reject">different name</span>}
+                        <span className="text-slate-600">@ {l.merchant_id}</span>
+                        {l.name_differs && <span className="chip bg-review/10 text-review">different name</span>}
                       </div>
                     ))}
                     {linkage.asset_links?.map((l: any) => (
-                      <div key={l.submission_id} className="flex items-center gap-2 font-mono">
-                        <span className="text-slate-500">asset</span>
-                        <span className="text-reject">{l.hamming} bits apart</span>
-                        <span className="text-slate-500">({l.kind})</span>
+                      <div key={l.submission_id} className="flex items-center gap-2">
+                        <span className="text-slate-600">asset</span>
+                        <span className={l.match === "exact" ? "text-reject" : "text-review"}>
+                          {l.match === "exact" ? "byte-identical" : `${l.hamming} bits apart`}
+                        </span>
+                        <span className="text-slate-600">({l.kind})</span>
                       </div>
                     ))}
                   </div>
+                  {/* A similarity hit is capped below the reject line on purpose;
+                      see linkage.SAME_PERSON. Saying so here stops a reviewer
+                      reading a face link as a finding. */}
+                  {!linkage.asset_links?.some((l: any) => l.match === "exact") && (
+                    <p className="mt-2.5 text-2xs leading-relaxed text-slate-600">
+                      Face and near-hash links are similarity claims, not identity ones. They cap at review and
+                      cannot reject on their own.
+                    </p>
+                  )}
                 </div>
               )}
 
               {Object.keys(result.heatmaps).length > 0 && (
                 <div className="card-pad">
                   <div className="label">Where the model looked</div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {Object.entries(result.heatmaps).map(([k, url]) => (
                       <figure key={k} className="space-y-1.5">
-                        <img src={url} alt={`${k} heatmap`} className="w-full rounded-lg border border-edge" />
-                        <figcaption className="text-[11px] text-slate-500">{k.replace(/_/g, " ")}</figcaption>
+                        <img src={url} alt={`${k} heatmap`} className="w-full rounded border border-edge" />
+                        <figcaption className="text-2xs text-slate-500">{k.replace(/_/g, " ")}</figcaption>
                       </figure>
                     ))}
                   </div>
@@ -268,13 +315,15 @@ export default function LiveVerifyPage() {
               )}
 
               <div>
-                <div className="label mb-2.5">Detector breakdown</div>
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="label mb-2">Detector breakdown</div>
+                <div className="grid gap-3 xl:grid-cols-2">
                   {DETECTOR_ORDER.filter((n) => result.detector_breakdown[n]).map((n) => (
                     <DetectorPanel
                       key={n}
                       detector={result.detector_breakdown[n]}
                       heatmap={result.heatmaps[n]}
+                      reviewAt={reviewAt}
+                      rejectAt={rejectAt}
                     />
                   ))}
                 </div>

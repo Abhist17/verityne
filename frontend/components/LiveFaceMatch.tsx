@@ -118,7 +118,7 @@ export function LiveFaceMatch({ reference }: { reference: File | null }) {
 
   return (
     <div className="space-y-3">
-      <div className={`relative overflow-hidden rounded-xl border-2 bg-ink-950 ${ring}`}>
+      <div className={`relative overflow-hidden rounded border bg-ink-950 ${ring}`}>
         <video ref={videoRef} playsInline muted className="w-full scale-x-[-1] bg-black" />
         <canvas ref={canvasRef} className="hidden" />
 
@@ -137,8 +137,8 @@ export function LiveFaceMatch({ reference }: { reference: File | null }) {
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-ink-950 to-transparent p-3">
             <div className="flex items-end justify-between">
               <div>
-                <div className={`text-3xl font-semibold tabular-nums ${tone}`}>{sim.toFixed(3)}</div>
-                <div className="text-[11px] text-slate-500">
+                <div className={`num text-2xl font-medium ${tone}`}>{sim.toFixed(3)}</div>
+                <div className="num text-2xs text-slate-500">
                   threshold {thr.toFixed(3)} · {result?.confidence}
                 </div>
               </div>
@@ -147,13 +147,13 @@ export function LiveFaceMatch({ reference }: { reference: File | null }) {
               </div>
             </div>
             {/* Where this score sits relative to the line, at a glance. */}
-            <div className="relative mt-2 h-1.5 rounded-full bg-ink-800">
+            <div className="relative mt-2 h-1 rounded-full bg-ink-800">
               <div
                 className="absolute inset-y-0 left-0 rounded-full bg-current opacity-70"
                 style={{ width: `${Math.max(0, Math.min(1, (sim + 1) / 2)) * 100}%` }}
               />
               <div
-                className="absolute -top-1 h-3.5 w-0.5 bg-slate-300"
+                className="absolute -top-1 h-3 w-0.5 bg-slate-200"
                 style={{ left: `${Math.max(0, Math.min(1, (thr + 1) / 2)) * 100}%` }}
               />
             </div>
@@ -165,7 +165,7 @@ export function LiveFaceMatch({ reference }: { reference: File | null }) {
         {!on ? (
           <button
             onClick={start}
-            className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-ink-950 hover:opacity-90"
+            className="btn-primary"
           >
             Start camera
           </button>
@@ -174,39 +174,39 @@ export function LiveFaceMatch({ reference }: { reference: File | null }) {
             <button
               onClick={() => setLive((v) => !v)}
               disabled={!reference}
-              className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-ink-950 hover:opacity-90 disabled:opacity-40"
+              className="btn-primary"
             >
               {live ? "Pause matching" : "Match live"}
             </button>
             <button
               onClick={matchOnce}
               disabled={!reference || live}
-              className="rounded-lg border border-edge px-3 py-1.5 text-sm text-slate-300 hover:border-accent/60 disabled:opacity-40"
+              className="btn"
             >
               Match once
             </button>
             <button
               onClick={stop}
-              className="rounded-lg border border-edge px-3 py-1.5 text-sm text-slate-400 hover:border-reject/60"
+              className="btn hover:border-reject/60 hover:text-reject"
             >
               Stop
             </button>
           </>
         )}
-        {result && <span className="text-xs text-slate-500">{result.latency_ms.toFixed(0)}ms</span>}
+        {result && <span className="num text-2xs text-slate-500">{result.latency_ms.toFixed(0)} ms</span>}
       </div>
 
       {!reference && (
-        <p className="text-xs text-slate-500">Upload an ID document above to match against.</p>
+        <p className="text-2xs text-slate-500">Upload an ID document above to match against.</p>
       )}
       {result?.detail && <p className="text-xs leading-relaxed text-slate-400">{result.detail}</p>}
       {band && (
-        <p className="text-[11px] text-slate-600">
+        <p className="text-2xs leading-relaxed text-slate-600">
           Identity threshold {band.low.toFixed(3)} — {band.fitted_on}
         </p>
       )}
       {error && (
-        <p className="rounded-lg border border-reject/40 bg-reject/10 px-3 py-2 text-xs text-reject">
+        <p className="rounded border border-reject/40 bg-reject/10 px-2.5 py-1.5 text-xs leading-relaxed text-reject">
           {error}
         </p>
       )}

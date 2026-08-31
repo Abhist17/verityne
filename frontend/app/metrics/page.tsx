@@ -7,25 +7,40 @@ import {
 } from "recharts";
 import clsx from "clsx";
 import { api, fmtInr, fmtPct, type Ablation } from "@/lib/api";
-import { Empty, ErrorBox, Spinner, StatTile } from "@/components/ui";
+import { Empty, ErrorBox, PageHeader, Spinner, StatTile } from "@/components/ui";
 
-const SERIES_COLORS = ["#5b8cff", "#2dd4a7", "#f5b53d", "#c084fc", "#fb7185"];
-const AXIS = { stroke: "#3a4258", fontSize: 11 };
-const GRID = "#1e2432";
+// Charts read the same palette the rest of the app does. The per-detector
+// series are deliberately dimmer and thinner than fusion: the point of the ROC
+// panel is whether fusion dominates them, so fusion has to be the figure and
+// they have to be the ground.
+const ACCENT = "#6d8cff";
+const PASS = "#3ddc97";
+const REVIEW = "#e8b04b";
+const REJECT = "#f4626f";
+const SERIES_COLORS = [ACCENT, PASS, REVIEW, "#b48ce8", "#e88ca4"];
+const AXIS = { stroke: "#4b5565", fontSize: 10 };
+const GRID = "#1a202a";
 
 const tooltipStyle = {
-  contentStyle: { background: "#0b0e16", border: "1px solid #232a3a", borderRadius: 10, fontSize: 12 },
-  labelStyle: { color: "#94a3b8" },
+  contentStyle: {
+    background: "#0c0e13",
+    border: "1px solid #2b3342",
+    borderRadius: 6,
+    fontSize: 11,
+    boxShadow: "0 8px 24px rgb(0 0 0 / 0.5)",
+  },
+  labelStyle: { color: "#94a3b8", marginBottom: 2 },
+  itemStyle: { padding: "1px 0" },
 };
 
 function Section({ title, hint, children }: { title: string; hint?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section className="card-pad">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="text-sm font-semibold text-slate-200">{title}</h2>
-        {hint && <p className="max-w-2xl text-[11px] leading-relaxed text-slate-500">{hint}</p>}
+        {hint && <p className="max-w-[62ch] text-2xs leading-relaxed text-slate-500">{hint}</p>}
       </div>
-      <div className="mt-4">{children}</div>
+      <div className="mt-3.5">{children}</div>
     </section>
   );
 }
@@ -108,15 +123,15 @@ export default function MetricsPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-xl font-semibold tracking-tight text-slate-100">Metrics</h1>
-        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-400">
-          Everything below is computed on an <strong className="text-slate-200">identity-disjoint held-out split</strong> —
-          no face that trained the fusion layer appears in these numbers. The uncomfortable numbers are here too.
-        </p>
-      </header>
+      <PageHeader title="Metrics">
+        Everything below is computed on an{" "}
+        <strong className="font-medium text-slate-200">identity-disjoint held-out split</strong> — no face that
+        trained the fusion layer appears in these numbers. The uncomfortable numbers are here too.
+      </PageHeader>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      {/* auto-fit rather than a fixed column count: five tiles into a 2- or
+          4-column grid leaves a hole, and the hole reads as a missing metric. */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(178px,1fr))] gap-3">
         <StatTile label="Fusion ROC-AUC" value={ev.fusion?.roc_auc?.toFixed(3) ?? "—"}
           sub={`${ev.n_packets} held-out packets · ${ev.fusion_model}`} tone="pass" />
         <StatTile label="Recall @ reject" value={fmtPct(cm.recall, 0)}
@@ -130,7 +145,7 @@ export default function MetricsPage() {
           sub="ms, live API traffic on this instance" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-5 wide:grid-cols-2">
         <Section title="ROC — fusion vs each detector"
           hint="The fusion curve should dominate. Where a single detector beats it, the fusion weights are wrong.">
           <ResponsiveContainer width="100%" height={300}>
@@ -140,13 +155,13 @@ export default function MetricsPage() {
                 label={{ value: "false positive rate", position: "insideBottom", offset: -2, fill: "#64748b", fontSize: 10 }} />
               <YAxis type="number" domain={[0, 1]} tick={AXIS} tickFormatter={(v) => v.toFixed(1)} />
               <Tooltip {...tooltipStyle} formatter={(v: any) => (typeof v === "number" ? v.toFixed(3) : v)} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="fusion" stroke="#5b8cff" strokeWidth={2.5} dot={false} name="fusion" />
+              <Legend iconType="plainline" iconSize={8} wrapperStyle={{ fontSize: 10, paddingTop: 6 }} />
+              <Line type="monotone" dataKey="fusion" stroke={ACCENT} strokeWidth={2.5} dot={false} name="fusion" />
               {Object.keys(ev.per_detector ?? {}).map((k, i) => (
                 <Line key={k} type="monotone" dataKey={k} stroke={SERIES_COLORS[(i + 1) % SERIES_COLORS.length]}
                   strokeWidth={1.3} dot={false} strokeOpacity={0.75} name={k.replace(/_/g, " ")} />
               ))}
-              <ReferenceLine segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]} stroke="#3a4258" strokeDasharray="4 4" />
+              <ReferenceLine segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]} stroke="#333c4c" strokeDasharray="4 4" />
             </LineChart>
           </ResponsiveContainer>
         </Section>
@@ -154,12 +169,12 @@ export default function MetricsPage() {
         <Section title="Per-detector performance"
           hint="“On target attacks” grades each detector only against the fraud it is designed to catch — the all-rows AUC is diluted by attacks it cannot see.">
           <div className="scroll-x">
-            <table className="w-full min-w-[520px] text-left text-xs">
-              <thead className="text-[10px] uppercase tracking-wider text-slate-500">
+            <table className="w-full min-w-[440px] text-left text-xs">
+              <thead className="text-2xs uppercase tracking-wider text-slate-500">
                 <tr>
                   <th className="pb-2 font-medium">Detector</th>
                   <th className="pb-2 text-right font-medium">AUC (all)</th>
-                  <th className="pb-2 text-right font-medium">AUC (on target)</th>
+                  <th className="pb-2 text-right font-medium">AUC (target)</th>
                   <th className="pb-2 text-right font-medium">Genuine</th>
                   <th className="pb-2 text-right font-medium">Fraud</th>
                   <th className="pb-2 text-right font-medium">Coverage</th>
@@ -169,17 +184,17 @@ export default function MetricsPage() {
                 {Object.entries(ev.per_detector).map(([k, d]: any) => (
                   <tr key={k} className="border-t border-edge/60">
                     <td className="py-2 pr-3 font-sans text-slate-300">{d.label}</td>
-                    <td className={clsx("py-2 text-right tabular-nums",
+                    <td className={clsx("py-2 text-right ",
                       d.auc_all_rows >= 0.7 ? "text-pass" : d.auc_all_rows >= 0.55 ? "text-review" : "text-reject")}>
                       {d.auc_all_rows?.toFixed(3) ?? "—"}
                     </td>
-                    <td className={clsx("py-2 text-right tabular-nums",
+                    <td className={clsx("py-2 text-right ",
                       d.auc_on_target_attacks >= 0.7 ? "text-pass" : d.auc_on_target_attacks >= 0.55 ? "text-review" : "text-slate-500")}>
                       {d.auc_on_target_attacks?.toFixed(3) ?? "—"}
                     </td>
-                    <td className="py-2 text-right tabular-nums text-slate-400">{d.mean_genuine?.toFixed(2) ?? "—"}</td>
-                    <td className="py-2 text-right tabular-nums text-slate-400">{d.mean_fraud?.toFixed(2) ?? "—"}</td>
-                    <td className="py-2 text-right tabular-nums text-slate-500">{fmtPct(d.coverage, 0)}</td>
+                    <td className="py-2 text-right text-slate-400">{d.mean_genuine?.toFixed(2) ?? "—"}</td>
+                    <td className="py-2 text-right text-slate-400">{d.mean_fraud?.toFixed(2) ?? "—"}</td>
+                    <td className="py-2 text-right text-slate-500">{fmtPct(d.coverage, 0)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -188,7 +203,7 @@ export default function MetricsPage() {
           {data.fusion_weights && Object.keys(data.fusion_weights).length > 0 && (
             <div className="mt-4 border-t border-edge pt-3">
               <div className="label">Fusion weights (positive raises risk)</div>
-              <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-[11px] sm:grid-cols-3">
+              <div className="num mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                 {Object.entries(data.fusion_weights)
                   .sort((a: any, b: any) => Math.abs(b[1]) - Math.abs(a[1]))
                   .slice(0, 9)
@@ -211,7 +226,7 @@ export default function MetricsPage() {
         >
           <div className="scroll-x">
             <table className="w-full min-w-[560px] text-left text-xs">
-              <thead className="text-[10px] uppercase tracking-wider text-slate-500">
+              <thead className="text-2xs uppercase tracking-wider text-slate-500">
                 <tr>
                   <th className="pb-2 font-medium">Detector muted</th>
                   <th className="pb-2 text-right font-medium">Held-out AUC</th>
@@ -222,7 +237,7 @@ export default function MetricsPage() {
               <tbody className="font-mono">
                 <tr className="border-t border-edge/60">
                   <td className="py-2 pr-3 font-sans text-slate-400">— none (full model)</td>
-                  <td className="py-2 text-right tabular-nums text-slate-200">{ablation.full_model.roc_auc.toFixed(3)}</td>
+                  <td className="py-2 text-right text-slate-200">{ablation.full_model.roc_auc.toFixed(3)}</td>
                   <td className="py-2 text-right text-slate-600">—</td>
                   <td className="pl-6" />
                 </tr>
@@ -232,19 +247,19 @@ export default function MetricsPage() {
                   return (
                     <tr key={r.detector} className="border-t border-edge/60">
                       <td className="py-2 pr-3 font-sans text-slate-300">{r.detector.replace(/_/g, " ")}</td>
-                      <td className="py-2 text-right tabular-nums text-slate-300">{r.roc_auc.toFixed(3)}</td>
-                      <td className={clsx("py-2 text-right tabular-nums", helps ? "text-reject" : "text-pass")}>
+                      <td className="py-2 text-right text-slate-300">{r.roc_auc.toFixed(3)}</td>
+                      <td className={clsx("py-2 text-right", helps ? "text-slate-300" : "text-reject")}>
                         {r.auc_drop >= 0 ? "−" : "+"}{Math.abs(r.auc_drop).toFixed(3)}
                       </td>
                       <td className="py-2 pl-6">
                         <div className="flex items-center gap-2">
                           <div className="h-1.5 w-32 overflow-hidden rounded-full bg-ink-800">
                             <div
-                              className={clsx("h-full rounded-full", helps ? "bg-reject" : "bg-pass")}
+                              className={clsx("h-full rounded-full", helps ? "bg-accent" : "bg-reject")}
                               style={{ width: `${Math.min(100, Math.abs(share) * 100)}%` }}
                             />
                           </div>
-                          <span className={clsx("tabular-nums text-[11px]", helps ? "text-slate-300" : "text-pass")}>
+                          <span className={clsx("text-xs", helps ? "text-slate-300" : "text-reject")}>
                             {share >= 0 ? "" : "−"}{Math.abs(share * 100).toFixed(1)}%
                           </span>
                         </div>
@@ -256,28 +271,29 @@ export default function MetricsPage() {
             </table>
           </div>
 
-          <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-            A <span className="text-pass">negative</span> share means muting that detector made the
-            model <em>better</em> — it was contributing noise, not signal.
+          <p className="mt-3 text-xs leading-relaxed text-slate-500">
+            <span className="text-accent">Blue</span> is the share of the above-chance AUC that detector
+            carries. <span className="text-reject">Red</span> is a negative share — muting it made the model{" "}
+            <em>better</em>, so it was contributing noise rather than signal.
           </p>
 
           <div className="mt-4 border-t border-edge pt-3">
             <div className="label">Corpus leak audit</div>
             {ablation.corpus_clean ? (
-              <p className="mt-2 text-[11px] leading-relaxed text-pass">
+              <p className="mt-2 text-xs leading-relaxed text-pass">
                 No generator setting lands on one class only without a physical reason to. Every
                 detector above is reading the packet rather than a label written into the file.
               </p>
             ) : (
               <>
-                <p className="mt-2 text-[11px] leading-relaxed text-reject">
+                <p className="mt-2 text-xs leading-relaxed text-reject">
                   {ablation.leaks.length} corpus value{ablation.leaks.length === 1 ? "" : "s"} appear
                   on one class only. A detector reading one of these is reading the answer key, and
                   every number above it is inflated by an unknown amount.
                 </p>
-                <div className="mt-2 grid gap-1 font-mono text-[11px] sm:grid-cols-2">
+                <div className="mt-2 grid gap-1 font-mono text-xs sm:grid-cols-2">
                   {ablation.leaks.map((l) => (
-                    <div key={`${l.field}-${l.value}`} className="flex justify-between gap-2 rounded border border-reject/30 bg-reject/8 px-2 py-1">
+                    <div key={`${l.field}-${l.value}`} className="flex justify-between gap-2 rounded border border-reject/30 bg-reject/[0.07] px-2 py-1">
                       <span className="truncate text-slate-400">{l.field}={l.value}</span>
                       <span className="text-reject">{l.n} packets, all {l.class}</span>
                     </div>
@@ -287,10 +303,10 @@ export default function MetricsPage() {
             )}
             {ablation.one_sided_but_expected?.length > 0 && (
               <div className="mt-3">
-                <p className="text-[11px] leading-relaxed text-slate-500">
+                <p className="text-xs leading-relaxed text-slate-500">
                   One-sided by construction, and allowed to be:
                 </p>
-                <div className="mt-1 grid gap-1 font-mono text-[11px] sm:grid-cols-2">
+                <div className="mt-1 grid gap-1 font-mono text-xs sm:grid-cols-2">
                   {ablation.one_sided_but_expected.map((l) => (
                     <div key={`${l.field}-${l.value}`} className="rounded border border-edge bg-ink-850 px-2 py-1">
                       <div className="flex justify-between gap-2">
@@ -298,7 +314,7 @@ export default function MetricsPage() {
                         <span className="text-slate-500">{l.n} packets</span>
                       </div>
                       {l.justification && (
-                        <div className="mt-0.5 font-sans text-[10px] leading-snug text-slate-600">{l.justification}</div>
+                        <div className="mt-0.5 font-sans text-2xs leading-snug text-slate-600">{l.justification}</div>
                       )}
                     </div>
                   ))}
@@ -309,7 +325,7 @@ export default function MetricsPage() {
         </Section>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+      <div className="grid gap-5 wide:grid-cols-[1fr_340px]">
         <Section title="Recall by attack type"
           hint="Sorted worst-first on purpose. A single headline AUC hides which attack we are actually bad at.">
           <ResponsiveContainer width="100%" height={Math.max(220, attackData.length * 34)}>
@@ -321,7 +337,7 @@ export default function MetricsPage() {
                 formatter={(v: any, n: any) => [n === "recall" ? fmtPct(v, 0) : Number(v).toFixed(3), n]} />
               <Bar dataKey="recall" name="caught at review threshold" radius={[0, 4, 4, 0]} barSize={16}>
                 {attackData.map((d, i) => (
-                  <Cell key={i} fill={d.recall >= 0.85 ? "#2dd4a7" : d.recall >= 0.6 ? "#f5b53d" : "#fb5e6d"} />
+                  <Cell key={i} fill={d.recall >= 0.85 ? PASS : d.recall >= 0.6 ? REVIEW : REJECT} />
                 ))}
               </Bar>
             </BarChart>
@@ -336,14 +352,14 @@ export default function MetricsPage() {
               { k: "fp", label: "False positive", v: cm.fp, tone: "text-review", note: "genuine blocked" },
               { k: "tn", label: "True negative", v: cm.tn, tone: "text-slate-300", note: "genuine passed" },
             ].map((c) => (
-              <div key={c.k} className="rounded-lg border border-edge bg-ink-850 p-3">
-                <div className={clsx("font-mono text-2xl font-semibold tabular-nums", c.tone)}>{c.v ?? "—"}</div>
-                <div className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">{c.label}</div>
-                <div className="text-[10px] text-slate-600">{c.note}</div>
+              <div key={c.k} className="rounded border border-edge bg-ink-850 p-3">
+                <div className={clsx("num text-2xl font-medium", c.tone)}>{c.v ?? "—"}</div>
+                <div className="mt-0.5 text-2xs uppercase tracking-wider text-slate-500">{c.label}</div>
+                <div className="text-2xs text-slate-600">{c.note}</div>
               </div>
             ))}
           </div>
-          <div className="mt-4 space-y-1.5 border-t border-edge pt-3 font-mono text-[11px] text-slate-400">
+          <div className="mt-4 space-y-1.5 border-t border-edge pt-3 font-mono text-xs text-slate-400">
             <div className="flex justify-between"><span className="text-slate-500">precision</span><span>{fmtPct(cm.precision, 1)}</span></div>
             <div className="flex justify-between"><span className="text-slate-500">recall</span><span>{fmtPct(cm.recall, 1)}</span></div>
             <div className="flex justify-between"><span className="text-slate-500">F1</span><span>{cm.f1?.toFixed(3)}</span></div>
@@ -359,7 +375,7 @@ export default function MetricsPage() {
         hint="Four of these inputs are business assumptions, not measurements. They are sliders precisely so you can move them: a single ₹ figure would be unfalsifiable."
       >
         {costError && <div className="mb-3 text-xs text-review">{costError}</div>}
-        <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+        <div className="grid gap-5 wide:grid-cols-[1fr_290px]">
           <ResponsiveContainer width="100%" height={320}>
             <LineChart data={cost?.curve ?? []} margin={{ top: 4, right: 8, bottom: 4, left: 8 }}>
               <CartesianGrid stroke={GRID} strokeDasharray="3 3" />
@@ -368,13 +384,13 @@ export default function MetricsPage() {
               <YAxis tick={AXIS} tickFormatter={(v) => fmtInr(v)} width={62} />
               <Tooltip {...tooltipStyle} formatter={(v: any, n: any) => [fmtInr(Number(v)), n]}
                 labelFormatter={(l) => `threshold ${Number(l).toFixed(2)}`} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="fraud_prevented_inr" name="fraud prevented" stroke="#2dd4a7" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="friction_cost_inr" name="lost to false rejects" stroke="#fb5e6d" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="net_benefit_inr" name="net benefit" stroke="#5b8cff" strokeWidth={2.5} dot={false} />
+              <Legend iconType="plainline" iconSize={8} wrapperStyle={{ fontSize: 10, paddingTop: 6 }} />
+              <Line type="monotone" dataKey="fraud_prevented_inr" name="fraud prevented" stroke={PASS} strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="friction_cost_inr" name="lost to false rejects" stroke={REJECT} strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="net_benefit_inr" name="net benefit" stroke={ACCENT} strokeWidth={2.5} dot={false} />
               {cost?.optimal && (
-                <ReferenceLine x={cost.optimal.threshold} stroke="#5b8cff" strokeDasharray="4 4"
-                  label={{ value: `optimum ${cost.optimal.threshold}`, fill: "#5b8cff", fontSize: 10, position: "top" }} />
+                <ReferenceLine x={cost.optimal.threshold} stroke={ACCENT} strokeDasharray="4 4"
+                  label={{ value: `optimum ${cost.optimal.threshold}`, fill: ACCENT, fontSize: 10, position: "top" }} />
               )}
             </LineChart>
           </ResponsiveContainer>
@@ -388,20 +404,20 @@ export default function MetricsPage() {
             ].map((s) => (
               <div key={s.label}>
                 <div className="flex items-baseline justify-between">
-                  <label className="text-[11px] text-slate-400">{s.label}</label>
+                  <label className="text-xs text-slate-400">{s.label}</label>
                   <span className="font-mono text-xs text-slate-200">{s.fmt(s.value)}</span>
                 </div>
                 <input type="range" min={s.min} max={s.max} step={s.step} value={s.value}
                   onChange={(e) => s.set(Number(e.target.value))}
-                  className="mt-1.5 w-full accent-[#5b8cff]" />
+                  className="mt-1.5 w-full accent-accent" />
               </div>
             ))}
 
             {cost?.optimal && (
-              <div className="rounded-lg border border-accent/40 bg-accent/8 p-3">
+              <div className="rounded border border-accent/40 bg-accent/[0.07] p-3">
                 <div className="label text-accent">Optimal threshold</div>
-                <div className="mt-1 font-mono text-2xl font-semibold text-accent">{cost.optimal.threshold}</div>
-                <div className="mt-1.5 space-y-0.5 text-[11px] leading-relaxed text-slate-400">
+                <div className="num mt-1 text-2xl font-medium text-accent">{cost.optimal.threshold}</div>
+                <div className="mt-1.5 space-y-0.5 text-xs leading-relaxed text-slate-400">
                   <div>net {fmtInr(cost.optimal.net_benefit_inr)} per {cost.assumptions.per_onboardings.toLocaleString()} onboardings</div>
                   <div>FAR {fmtPct(cost.optimal.false_accept_rate, 1)} · FRR {fmtPct(cost.optimal.false_reject_rate, 1)}</div>
                 </div>
@@ -411,12 +427,12 @@ export default function MetricsPage() {
         </div>
       </Section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-5 wide:grid-cols-2">
         <Section title="Bias audit — accuracy by skin-tone proxy"
           hint="Deepfake detectors are known to degrade on darker skin. Measuring it is the minimum bar.">
           <div className="scroll-x">
             <table className="w-full min-w-[420px] text-left text-xs">
-              <thead className="text-[10px] uppercase tracking-wider text-slate-500">
+              <thead className="text-2xs uppercase tracking-wider text-slate-500">
                 <tr>
                   <th className="pb-2 font-medium">ITA° bucket</th>
                   <th className="pb-2 text-right font-medium">n</th>
@@ -429,16 +445,16 @@ export default function MetricsPage() {
                 {Object.entries(ev.bias_audit?.buckets ?? {}).map(([k, b]: any) => (
                   <tr key={k} className="border-t border-edge/60">
                     <td className="py-2 font-sans text-slate-300">{k.replace(/_/g, " ")}</td>
-                    <td className="py-2 text-right tabular-nums text-slate-400">{b.n}</td>
-                    <td className="py-2 text-right tabular-nums text-slate-300">{b.auc?.toFixed(3) ?? "—"}</td>
-                    <td className="py-2 text-right tabular-nums text-slate-400">{b.false_reject_rate !== undefined ? fmtPct(b.false_reject_rate, 1) : "—"}</td>
-                    <td className="py-2 text-right tabular-nums text-slate-400">{b.false_accept_rate !== undefined ? fmtPct(b.false_accept_rate, 1) : "—"}</td>
+                    <td className="py-2 text-right text-slate-400">{b.n}</td>
+                    <td className="py-2 text-right text-slate-300">{b.auc?.toFixed(3) ?? "—"}</td>
+                    <td className="py-2 text-right text-slate-400">{b.false_reject_rate !== undefined ? fmtPct(b.false_reject_rate, 1) : "—"}</td>
+                    <td className="py-2 text-right text-slate-400">{b.false_accept_rate !== undefined ? fmtPct(b.false_accept_rate, 1) : "—"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="mt-3 border-t border-edge pt-3 text-[11px] leading-relaxed text-slate-500">
+          <p className="mt-3 border-t border-edge pt-3 text-xs leading-relaxed text-slate-500">
             {ev.bias_audit?.caveat}
           </p>
         </Section>
@@ -452,7 +468,7 @@ export default function MetricsPage() {
                   label={{ value: "ms", position: "insideBottom", offset: -2, fill: "#64748b", fontSize: 10 }} />
                 <YAxis tick={AXIS} allowDecimals={false} />
                 <Tooltip {...tooltipStyle} />
-                <Bar dataKey="count" fill="#5b8cff" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="count" fill={ACCENT} radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -461,7 +477,7 @@ export default function MetricsPage() {
           {ev.per_capture_mode && Object.keys(ev.per_capture_mode).length > 0 && (
             <div className="mt-4 border-t border-edge pt-3">
               <div className="label">Tamper detection by upload type</div>
-              <div className="mt-2 space-y-1 font-mono text-[11px]">
+              <div className="mt-2 space-y-1 font-mono text-xs">
                 {Object.entries(ev.per_capture_mode).map(([mode, m]: any) => (
                   <div key={mode} className="flex justify-between gap-3">
                     <span className="text-slate-500">{mode === "scan" ? "digital scan / direct upload" : "phone photo of card"} (n={m.n})</span>
@@ -469,7 +485,7 @@ export default function MetricsPage() {
                   </div>
                 ))}
               </div>
-              <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+              <p className="mt-2 text-xs leading-relaxed text-slate-500">
                 Compression-based tamper analysis reads an image&apos;s edit history. Photographing a card re-encodes
                 the whole frame and largely erases it, so the two populations are reported separately rather than averaged.
               </p>

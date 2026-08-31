@@ -139,6 +139,10 @@ export const api = {
 
   submission: (id: string) => request<any>(`/submissions/${id}`),
 
+  /** Re-run the pipeline over an already-stored packet, and return a full verdict. */
+  rescore: (id: string) =>
+    request<VerifyResponse>(`/submissions/${id}/rescore`, { method: "POST" }),
+
   gauntletManifest: () => request<any>("/gauntlet"),
 
   metrics: () => request<any>("/metrics"),
