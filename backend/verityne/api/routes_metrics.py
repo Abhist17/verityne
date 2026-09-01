@@ -35,6 +35,8 @@ REAL_DATA_REPORTS = {
                    "LFW — 6,000 pairs of real photographs of real people"),
     "id_documents": (EVAL_ROOT / "real_docs.json",
                      "MIDV-2020 — identity documents physically printed, photographed and scanned"),
+    "behavioral": (EVAL_ROOT / "behavioral.json",
+                   "Aalto 136M keystrokes + CMU Killourhy-Maxion, against real browser automation"),
     "liveness_video": (EVAL_ROOT / "real_video.json",
                        "recorded deepfake video (FaceForensics++ / Celeb-DF / DFDC)"),
 }
@@ -67,6 +69,24 @@ def metrics(session: Session = Depends(db_session)):
             "training. Live stats are computed from the audit log of this instance."
         ),
     }
+
+
+@router.get("/metrics/behavioral", summary="Detector 6: what the keystroke model was measured at")
+def behavioral_metrics():
+    """The Detector 6 evaluation report, or an explicit absence.
+
+    404 rather than an empty shape: this file only exists once someone has built
+    the corpus and run the fit, and a page that silently rendered zeros for it
+    would be claiming a measurement nobody made.
+    """
+    report = _load_json(EVAL_ROOT / "behavioral.json")
+    if report is None:
+        raise HTTPException(
+            404,
+            "No behavioral evaluation on disk. Build the corpus "
+            "(`make behavioral-corpus`) and fit the model (`make behavioral-train`).",
+        )
+    return report
 
 
 @router.get("/metrics/ablation", summary="What each detector is worth, and whether the corpus leaks its labels")

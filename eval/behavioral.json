@@ -1,0 +1,450 @@
+{
+  "corpus": {
+    "human_aalto_sessions": 12000,
+    "human_cmu_sessions": 2040,
+    "bot_sessions": 3000,
+    "strategies": {
+      "cdp_raw": 500,
+      "replay_human": 500,
+      "type_fixed": 500,
+      "type_gaussian": 500,
+      "type_jitter": 500,
+      "type_no_delay": 500
+    },
+    "human_source": "Aalto 136M keystrokes (168,595 participants) + CMU Killourhy-Maxion (51 subjects)",
+    "bot_source": "real headless Chromium driven via Playwright/CDP, captured by the shipped collector"
+  },
+  "shipped_feature_set": "core",
+  "feature_sets": {
+    "core": [
+      "dwell_mean",
+      "dwell_std",
+      "dwell_cv",
+      "dwell_median",
+      "dwell_p10",
+      "dwell_p90",
+      "dwell_min",
+      "dwell_max",
+      "dwell_iqr",
+      "flight_mean",
+      "flight_std",
+      "flight_cv",
+      "flight_median",
+      "flight_p10",
+      "flight_p90",
+      "flight_min",
+      "flight_max",
+      "flight_iqr",
+      "rollover_rate",
+      "dwell_flight_corr",
+      "dwell_unique_ratio",
+      "flight_unique_ratio"
+    ],
+    "core+context": [
+      "dwell_mean",
+      "dwell_std",
+      "dwell_cv",
+      "dwell_median",
+      "dwell_p10",
+      "dwell_p90",
+      "dwell_min",
+      "dwell_max",
+      "dwell_iqr",
+      "flight_mean",
+      "flight_std",
+      "flight_cv",
+      "flight_median",
+      "flight_p10",
+      "flight_p90",
+      "flight_min",
+      "flight_max",
+      "flight_iqr",
+      "rollover_rate",
+      "dwell_flight_corr",
+      "dwell_unique_ratio",
+      "flight_unique_ratio",
+      "pause_rate",
+      "typing_speed_cps",
+      "backspace_rate"
+    ]
+  },
+  "ablation": {
+    "core": {
+      "n_features": 22,
+      "threshold": 0.5,
+      "held_out_subject_disjoint": {
+        "xgboost": {
+          "n": 5272,
+          "n_positive": 1000,
+          "auc": 1.0,
+          "ap": 0.9999
+        },
+        "logistic_regression": {
+          "n": 5272,
+          "n_positive": 1000,
+          "auc": 0.9984,
+          "ap": 0.9831
+        },
+        "n_train": 11768,
+        "n_train_subjects": 3398,
+        "n_test_subjects": 1456,
+        "threshold": 0.5,
+        "threshold_chosen_for_human_fpr": 0.01,
+        "human_fpr_at_threshold": 0.0007,
+        "recall_at_threshold": 1.0
+      },
+      "leave_one_strategy_out": {
+        "replay_human": {
+          "n": 4760,
+          "n_positive": 500,
+          "auc": 0.4996,
+          "ap": 0.105,
+          "threshold": 0.5,
+          "recall_at_threshold": 0.0,
+          "false_positive_rate": 0.0
+        },
+        "type_gaussian": {
+          "n": 4760,
+          "n_positive": 500,
+          "auc": 0.998,
+          "ap": 0.9804,
+          "threshold": 0.5,
+          "recall_at_threshold": 0.166,
+          "false_positive_rate": 0.0
+        },
+        "cdp_raw": {
+          "n": 4760,
+          "n_positive": 500,
+          "auc": 1.0,
+          "ap": 1.0,
+          "threshold": 0.5,
+          "recall_at_threshold": 1.0,
+          "false_positive_rate": 0.0
+        },
+        "type_fixed": {
+          "n": 4760,
+          "n_positive": 500,
+          "auc": 1.0,
+          "ap": 1.0,
+          "threshold": 0.5,
+          "recall_at_threshold": 1.0,
+          "false_positive_rate": 0.0
+        },
+        "type_jitter": {
+          "n": 4760,
+          "n_positive": 500,
+          "auc": 1.0,
+          "ap": 1.0,
+          "threshold": 0.5,
+          "recall_at_threshold": 1.0,
+          "false_positive_rate": 0.0
+        },
+        "type_no_delay": {
+          "n": 4760,
+          "n_positive": 500,
+          "auc": 1.0,
+          "ap": 1.0,
+          "threshold": 0.5,
+          "recall_at_threshold": 1.0,
+          "false_positive_rate": 0.0
+        }
+      },
+      "transfer_to_unseen_population": {
+        "protocol": "fit on Aalto humans + automation only; score CMU humans, never seen",
+        "dataset": "CMU Killourhy-Maxion, 51 subjects, 400 repetitions each",
+        "n": 2040,
+        "threshold": 0.5,
+        "false_positive_rate": 0.3877,
+        "mean_score": 0.3988,
+        "p95_score": 0.9945
+      }
+    },
+    "core+context": {
+      "n_features": 25,
+      "threshold": 0.5,
+      "held_out_subject_disjoint": {
+        "xgboost": {
+          "n": 5272,
+          "n_positive": 1000,
+          "auc": 1.0,
+          "ap": 1.0
+        },
+        "logistic_regression": {
+          "n": 5272,
+          "n_positive": 1000,
+          "auc": 0.9999,
+          "ap": 0.9995
+        },
+        "n_train": 11768,
+        "n_train_subjects": 3398,
+        "n_test_subjects": 1456,
+        "threshold": 0.5,
+        "threshold_chosen_for_human_fpr": 0.01,
+        "human_fpr_at_threshold": 0.0,
+        "recall_at_threshold": 1.0
+      },
+      "leave_one_strategy_out": {
+        "replay_human": {
+          "n": 4760,
+          "n_positive": 500,
+          "auc": 0.4996,
+          "ap": 0.105,
+          "threshold": 0.5,
+          "recall_at_threshold": 0.0,
+          "false_positive_rate": 0.0
+        },
+        "type_gaussian": {
+          "n": 4760,
+          "n_positive": 500,
+          "auc": 0.9997,
+          "ap": 0.9975,
+          "threshold": 0.5,
+          "recall_at_threshold": 0.478,
+          "false_positive_rate": 0.0
+        },
+        "cdp_raw": {
+          "n": 4760,
+          "n_positive": 500,
+          "auc": 1.0,
+          "ap": 1.0,
+          "threshold": 0.5,
+          "recall_at_threshold": 1.0,
+          "false_positive_rate": 0.0
+        },
+        "type_fixed": {
+          "n": 4760,
+          "n_positive": 500,
+          "auc": 1.0,
+          "ap": 1.0,
+          "threshold": 0.5,
+          "recall_at_threshold": 1.0,
+          "false_positive_rate": 0.0
+        },
+        "type_jitter": {
+          "n": 4760,
+          "n_positive": 500,
+          "auc": 1.0,
+          "ap": 1.0,
+          "threshold": 0.5,
+          "recall_at_threshold": 1.0,
+          "false_positive_rate": 0.0
+        },
+        "type_no_delay": {
+          "n": 4760,
+          "n_positive": 500,
+          "auc": 1.0,
+          "ap": 1.0,
+          "threshold": 0.5,
+          "recall_at_threshold": 1.0,
+          "false_positive_rate": 0.0002
+        }
+      },
+      "transfer_to_unseen_population": {
+        "protocol": "fit on Aalto humans + automation only; score CMU humans, never seen",
+        "dataset": "CMU Killourhy-Maxion, 51 subjects, 400 repetitions each",
+        "n": 2040,
+        "threshold": 0.5,
+        "false_positive_rate": 0.8162,
+        "mean_score": 0.7699,
+        "p95_score": 0.9972
+      }
+    }
+  },
+  "feature_importance": [
+    {
+      "feature": "flight_iqr",
+      "gain": 0.5595
+    },
+    {
+      "feature": "flight_p90",
+      "gain": 0.1957
+    },
+    {
+      "feature": "flight_max",
+      "gain": 0.0396
+    },
+    {
+      "feature": "flight_unique_ratio",
+      "gain": 0.0323
+    },
+    {
+      "feature": "flight_median",
+      "gain": 0.0287
+    },
+    {
+      "feature": "flight_min",
+      "gain": 0.0219
+    },
+    {
+      "feature": "dwell_mean",
+      "gain": 0.018
+    },
+    {
+      "feature": "dwell_std",
+      "gain": 0.0157
+    },
+    {
+      "feature": "dwell_max",
+      "gain": 0.0134
+    },
+    {
+      "feature": "dwell_min",
+      "gain": 0.0117
+    },
+    {
+      "feature": "rollover_rate",
+      "gain": 0.0107
+    },
+    {
+      "feature": "flight_std",
+      "gain": 0.0083
+    },
+    {
+      "feature": "dwell_p10",
+      "gain": 0.0081
+    },
+    {
+      "feature": "flight_cv",
+      "gain": 0.0075
+    },
+    {
+      "feature": "dwell_flight_corr",
+      "gain": 0.0055
+    },
+    {
+      "feature": "dwell_median",
+      "gain": 0.0054
+    },
+    {
+      "feature": "dwell_unique_ratio",
+      "gain": 0.0053
+    },
+    {
+      "feature": "dwell_cv",
+      "gain": 0.003
+    },
+    {
+      "feature": "flight_p10",
+      "gain": 0.0029
+    },
+    {
+      "feature": "flight_mean",
+      "gain": 0.0028
+    },
+    {
+      "feature": "dwell_iqr",
+      "gain": 0.0023
+    },
+    {
+      "feature": "dwell_p90",
+      "gain": 0.0018
+    }
+  ],
+  "human_fpr_budget": 0.01,
+  "threshold": 0.5,
+  "hyperparameters": {
+    "max_depth": 4,
+    "n_estimators": 600,
+    "learning_rate": 0.12,
+    "subsample": 0.7,
+    "colsample_bytree": 0.9,
+    "reg_lambda": 1.0,
+    "min_child_weight": 8
+  },
+  "sweep": {
+    "ran": true,
+    "configurations": 648,
+    "objective": "minimise false positives on a human population never fitted on, subject to not regressing recall on unseen automation",
+    "top": [
+      {
+        "params": {
+          "max_depth": 4,
+          "n_estimators": 600,
+          "learning_rate": 0.12,
+          "subsample": 0.7,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 1.0,
+          "min_child_weight": 8
+        },
+        "threshold": 0.5,
+        "transfer_fpr": 0.3877,
+        "mean_unseen_recall": 0.8333,
+        "min_unseen_recall": 0.0,
+        "size": 2400
+      },
+      {
+        "params": {
+          "max_depth": 4,
+          "n_estimators": 300,
+          "learning_rate": 0.12,
+          "subsample": 0.7,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 1.0,
+          "min_child_weight": 8
+        },
+        "threshold": 0.5,
+        "transfer_fpr": 0.3897,
+        "mean_unseen_recall": 0.8333,
+        "min_unseen_recall": 0.0,
+        "size": 1200
+      },
+      {
+        "params": {
+          "max_depth": 2,
+          "n_estimators": 150,
+          "learning_rate": 0.03,
+          "subsample": 0.7,
+          "colsample_bytree": 0.6,
+          "reg_lambda": 5.0,
+          "min_child_weight": 1
+        },
+        "threshold": 0.5,
+        "transfer_fpr": 0.402,
+        "mean_unseen_recall": 0.8333,
+        "min_unseen_recall": 0.0,
+        "size": 300
+      },
+      {
+        "params": {
+          "max_depth": 2,
+          "n_estimators": 150,
+          "learning_rate": 0.03,
+          "subsample": 0.7,
+          "colsample_bytree": 0.6,
+          "reg_lambda": 5.0,
+          "min_child_weight": 8
+        },
+        "threshold": 0.5,
+        "transfer_fpr": 0.402,
+        "mean_unseen_recall": 0.8333,
+        "min_unseen_recall": 0.0,
+        "size": 300
+      },
+      {
+        "params": {
+          "max_depth": 2,
+          "n_estimators": 150,
+          "learning_rate": 0.03,
+          "subsample": 0.7,
+          "colsample_bytree": 0.6,
+          "reg_lambda": 1.0,
+          "min_child_weight": 8
+        },
+        "threshold": 0.5,
+        "transfer_fpr": 0.4044,
+        "mean_unseen_recall": 0.8333,
+        "min_unseen_recall": 0.0,
+        "size": 300
+      }
+    ]
+  },
+  "headline": {
+    "held_out_auc": 1.0,
+    "held_out_recall": 1.0,
+    "human_false_positive_rate": 0.0007,
+    "worst_unseen_strategy": "replay_human",
+    "worst_unseen_strategy_auc": 0.4996,
+    "transfer_false_positive_rate": 0.3877
+  },
+  "note": "Leave-one-strategy-out is the number that describes deployment: it is the only protocol here that asks whether the model recognises automation it has never seen. The held-out AUC is an upper bound, not a forecast. `n_keys` is excluded from every feature set because session length is a property of how this corpus was chopped, and it was the highest-gain feature on the first fit."
+}

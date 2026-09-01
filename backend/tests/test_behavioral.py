@@ -5,7 +5,9 @@ signal on a fraud kit costs one caught fraud; firing it on a nervous human costs
 that person their onboarding, so the false-positive tests are written first and
 are the strict ones.
 """
+import json
 import random
+from pathlib import Path
 
 import pytest
 
@@ -91,11 +93,20 @@ def kit_buffer(seed: int = 0) -> dict:
 
 
 def score(buf: dict) -> float:
-    return score_features(extract_features(buf))[0]
+    """Rules only.
+
+    The hand-written 'human' fixtures below sample dwell and flight from a
+    gaussian, and real typing is neither gaussian nor independent between
+    consecutive keys - it is heavy-tailed and autocorrelated. The fitted model
+    was trained on 168,595 real people and flags those fixtures as generated,
+    correctly. So the fixtures pin the *rules*, which is what they were written
+    for, and `TestAgainstRealHumans` pins the model against real typing.
+    """
+    return score_features(extract_features(buf), use_model=False)[0]
 
 
 def rules(buf: dict) -> set:
-    return {h["rule"] for h in score_features(extract_features(buf))[3]}
+    return {h["rule"] for h in score_features(extract_features(buf), use_model=False)[3]}
 
 
 # --------------------------------------------------------------------------- #
@@ -412,3 +423,67 @@ class TestCollectorContract:
         from verityne.schemas import BehavioralEnvelope
 
         BehavioralEnvelope(**self.collector_buffer())
+
+
+REAL_HUMANS = Path(__file__).resolve().parents[2] / "datasets/keystrokes/human_aalto.jsonl"
+BOT_SESSIONS = Path(__file__).resolve().parents[2] / "datasets/keystrokes/bot_sessions.jsonl"
+
+
+def _load(path: Path, limit: int) -> list:
+    rows = []
+    with path.open() as fh:
+        for i, line in enumerate(fh):
+            if i >= limit:
+                break
+            rows.append(json.loads(line))
+    return rows
+
+
+@pytest.mark.skipif(not REAL_HUMANS.exists(),
+                    reason="real keystroke corpus absent - run `make behavioral-corpus`")
+class TestAgainstRealHumans:
+    """The fitted model, against typing nobody in this repository wrote.
+
+    Aalto's participants are the only humans in this test suite whose rhythm was
+    not invented by us, so they are the only ones whose false-positive rate means
+    anything. The corpus is git-ignored and multi-gigabyte, so these skip on a
+    fresh clone rather than failing it.
+    """
+
+    def test_the_model_does_not_flag_real_people(self):
+        from verityne.detectors.behavioral import model_p_automated
+        from verityne.utils.keystroke import keystroke_features
+
+        rows = _load(REAL_HUMANS, 400)
+        ps = []
+        for r in rows:
+            f = keystroke_features(
+                r["dwells"], r["flights"], n_keys=r["n_keys"],
+                backspaces=r["backspaces"], span_s=r.get("span_s"), printable=r.get("printable"),
+            )
+            f["keystroke_count"] = r["n_keys"]
+            p = model_p_automated(f)
+            if p is not None:
+                ps.append(p)
+        if not ps:
+            pytest.skip("no fitted keystroke model on disk")
+        flagged = sum(1 for p in ps if p >= 0.5) / len(ps)
+        assert flagged < 0.05, (
+            f"the model flags {flagged:.1%} of real Aalto participants as automated; "
+            "at that rate it rejects genuine merchants for how they type"
+        )
+
+    @pytest.mark.skipif(not BOT_SESSIONS.exists(), reason="bot corpus absent")
+    def test_real_automation_is_caught_by_the_full_detector(self):
+        """Every strategy, end to end, through the same path a request takes."""
+        from collections import defaultdict
+
+        by_strategy = defaultdict(list)
+        for r in _load(BOT_SESSIONS, 400):
+            by_strategy[r.get("strategy", "?")].append(r)
+        assert by_strategy, "bot corpus is empty"
+        for strategy, rows in by_strategy.items():
+            caught = sum(1 for r in rows if score_features(extract_features(r))[0] > 0.5)
+            assert caught / len(rows) >= 0.9, (
+                f"only {caught}/{len(rows)} of '{strategy}' sessions scored above 0.5"
+            )

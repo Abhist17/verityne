@@ -33,12 +33,18 @@ submission with no telemetry is *skipped*, never silently scored as clean.
 """
 from __future__ import annotations
 
+import functools
+import logging
 import math
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
+log = logging.getLogger("verityne.behavioral")
+
+from ..config import MODEL_ROOT
 from ..schemas import DetectorOutput
+from ..utils.keystroke import feature_row, keystroke_features
 from .base import Detector, SubmissionPayload, clamp
 
 # --------------------------------------------------------------------------- #
@@ -77,6 +83,10 @@ ROBOTIC_MOUSE_DT_CV = 0.12
 LOW_PATH_ENTROPY = 0.35
 #: Enough keystrokes to read a rhythm from at all.
 MIN_KEYS_FOR_RHYTHM = 12
+#: Below this the fitted model is not saying anything a rule is not already
+#: saying more legibly, and a low-probability hit would only add noise to the
+#: noisy-OR. Set at the model's own operating point.
+MODEL_ALERT_P = 0.5
 #: Enough keystrokes to read one confidently.
 CONFIDENT_KEYS = 35
 
@@ -106,6 +116,49 @@ REGION_OFFSET_MIN = {
 #: pair is called incoherent. Four hours clears every daylight-saving shift and
 #: every "I am travelling" case inside a continent.
 LOCALE_OFFSET_TOLERANCE_MIN = 4 * 60
+
+
+#: Fitted by `scripts/train_behavioral.py` on real Aalto typing and real
+#: browser-automation sessions. Absent until that script has been run, and the
+#: rules below stand alone when it is - the detector is never dead on arrival.
+KEYSTROKE_MODEL_PATH = MODEL_ROOT / "behavioral_keystroke.joblib"
+
+
+@functools.lru_cache(maxsize=1)
+def _keystroke_model():
+    if not KEYSTROKE_MODEL_PATH.exists():
+        return None
+    try:
+        import joblib
+
+        return joblib.load(KEYSTROKE_MODEL_PATH)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("keystroke model unreadable: %s", exc)
+        return None
+
+
+def reload_keystroke_model() -> None:
+    _keystroke_model.cache_clear()
+
+
+def model_p_automated(feats: Dict[str, Any]) -> Optional[float]:
+    """P(this rhythm was generated), from the fitted model, or None.
+
+    None rather than 0.5 when the model is missing or the sample is too thin:
+    the caller must be able to tell "the model says human" from "there was no
+    model", because those two justify completely different weights.
+    """
+    bundle = _keystroke_model()
+    if bundle is None:
+        return None
+    if int(feats.get("keystroke_count") or 0) < int(bundle.get("min_keys", MIN_KEYS_FOR_RHYTHM)):
+        return None
+    try:
+        row = feature_row(feats, bundle["feature_names"])
+        return float(bundle["model"].predict_proba(row[None, :])[0, 1])
+    except Exception as exc:  # noqa: BLE001
+        log.warning("keystroke model failed, falling back to rules: %s", exc)
+        return None
 
 
 def _stats(xs: Sequence[float]) -> Tuple[float, float, float]:
@@ -204,6 +257,17 @@ def extract_features(events: Dict[str, Any]) -> Dict[str, Any]:
 
 
     positive_flights = [x for x in flights if x >= 0]
+
+    # The fitted model's inputs, computed by the same function the training
+    # script uses. Merged in rather than recomputed here so the row a model was
+    # fitted on and the row it is served cannot drift apart - see
+    # utils/keystroke.py, which exists entirely for that reason.
+    span_s = (max(downs) - min(downs)) / 1000.0 if len(downs) >= 2 else None
+    f.update(keystroke_features(
+        dwells, flights, n_keys=len(keys), backspaces=backspaces,
+        span_s=span_s, printable=printable,
+    ))
+
     f["keystroke_count"] = len(keys)
     f["dwell_samples"] = len(dwells)
     f["dwell_mean_ms"] = round(d_mean, 2)
@@ -354,8 +418,17 @@ def extract_features(events: Dict[str, Any]) -> Dict[str, Any]:
 # Scoring
 # --------------------------------------------------------------------------- #
 
-def score_features(f: Dict[str, Any]) -> Tuple[float, float, List[str], List[Dict[str, Any]]]:
+def score_features(
+    f: Dict[str, Any], *, use_model: bool = True
+) -> Tuple[float, float, List[str], List[Dict[str, Any]]]:
     """Rule hits -> (score, confidence, reasons, hits).
+
+    `use_model=False` scores on the deterministic rules alone. That is not a
+    convenience flag: the rules and the fitted model are separately meaningful
+    and separately testable, and a test that means to pin rule behaviour should
+    not silently start measuring a model checkpoint that may or may not be on
+    disk. `scripts/train_behavioral.py` uses it to report what the model adds
+    over the rules rather than assuming it adds anything.
 
     Combined by noisy-OR, the same way `metadata_exif` combines its rules: each
     independent hit erodes the probability that the fill was human, so several
@@ -367,6 +440,21 @@ def score_features(f: Dict[str, Any]) -> Tuple[float, float, List[str], List[Dic
     """
     hits: List[Tuple[str, float, str]] = []
     keys = int(f.get("keystroke_count") or 0)
+
+    # ---- fitted model -------------------------------------------------------
+    # Consulted alongside the rules rather than instead of them. The rules encode
+    # things that are true by physics (a 9 ms flight) or by self-declaration (a
+    # webdriver flag); the model encodes the shape of a real typing distribution,
+    # which is what the rules could only approximate with hand-set constants. It
+    # contributes as one more weighted hit, capped below the categorical tier,
+    # because a fitted probability is still a statistical claim.
+    p_auto = model_p_automated(f) if use_model else None
+    if p_auto is not None and p_auto >= MODEL_ALERT_P:
+        hits.append((
+            "keystroke:model", min(0.80, float(p_auto)),
+            f"A model fitted on 168,595 real people's typing and on real browser "
+            f"automation puts this rhythm at {p_auto:.0%} likely generated",
+        ))
 
     # ---- keystroke rhythm ---------------------------------------------------
     if keys >= MIN_KEYS_FOR_RHYTHM:
@@ -568,7 +656,36 @@ class BehavioralDetector(Detector):
                 "automation_flags": feats.get("automation_flags"),
                 "locale_incoherent": bool(feats.get("locale_incoherent")),
             },
-            "evidence": {"events_seen": feats.get("event_count")},
+            # The bands the rules above actually fire on, published rather than
+            # duplicated in the dashboard. A UI that hard-codes "normal dwell is
+            # 60-160 ms" drifts silently the moment a constant here is re-fitted,
+            # and the reviewer is then reading a chart that no longer describes
+            # the decision. Server owns the thresholds; the page only draws them.
+            "reference": {
+                "dwell_mean_ms": {"human": [55, 190], "measured": feats.get("dwell_mean_ms")},
+                "dwell_cv": {"human": [ROBOTIC_DWELL_CV, 0.75], "measured": feats.get("dwell_cv")},
+                "flight_cv": {"human": [ROBOTIC_FLIGHT_CV, 3.0], "measured": feats.get("flight_cv")},
+                "flight_min_ms": {"human": [HUMAN_FLIGHT_FLOOR_MS, 400],
+                                   "measured": feats.get("flight_min_ms")},
+                "typing_speed_cps": {"human": [0.6, IMPLAUSIBLE_TYPING_CPS],
+                                      "measured": feats.get("typing_speed_cps")},
+                "rollover_rate": {"human": [0.02, 0.6], "measured": feats.get("rollover_rate")},
+                "mouse_straightness": {"human": [0.0, STRAIGHT_LINE_RATIO],
+                                        "measured": feats.get("mouse_straightness")},
+                "mouse_path_entropy": {"human": [LOW_PATH_ENTROPY, 1.0],
+                                        "measured": feats.get("mouse_path_entropy")},
+                "mouse_dt_cv": {"human": [ROBOTIC_MOUSE_DT_CV, 2.0],
+                                 "measured": feats.get("mouse_dt_cv")},
+                "total_time_s": {"human": [MIN_PLAUSIBLE_FORM_SECONDS, 600],
+                                  "measured": feats.get("total_time_s")},
+            },
+            "evidence": {
+                "events_seen": feats.get("event_count"),
+                "keystroke_model": (
+                    None if model_p_automated(feats) is None
+                    else round(float(model_p_automated(feats)), 4)
+                ),
+            },
         }
         return DetectorOutput(
             name=self.name, label=self.label, score=score, confidence=confidence,
