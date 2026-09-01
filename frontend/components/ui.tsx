@@ -5,24 +5,67 @@ import type { Verdict } from "@/lib/api";
 
 /** Title, optional controls, nothing else. The explanatory paragraph that used
  *  to live here is gone on purpose: it was the same three lines on every page
- *  and it pushed the actual content below the fold. */
+ *  and it pushed the actual content below the fold.
+ *
+ *  The title is set at 34px rather than the 19px it used to be. At 19px an <h1>
+ *  is the same size as the row labels under it, so a page opened with no visible
+ *  hierarchy at all — every page looked like the middle of a page. The scale
+ *  already carried a `3xl` step with -0.025em on it and nothing was using it.
+ *
+ *  `eyebrow` is the small caps line above the title: it names the section a page
+ *  belongs to, which is what lets the title itself stay one word.
+ */
 export function PageHeader({
   title,
+  eyebrow,
   actions,
   children,
 }: {
   title: string;
+  eyebrow?: React.ReactNode;
   actions?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   return (
-    <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3">
+    <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
       <div className="min-w-0 flex-1 basis-[min(100%,20rem)]">
-        <h1 className="text-xl font-medium tracking-tight text-slate-100">{title}</h1>
-        {children && <p className="mt-1 max-w-[62ch] text-sm text-slate-500">{children}</p>}
+        {eyebrow && <div className="eyebrow mb-2.5">{eyebrow}</div>}
+        <h1 className="page-title">{title}</h1>
+        {children && <p className="mt-3 max-w-[62ch] text-sm leading-relaxed text-slate-500">{children}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
+  );
+}
+
+/**
+ * One member of a numbered set: an ordinal, a name, and a line about it.
+ *
+ * The set this exists for is the six detectors, which were a column of hairline
+ * rows — correct as data, wrong as an introduction, because a reader meeting
+ * this system for the first time needs to see that there are *six separate
+ * things* before reading what any one of them does. Six boxes say that at a
+ * glance; six rules do not.
+ *
+ * Colour stays out of it. The ordinal is ink, the name is slate, the sentence is
+ * slate — the palette's rule is that hue means a verdict, and a detector that
+ * has not run yet has no verdict to report.
+ */
+export function NumberedCard({
+  index,
+  title,
+  children,
+}: {
+  index: number;
+  title: React.ReactNode;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="card card-hover">
+      <div className="ordinal">{String(index).padStart(2, "0")}</div>
+      <div className="mt-3 text-sm font-medium text-slate-100">{title}</div>
+      {children && <p className="mt-1.5 text-xs leading-relaxed text-slate-500">{children}</p>}
+    </div>
   );
 }
 
@@ -58,8 +101,14 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section>
-      <div className="flex items-baseline gap-3">
+    // `min-w-0` is load-bearing, not tidiness. A grid or flex item defaults to
+    // `min-width: auto`, so a section refuses to shrink below the intrinsic
+    // width of its widest child — and a Recharts container or an SVG graph has a
+    // large intrinsic width. On a phone that pushed the whole document 394px
+    // wider than the viewport and put a horizontal scrollbar under every chart
+    // page. The charts already scale once the box is allowed to.
+    <section className="min-w-0">
+      <div className="flex min-w-0 items-baseline gap-3">
         <h2 className="shrink-0 text-sm font-medium text-slate-200">{title}</h2>
         <span className="rule-soft min-w-0 flex-1" />
         {right && <span className="shrink-0 text-2xs text-slate-600">{right}</span>}

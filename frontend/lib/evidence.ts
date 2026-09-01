@@ -69,6 +69,29 @@ export function headline(): Headline {
   };
 }
 
+export interface PacketCell {
+  score: number;
+  fraud: boolean;
+}
+
+/**
+ * Every held-out packet, as one cell.
+ *
+ * 105 rows is small enough to draw individually, which is the point: an AUC is
+ * one number standing in for a distribution, and the distribution is the thing
+ * worth looking at. Sorted by score, the overlap between the two classes — the
+ * band where a genuine merchant and a fraudulent one score the same — is the
+ * shape that makes 0.753 what it is, and no headline figure shows it.
+ */
+export function packets(): PacketCell[] {
+  const m: any = read("metrics.json");
+  const raw = m?.raw_scores;
+  if (!raw?.y_true?.length) return [];
+  return raw.y_true
+    .map((y: number, i: number) => ({ score: raw.y_score[i] as number, fraud: y === 1 }))
+    .sort((a: PacketCell, b: PacketCell) => a.score - b.score);
+}
+
 export interface CorrectionRow {
   order: number;
   title: string;

@@ -291,7 +291,11 @@ export function RingGraph({
   const empty = !nodes.length;
 
   return (
-    <div ref={wrapRef} className="relative">
+    // `w-full min-w-0` is load-bearing. The SVG takes a pixel width measured
+    // from this element, and a grid or flex child defaults to min-content width
+    // — so on a narrow viewport the box never shrank, the observer kept
+    // reporting the 760px seed, and the graph pushed the whole page 394px wide.
+    <div ref={wrapRef} className="relative w-full min-w-0">
       <svg
         width={width}
         height={height}

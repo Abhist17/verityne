@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { corrections, headline } from "@/lib/evidence";
+import { corrections, headline, packets } from "@/lib/evidence";
+import { ScoreField } from "@/components/ScoreField";
 
 /**
  * The landing page.
@@ -35,43 +36,64 @@ function Rule({ n, label }: { n: string; label: string }) {
 export default function LandingPage() {
   const h = headline();
   const rows = corrections();
+  const cells = packets();
   const open = rows.filter((r) => r.status === "open");
 
   return (
     <div className="pb-8">
-      {/* ---------------------------------------------------------------- hero */}
-      <section className="pt-10 wide:pt-16">
-        <p className="label">Deepfake-aware KYC verification</p>
-        <h1 className="mt-4 max-w-[19ch] text-3xl font-medium leading-[1.06] tracking-tight text-slate-100 wide:text-display">
-          Every vendor shows you a ROC curve.
-          <span className="block text-slate-500">We show you where it fails.</span>
+      {/* ---------------------------------------------------------------- hero
+          Full-bleed true black behind the fold. The app's surface is #0a0a0c,
+          which is right for something you read for an hour; a hero wants the
+          screen to vanish behind the type instead. */}
+      {/* Full-bleed. `-mx-6` only cancels the container padding — the page is
+          capped at 1180px with auto margins, so the black stopped short and the
+          hero read as a card floating on the app ground. This breaks out to the
+          viewport and re-centres its own content. */}
+      <section className="relative left-1/2 w-screen -translate-x-1/2 bg-ink-1000">
+        <div className="mx-auto w-full max-w-[1180px] px-6 pb-16 pt-10 wide:pt-14">
+        {/* Eyebrow. Not an announcement banner for its own sake — it is the one
+            sentence that says what kind of thing this is before the headline
+            makes a claim. */}
+        <Link
+          href="/corrections"
+          className="group inline-flex items-center gap-2.5 text-xs text-slate-500 transition-colors hover:text-slate-300"
+        >
+          <span className="border border-edge-strong px-1.5 py-0.5 text-2xs uppercase tracking-[0.12em] text-slate-400">
+            Audit
+          </span>
+          {h.corrections && (
+            <span>
+              {h.corrections.n} things this project believed and measured wrong ·{" "}
+              {h.corrections.open} still open
+            </span>
+          )}
+          <span className="transition-transform group-hover:translate-x-0.5">→</span>
+        </Link>
+
+        <h1 className="num mt-7 max-w-[17ch] text-3xl font-normal leading-[1.04] tracking-tight text-slate-50 wide:text-display">
+          Every vendor shows
+          <br />
+          you a ROC curve.
+          <span className="mt-2 block text-slate-600">We show you where it fails.</span>
         </h1>
 
-        <p className="mt-7 max-w-[62ch] text-sm leading-relaxed text-slate-400">
+        <p className="mt-8 max-w-[54ch] text-sm leading-relaxed text-slate-400">
           Six independent detectors, a calibrated fusion layer, and a human-readable explanation
-          behind every verdict. And{" "}
-          {h.corrections && (
-            <>
-              <span className="text-slate-100">
-                {h.corrections.n} documented cases
-              </span>{" "}
-              of this project believing something about itself, measuring it, and being wrong —{" "}
-              {h.corrections.fixed} fixed, {h.corrections.open} still open, including one that says
-              a detector in this system does not work.
-            </>
-          )}
+          behind every verdict — built on the assumption that the attacker has Stable Diffusion and
+          DeepFaceLab on their laptop.
         </p>
 
-        <div className="mt-8 flex flex-wrap items-center gap-3">
+        {/* Sharp corners, sitting flush. */}
+        <div className="mt-8 flex flex-wrap items-stretch">
           <Link
             href="/verify"
-            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-ink-950 transition-opacity hover:opacity-90"
+            className="bg-accent px-5 py-2.5 text-sm font-medium text-ink-1000 transition-opacity hover:opacity-90"
           >
             Score a packet
           </Link>
           <Link
             href="/corrections"
-            className="rounded-md px-4 py-2 text-sm text-slate-300 ring-1 ring-inset ring-edge-strong transition-colors hover:bg-ink-850 hover:text-slate-100"
+            className="border border-l-0 border-edge-strong px-5 py-2.5 text-sm text-slate-300 transition-colors hover:bg-ink-900 hover:text-slate-100"
           >
             Read what we got wrong
           </Link>
@@ -79,14 +101,28 @@ export default function LandingPage() {
             href="https://github.com/Abhist17/verityne"
             target="_blank"
             rel="noreferrer"
-            className="px-2 py-2 text-sm text-slate-500 transition-colors hover:text-slate-300"
+            className="ml-4 self-center text-sm text-slate-500 transition-colors hover:text-slate-300"
           >
             Source ↗
           </a>
         </div>
 
+        {/* The hero image is the evaluation itself. */}
+        <div className="mt-14 grid gap-10 wide:grid-cols-[minmax(0,1fr)_20rem] wide:items-end">
+          <ScoreField cells={cells} />
+          <p className="max-w-[34ch] text-xs leading-relaxed text-slate-500">
+            Every held-out packet this system has scored. The two classes are not two blocks — they
+            interleave through the middle, and that band is every case where a genuine merchant and
+            a fraudulent one look the same to the model.
+            <span className="mt-3 block text-slate-600">
+              That overlap is what {h.fusionAuc?.toFixed(3)} means. A single AUC is a summary of
+              this picture.
+            </span>
+          </p>
+        </div>
+
         {/* the four numbers, straight from the reports */}
-        <dl className="mt-14 grid gap-x-10 gap-y-8 border-t border-edge pt-8 sm:grid-cols-2 wide:grid-cols-4">
+        <dl className="mt-16 grid gap-x-10 gap-y-8 border-t border-edge pt-8 sm:grid-cols-2 wide:grid-cols-4">
           {[
             ["Held-out ROC-AUC", h.fusionAuc?.toFixed(3), "identity-disjoint split; was 0.913 before an ablation found the leak"],
             ["Detector 6", h.behavioral?.auc?.toFixed(3), "keystroke rhythm, fitted on 168,595 real people"],
@@ -100,6 +136,7 @@ export default function LandingPage() {
             </div>
           ))}
         </dl>
+        </div>
       </section>
 
       {/* ------------------------------------------------------------- 01 the problem */}

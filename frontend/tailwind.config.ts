@@ -24,6 +24,10 @@ const config: Config = {
         // palettes stacked, and the small amount of red in the ground is what
         // makes them look chosen together.
         ink: {
+          // True black, for the landing hero only. The app's ground stays at
+          // 950 — a UI you read for an hour wants a little lift under the text,
+          // while a hero wants the screen to disappear behind the type.
+          1000: "#000000",
           950: "#0a0a0c",
           900: "#0e0e12",
           850: "#131318",

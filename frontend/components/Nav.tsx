@@ -43,7 +43,11 @@ export function Nav() {
             The rule is drawn on the header and the marker on the link, and the
             link's `-bottom-4` is the `py-4` on the row — the two have to stay in
             step or the marker floats above the border it is meant to sit in. */}
-        <nav className="flex items-center gap-5">
+        {/* Scrolls rather than overflows. Seven tabs do not fit a 390px
+            viewport, and a flex row that cannot shrink pushed the document
+            233px wide — which put a horizontal scrollbar under every page on a
+            phone, not just this one. */}
+        <nav className="scroll-x -mx-1 flex min-w-0 flex-1 items-center gap-5 px-1">
           {LINKS.map((l) => {
             const active = pathname === l.href || (l.href !== "/" && pathname.startsWith(l.href));
             return (
@@ -68,7 +72,7 @@ export function Nav() {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2.5 text-2xs">
+        <div className="ml-auto flex shrink-0 items-center gap-2.5 text-2xs">
           {/* One dot. If it is green the system is up; that is the whole status
               bar's job, and the device string was chrome nobody read. */}
           <span
