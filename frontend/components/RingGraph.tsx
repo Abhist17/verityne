@@ -51,6 +51,26 @@ const radiusOf = (score: number) => 5 + Math.sqrt(Math.max(0, Math.min(1, score)
 /** Ring hull padding, in layout units. */
 const HULL_PAD = 26;
 
+/** Whether this viewer has asked for less motion.
+ *
+ *  SVG animation elements do not honour `prefers-reduced-motion` the way a CSS
+ *  animation does — there is no media query that reaches inside SMIL — so the
+ *  preference has to be read and the elements simply not rendered. The graph is
+ *  built to be fully legible without any of it: the pulses and the breathing
+ *  halo are emphasis, never the encoding. */
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setReduced(mq.matches);
+    sync();
+    mq.addEventListener?.("change", sync);
+    return () => mq.removeEventListener?.("change", sync);
+  }, []);
+  return reduced;
+}
+
 export function RingGraph({
   graph,
   height = 460,
@@ -65,6 +85,7 @@ export function RingGraph({
   const wrapRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(760);
   const [hover, setHover] = useState<{ node: Sim; x: number; y: number } | null>(null);
+  const stillness = useReducedMotion();
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -282,6 +303,41 @@ export function RingGraph({
         className="block touch-none select-none"
         onMouseLeave={() => setHover(null)}
       >
+        {/* Bloom, hull gradients and a vignette.
+            The glow is a real filter rather than a stack of translucent circles:
+            one blur pass merged under the source keeps the node edge crisp while
+            the light falls off around it, which is what makes a dark network
+            read as lit rather than as flat dots on a background. */}
+        <defs>
+          <filter id="rg-glow" x="-120%" y="-120%" width="340%" height="340%">
+            <feGaussianBlur stdDeviation="4.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id="rg-glow-soft" x="-160%" y="-160%" width="420%" height="420%">
+            <feGaussianBlur stdDeviation="9" />
+          </filter>
+          <radialGradient id="rg-hull-proven">
+            <stop offset="0%" stopColor={REJECT} stopOpacity="0.20" />
+            <stop offset="70%" stopColor={REJECT} stopOpacity="0.06" />
+            <stop offset="100%" stopColor={REJECT} stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="rg-hull-inferred">
+            <stop offset="0%" stopColor="#8a8f9e" stopOpacity="0.13" />
+            <stop offset="70%" stopColor="#8a8f9e" stopOpacity="0.04" />
+            <stop offset="100%" stopColor="#8a8f9e" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="rg-vignette">
+            <stop offset="0%" stopColor="#20212a" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#20212a" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        <rect x={0} y={0} width={width} height={graphH} fill="url(#rg-vignette)" />
+
         {/* ---- ring hulls, behind everything --------------------------- */}
         <g>
           {hulls.map((h) => {
@@ -293,15 +349,37 @@ export function RingGraph({
                   cx={h.cx}
                   cy={h.cy}
                   r={h.rad}
-                  fill={proven ? REJECT : AXIS_STROKE}
-                  fillOpacity={proven ? 0.055 : 0.035}
-                  stroke={proven ? REJECT : AXIS_STROKE}
-                  strokeOpacity={proven ? 0.4 : 0.22}
-                  strokeWidth={1}
-                  // A proven ring is outlined solid; an inferred one is dashed,
-                  // the same grammar the edges use.
-                  strokeDasharray={proven ? undefined : "4 4"}
+                  fill={proven ? "url(#rg-hull-proven)" : "url(#rg-hull-inferred)"}
                 />
+                <circle
+                  cx={h.cx}
+                  cy={h.cy}
+                  r={h.rad}
+                  fill="none"
+                  stroke={proven ? REJECT : AXIS_STROKE}
+                  strokeOpacity={proven ? 0.55 : 0.28}
+                  strokeWidth={proven ? 1.4 : 1}
+                  // A proven ring is outlined solid; an inferred one is dashed,
+                  // the same grammar the edges use. The dash creeps slowly so an
+                  // inferred cluster reads as unsettled rather than merely thin.
+                  strokeDasharray={proven ? undefined : "5 6"}
+                >
+                  {!proven && !stillness && (
+                    <animate attributeName="stroke-dashoffset" from="0" to="-22"
+                             dur="3.4s" repeatCount="indefinite" />
+                  )}
+                </circle>
+                {/* A proven ring breathes: the only motion reserved for a claim
+                    that rests on a byte-identical file rather than a similarity. */}
+                {proven && !stillness && (
+                  <circle cx={h.cx} cy={h.cy} r={h.rad} fill="none" stroke={REJECT}
+                          strokeWidth={1} opacity={0}>
+                    <animate attributeName="r" values={`${h.rad};${h.rad + 16};${h.rad}`}
+                             dur="4.2s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.34;0;0.34"
+                             dur="4.2s" repeatCount="indefinite" />
+                  </circle>
+                )}
                 <text
                   // Kept inside the canvas on both sides; a cluster near an edge
                   // would otherwise have half its label cut off.
@@ -330,18 +408,46 @@ export function RingGraph({
             if (!a || !b) return null;
             const exact = e.kind === "asset_exact";
             const faded = selected != null && e.source !== selected && e.target !== selected;
+            // A gentle arc rather than a straight chord. In a dense cluster two
+            // straight edges between the same pair of neighbours overlap into one
+            // line; curving them apart keeps the count of links legible.
+            const mx = (a.x + b.x) / 2;
+            const my = (a.y + b.y) / 2;
+            const nx = -(b.y - a.y);
+            const ny = b.x - a.x;
+            const len = Math.hypot(nx, ny) || 1;
+            const bow = Math.min(26, len * 0.16) * (i % 2 === 0 ? 1 : -1);
+            const d = `M ${a.x} ${a.y} Q ${mx + (nx / len) * bow} ${my + (ny / len) * bow} ${b.x} ${b.y}`;
             return (
-              <line
-                key={i}
-                x1={a.x}
-                y1={a.y}
-                x2={b.x}
-                y2={b.y}
-                stroke={exact ? REJECT : AXIS_STROKE}
-                strokeWidth={exact ? 2 : 1.25}
-                strokeDasharray={exact ? undefined : "3 3"}
-                strokeOpacity={faded ? 0.12 : exact ? 0.95 : 0.6}
-              />
+              <g key={i} opacity={faded ? 0.14 : 1}>
+                {exact && (
+                  <path d={d} fill="none" stroke={REJECT} strokeWidth={5}
+                        strokeOpacity={0.28} filter="url(#rg-glow-soft)" />
+                )}
+                <path
+                  d={d}
+                  fill="none"
+                  stroke={exact ? REJECT : AXIS_STROKE}
+                  strokeWidth={exact ? 1.9 : 1.2}
+                  strokeDasharray={exact ? undefined : "3 4"}
+                  strokeOpacity={exact ? 0.95 : 0.55}
+                >
+                  {!exact && !stillness && (
+                    <animate attributeName="stroke-dashoffset" from="0" to="-14"
+                             dur="1.6s" repeatCount="indefinite" />
+                  )}
+                </path>
+                {/* Evidence travelling down a proven link. Motion is spent only
+                    where the claim is a fact, so the eye is drawn to the rings
+                    that are not an inference. */}
+                {exact && !faded && !stillness && (
+                  <circle r={2.2} fill={REJECT} filter="url(#rg-glow)">
+                    <animateMotion dur="2.6s" repeatCount="indefinite" path={d} />
+                    <animate attributeName="opacity" values="0;1;1;0"
+                             dur="2.6s" repeatCount="indefinite" />
+                  </circle>
+                )}
+              </g>
             );
           })}
         </g>
@@ -353,19 +459,25 @@ export function RingGraph({
             const r = radiusOf(n.score) * Math.min(1.25, view.k);
             const faded = dim(n.id);
             return (
-              <circle
-                key={n.id}
-                cx={p.x}
-                cy={p.y}
-                r={r}
-                fill={VERDICT_FILL[n.verdict]}
-                fillOpacity={faded ? 0.15 : 0.92}
-                stroke={selected === n.id ? "#f1f5f9" : INK[900]}
-                strokeWidth={2}
-                className="cursor-pointer"
-                onMouseEnter={() => setHover({ node: n, x: p.x, y: p.y })}
-                onClick={() => onSelect?.(selected === n.id ? null : n.id)}
-              />
+              <g key={n.id}>
+                {!faded && (
+                  <circle cx={p.x} cy={p.y} r={r * 1.9} fill={VERDICT_FILL[n.verdict]}
+                          opacity={0.16} filter="url(#rg-glow-soft)" />
+                )}
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={r}
+                  fill={VERDICT_FILL[n.verdict]}
+                  fillOpacity={faded ? 0.15 : 0.95}
+                  stroke={selected === n.id ? "#f1f5f9" : INK[900]}
+                  strokeWidth={2}
+                  filter={faded ? undefined : "url(#rg-glow)"}
+                  className="cursor-pointer"
+                  onMouseEnter={() => setHover({ node: n, x: p.x, y: p.y })}
+                  onClick={() => onSelect?.(selected === n.id ? null : n.id)}
+                />
+              </g>
             );
           })}
         </g>
