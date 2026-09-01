@@ -207,7 +207,7 @@ export default function CorrectionsPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Corrections">
+      <PageHeader title="Corrections" eyebrow="Audit trail">
         Every belief this project held, measured, and lost. Generated from the evidence files each
         entry cites — an entry claiming a number no report contains fails the build.
       </PageHeader>

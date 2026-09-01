@@ -45,6 +45,7 @@ export default function AttackGalleryPage() {
     <div className="space-y-12">
       <PageHeader
         title="Attack Gallery"
+        eyebrow="Observed traffic"
         actions={
           <>
             <div className="segment" role="group" aria-label="Time window">

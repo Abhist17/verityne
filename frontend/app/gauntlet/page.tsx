@@ -109,6 +109,7 @@ export default function GauntletPage() {
     <div className="space-y-12">
       <PageHeader
         title="The Gauntlet"
+        eyebrow="Fixture run"
         actions={
           <>
             {manifest && (

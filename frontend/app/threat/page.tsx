@@ -131,6 +131,7 @@ export default function ThreatIntelPage() {
     <div className="space-y-14">
       <PageHeader
         title="Threat Intelligence"
+        eyebrow="Observed traffic"
         actions={
           <>
             <div className="segment" role="group" aria-label="Time window">

@@ -42,6 +42,7 @@ export default function ReviewQueuePage() {
     <div className="space-y-12">
       <PageHeader
         title="Review Queue"
+        eyebrow="Human adjudication"
         actions={
           <div className="flex gap-5">
             <div className="text-right">

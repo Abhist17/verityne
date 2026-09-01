@@ -29,6 +29,49 @@ body {
     @apply rounded-lg border border-edge bg-ink-900;
   }
 
+  /* --- the card, reintroduced deliberately -------------------------------
+     "There is no card" was right for a *list* — boxing every row is what made
+     the old dashboard read as dense. It was wrong for a *set*: six detectors
+     described in six hairline rows have no edges, so the eye finds no unit to
+     land on and the whole column greys out. A set of peers gets a box; a
+     sequence of rows still does not.
+
+     The elevation is one value step (950 → 900) plus a hairline, which is the
+     least that reads as raised on this ground. Anything more and the box starts
+     competing with the verdict colours for attention, which is the one thing
+     the palette is not allowed to do. */
+  .card {
+    @apply relative rounded-xl border border-edge bg-ink-900 p-5 transition-colors duration-200;
+  }
+  .card-hover {
+    @apply hover:border-edge-strong hover:bg-ink-850;
+  }
+
+  /* --- the ordinal ---------------------------------------------------------
+     A set that runs in a fixed order should say so. The numeral is set in the
+     ink ramp rather than the text ramp — it is structure, not content, and it
+     must never out-shout the thing it is numbering. It brightens with its card
+     on hover, which is the whole of the interaction. */
+  .ordinal {
+    @apply num select-none text-2xs font-medium tabular-nums text-ink-600 transition-colors duration-200;
+  }
+  .card-hover:hover .ordinal {
+    @apply text-slate-600;
+  }
+
+  /* The page title. Large and very tight — this is the one place the interface
+     is allowed to be typographic rather than instrumental, and at 34px the
+     -0.025em from the scale is what stops it reading as a bare <h1>. */
+  .page-title {
+    @apply text-3xl font-medium text-slate-100;
+  }
+  /* Sits above the title. Same micro-label role as `.label`, but it is the
+     first thing on the page, so it carries the accent's brightness rather than
+     the slate ramp's quiet. */
+  .eyebrow {
+    @apply text-2xs font-medium uppercase tracking-[0.16em] text-slate-500;
+  }
+
   /* --- type ---------------------------------------------------------------- */
   .label {
     @apply text-2xs font-medium uppercase tracking-[0.14em] text-slate-600;
