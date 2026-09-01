@@ -21,12 +21,12 @@ from __future__ import annotations
 import io
 import random
 import string
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageEnhance, ImageFont
 
 FONT_DIRS = [
     "/usr/share/fonts/truetype/dejavu",
@@ -252,7 +252,6 @@ def tamper_card(
 ) -> Tuple[Image.Image, Dict]:
     """Edit an already-compressed card the way a forger would, leaving a real ELA trail."""
     base = _jpeg_roundtrip(card, quality=94)  # the "original" the forger obtained
-    d = ImageDraw.Draw(base)
     info: Dict[str, object] = {"tamper_kind": kind}
 
     if kind == "name_swap":

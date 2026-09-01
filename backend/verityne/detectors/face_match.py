@@ -15,7 +15,6 @@ import functools
 import json
 from typing import Dict, List
 
-import numpy as np
 
 from ..config import MODEL_ROOT
 

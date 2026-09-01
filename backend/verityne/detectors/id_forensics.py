@@ -16,7 +16,6 @@ from __future__ import annotations
 import re
 from typing import Dict, List, Optional
 
-import cv2
 import numpy as np
 
 from ..schemas import DetectorOutput

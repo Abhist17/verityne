@@ -8,7 +8,7 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import desc, func, select
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from ..config import DATASET_ROOT, get_policy, reload_policy

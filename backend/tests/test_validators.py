@@ -1,5 +1,4 @@
 """The deterministic checks. These are the parts that must never silently regress."""
-import pytest
 
 from verityne.detectors.id_forensics import validate_pan
 from verityne.utils.ocr import find_fields, normalise_pan

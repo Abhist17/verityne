@@ -24,7 +24,7 @@ import time
 from typing import Optional
 
 import numpy as np
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from PIL import Image
 from pydantic import BaseModel, Field
 

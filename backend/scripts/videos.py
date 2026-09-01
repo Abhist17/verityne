@@ -17,7 +17,7 @@ from __future__ import annotations
 import math
 import random
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 
 import cv2
 import numpy as np

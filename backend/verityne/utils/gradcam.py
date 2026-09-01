@@ -6,7 +6,7 @@ best available pretrained detectors are ViT-based.
 """
 from __future__ import annotations
 
-from typing import Callable, List, Optional
+from typing import List, Optional
 
 import numpy as np
 

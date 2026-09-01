@@ -15,7 +15,6 @@ from ..config import get_policy
 from ..db import SessionLocal, Submission, Verdict
 from ..pipeline import run_pipeline
 from ..schemas import GauntletResult, GauntletSummary
-from ..utils.artifacts import save_thumbnail
 from .deps import db_session
 
 router = APIRouter()

@@ -1,7 +1,6 @@
 """Shared FastAPI dependencies: auth, upload handling, response shaping."""
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 from typing import Optional
 

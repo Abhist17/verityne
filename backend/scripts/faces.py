@@ -17,7 +17,7 @@ import logging
 import os
 import random
 from pathlib import Path
-from typing import Iterator, List, Optional, Tuple
+from typing import List, Tuple
 
 import numpy as np
 from PIL import Image, ImageFilter

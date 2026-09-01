@@ -57,7 +57,7 @@ import sys
 import time
 import urllib.request
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 

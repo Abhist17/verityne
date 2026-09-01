@@ -35,7 +35,6 @@ import argparse
 import json
 import logging
 import sys
-from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -47,7 +46,6 @@ sys.path.insert(0, str(REPO / "backend"))
 from verityne.utils.keystroke import (  # noqa: E402
     CONTEXT_FEATURES,
     CORE_FEATURES,
-    FEATURE_NAMES,
     feature_row,
     keystroke_features,
 )
@@ -253,7 +251,6 @@ def sweep(feats_h, yh, sh, feats_c, yc, sc, feats_b, yb, sb, groups_b,
     # Fit on Aalto + automation only; CMU is the unseen population throughout.
     X_fit = np.vstack([Xh_c, Xb_c])
     y_fit = np.concatenate([yh, yb])
-    subj_fit = list(sh) + list(sb)
     groups_fit = ["human"] * len(Xh_c) + list(groups_b)
 
     grid = SWEEP_GRID if not limit else SWEEP_GRID[:limit]

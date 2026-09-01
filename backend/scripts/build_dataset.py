@@ -24,10 +24,8 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
-import io
 import json
 import logging
-import os
 import random
 import shutil
 import sys
@@ -43,8 +41,8 @@ sys.path.insert(0, str(SCRIPT_DIR.parent))
 
 import piexif  # noqa: E402
 
-from faces import generate_sd_faces, load_real_faces, procedural_fake_face, swap_face  # noqa: E402
-from idcards import Identity, build_card, make_identity  # noqa: E402
+from faces import generate_sd_faces, load_real_faces, procedural_fake_face  # noqa: E402
+from idcards import build_card, make_identity  # noqa: E402
 from verityne.config import DATASET_ROOT, PHYSICALLY_FRAUD_ONLY  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

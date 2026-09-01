@@ -17,7 +17,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
@@ -25,7 +25,6 @@ sys.path.insert(0, str(SCRIPT_DIR.parent))
 
 from verityne.config import DATASET_ROOT, EVAL_ROOT  # noqa: E402
 from verityne.detectors import STAGE_ONE, STAGE_TWO, SubmissionPayload  # noqa: E402
-from verityne.detectors.fingerprint import identify as identify_generator  # noqa: E402
 from verityne.detectors.models import warmup  # noqa: E402
 from verityne.utils.spectral import profile_vector, spectral_features  # noqa: E402
 

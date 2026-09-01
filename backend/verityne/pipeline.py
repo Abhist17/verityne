@@ -11,12 +11,11 @@ to re-decode and re-load models per worker.
 from __future__ import annotations
 
 import asyncio
-import datetime as dt
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 
 from sqlalchemy.orm import Session
 
@@ -37,6 +36,11 @@ log = logging.getLogger("verityne.pipeline")
 #: One shared pool. Sized for the detector fan-out, not the core count - the
 #: heavy work is inside torch, which does its own intra-op threading.
 _EXECUTOR = ThreadPoolExecutor(max_workers=6, thread_name_prefix="detector")
+
+#: Strong references to in-flight webhook tasks. `asyncio` only holds a weak one,
+#: so a task nobody keeps can be garbage-collected mid-request and the Slack ping
+#: silently never fires. Each task removes itself when it finishes.
+_BACKGROUND_TASKS: set[asyncio.Task] = set()
 
 
 def linkage_review_ceiling(policy: MerchantPolicy) -> float:
@@ -76,7 +80,7 @@ def _persist_biometrics(session: Session, submission_id: str, merchant_id: str,
     session.flush()
 
     hashes: Dict[str, Dict[str, str]] = {}
-    for kind, cache_key in (("selfie", "selfie_face"), ("id_photo", "id_face")):
+    for kind in ("selfie", "id_photo"):
         vec_key = "selfie_embedding" if kind == "selfie" else "id_embedding"
         vec = payload.cache.get(vec_key)
         if vec:
@@ -252,7 +256,9 @@ async def run_pipeline(
     }
 
     if fire_webhook and verdict_label == "REJECT" and final_score >= policy.webhook_min_score:
-        asyncio.create_task(_notify(response))
+        task = asyncio.create_task(_notify(response))
+        _BACKGROUND_TASKS.add(task)
+        task.add_done_callback(_BACKGROUND_TASKS.discard)
     return response
 
 
@@ -267,7 +273,7 @@ async def _notify(resp: VerifyResponse) -> None:
 
         reasons = "\n".join(f"• {r}" for r in resp.top_reasons)
         payload = {
-            "text": f"*Verityne · high-confidence fraud blocked*",
+            "text": "*Verityne · high-confidence fraud blocked*",
             "blocks": [
                 {"type": "header", "text": {"type": "plain_text", "text": "🚨 KYC submission rejected"}},
                 {"type": "section", "fields": [

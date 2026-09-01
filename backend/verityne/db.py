@@ -6,7 +6,6 @@ VERITYNE_DB to a postgresql:// URL and the same schema runs unchanged.
 from __future__ import annotations
 
 import datetime as dt
-import json
 import uuid
 from contextlib import contextmanager
 from typing import Any, Iterator, Optional

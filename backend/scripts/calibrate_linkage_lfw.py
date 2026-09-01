@@ -289,7 +289,7 @@ def main() -> None:
         print(f"{title:>11}: threshold {b['threshold']:.4f}  pairwise FAR {b['pairwise_far']:.2e}  "
               f"TAR {b['tar']:.4f}")
         rates = b["per_applicant_false_link_rate"]
-        print(f"             per-applicant false-link rate: " +
+        print("             per-applicant false-link rate: " +
               "  ".join(f"N={k}: {v:.1%}" for k, v in rates.items()))
 
 
