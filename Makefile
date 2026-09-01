@@ -97,6 +97,35 @@ indian-faces: ## is the selfie detector reading demography? real Indian faces vs
 	$(PY) backend/scripts/evaluate_indian_faces.py --n $(or $(N),300) --shards $(or $(SHARDS),1)
 
 real: calibrate-face calibrate-linkage real-docs eval-real-docs indian-faces ## the real-data track that needs no gated access
+
+# ---------------------------------------------------------------- detector 6
+# Both halves of Detector 6's corpus are real: the genuine side is 168,595
+# people from the Aalto keystroke study plus CMU's 51 subjects, and the
+# automated side is a real headless Chromium driven through the APIs a fraud kit
+# actually uses. Neither is synthesised, which is the only reason the numbers in
+# eval/behavioral.json mean anything.
+
+behavioral-data: ## download the real keystroke datasets (Aalto ~1.5 GB + CMU ~4 MB)
+	mkdir -p datasets/keystrokes
+	test -f datasets/keystrokes/Keystrokes.zip || \
+	  curl -L --retry 3 -o datasets/keystrokes/Keystrokes.zip \
+	  https://userinterfaces.aalto.fi/136Mkeystrokes/data/Keystrokes.zip
+	test -f datasets/keystrokes/cmu_strong_password.csv || \
+	  curl -L --retry 3 -o datasets/keystrokes/cmu_strong_password.csv \
+	  https://www.cs.cmu.edu/~keystroke/DSL-StrongPasswordData.csv
+
+behavioral-corpus: ## reduce the real datasets to form-sized typing sessions
+	$(PY) backend/scripts/keystroke_corpus.py --participants 20000 --cap 25000
+
+behavioral-bots: ## drive a real headless Chromium and record what it leaves behind
+	$(PY) -m playwright install chromium
+	$(PY) backend/scripts/bot_telemetry.py --sessions 3500 --concurrency 6
+
+behavioral-train: ## fit and evaluate the keystroke model → eval/behavioral.json
+	$(PY) backend/scripts/train_behavioral.py --sweep
+
+behavioral: behavioral-data behavioral-corpus behavioral-bots behavioral-train ## the whole Detector 6 track
+
 	@echo "real-data track complete — see eval/face_match_lfw.json, eval/real_docs.json"
 	@echo "and eval/indian_faces.json, eval/linkage_lfw.json"
 
