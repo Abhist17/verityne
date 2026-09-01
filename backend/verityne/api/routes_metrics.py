@@ -37,6 +37,9 @@ REAL_DATA_REPORTS = {
                      "MIDV-2020 — identity documents physically printed, photographed and scanned"),
     "behavioral": (EVAL_ROOT / "behavioral.json",
                    "Aalto 136M keystrokes + CMU Killourhy-Maxion, against real browser automation"),
+    "selfie_faces": (EVAL_ROOT / "real_faces.json",
+                     "DeepFakeFace (SD text2img, SD inpainting, InsightFace swap) and "
+                     "140k Real-and-Fake (StyleGAN) — fakes this project did not generate"),
     "liveness_video": (EVAL_ROOT / "real_video.json",
                        "recorded deepfake video (FaceForensics++ / Celeb-DF / DFDC)"),
 }
@@ -69,6 +72,25 @@ def metrics(session: Session = Depends(db_session)):
             "training. Live stats are computed from the audit log of this instance."
         ),
     }
+
+
+@router.get("/metrics/corrections", summary="Every belief this project measured and lost")
+def corrections():
+    """The audit trail, generated from the evidence files each entry cites.
+
+    Served as its own endpoint rather than folded into `/metrics` because it is
+    not a metric: it is the record of what the metrics used to say and why they
+    were wrong. `scripts/build_corrections.py` resolves every number out of the
+    report it names, so nothing here can claim a figure no evidence file holds.
+    """
+    report = _load_json(EVAL_ROOT / "corrections.json")
+    if report is None:
+        raise HTTPException(
+            404,
+            "No corrections file on disk. Build it with "
+            "`python backend/scripts/build_corrections.py`.",
+        )
+    return report
 
 
 @router.get("/metrics/behavioral", summary="Detector 6: what the keystroke model was measured at")

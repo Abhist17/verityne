@@ -88,6 +88,15 @@ real-docs: ## build the tamper set from real captured MIDV-2020 documents
 eval-real-docs: ## score ID forensics on real documents → eval/real_docs.json
 	$(PY) backend/scripts/evaluate_real_docs.py
 
+thresholds: ## re-fit review/reject on the TRAINING split only → eval/thresholds.json
+	$(PY) backend/scripts/fit_thresholds.py
+
+corrections: ## assemble the audit trail from the evidence files → eval/corrections.json
+	$(PY) backend/scripts/build_corrections.py
+
+eval-real-faces: ## score the selfie detector on fakes we did not generate → eval/real_faces.json
+	$(PY) backend/scripts/evaluate_real_faces.py --n $(or $(N),400) --workers $(or $(WORKERS),12)
+
 eval-real-video: ## score liveness on recorded deepfakes → eval/real_video.json
 	@echo "Point --data at an extracted FaceForensics++, Celeb-DF v2 or DFDC-preview tree."
 	@echo "FF++ and Celeb-DF are gated behind a signed request form; nothing here downloads them."
@@ -96,7 +105,7 @@ eval-real-video: ## score liveness on recorded deepfakes → eval/real_video.jso
 indian-faces: ## is the selfie detector reading demography? real Indian faces vs FFHQ
 	$(PY) backend/scripts/evaluate_indian_faces.py --n $(or $(N),300) --shards $(or $(SHARDS),1)
 
-real: calibrate-face calibrate-linkage real-docs eval-real-docs indian-faces ## the real-data track that needs no gated access
+real: calibrate-face calibrate-linkage real-docs eval-real-docs eval-real-faces indian-faces ## the real-data track that needs no gated access
 
 # ---------------------------------------------------------------- detector 6
 # Both halves of Detector 6's corpus are real: the genuine side is 168,595
