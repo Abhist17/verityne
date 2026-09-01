@@ -10,7 +10,58 @@ body {
   @apply bg-ink-950 text-slate-300 antialiased;
 }
 
+@layer base {
+  /* --- the page grid ------------------------------------------------------
+     Faint vertical rules running the height of the document, on the same
+     1180px measure the content uses. They do almost nothing individually and a
+     great deal together: they give a dark page a sense of structure behind the
+     text, so a section that is mostly whitespace still reads as *placed* rather
+     than as an empty screen with words on it.
+
+     Painted on `body` with a repeating gradient rather than as elements, so it
+     costs one paint and nothing in the DOM, and it sits under everything
+     because the app's own surfaces all carry their own background. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: repeating-linear-gradient(
+      to right,
+      theme("colors.edge.DEFAULT") 0 1px,
+      transparent 1px 168px
+    );
+    background-position: center top;
+    background-size: 1180px 100%;
+    background-repeat: repeat-y;
+    opacity: 0.5;
+  }
+  body > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
 @layer components {
+  /* --- a page title --------------------------------------------------------
+     Monospace, large, with a rule under it. The rule is doing real work: a big
+     heading on a dark page has no baseline to sit on, so it floats, and a
+     single hairline underneath anchors the whole column that follows. */
+  .page-title {
+    @apply num text-2xl font-normal tracking-tight text-slate-50 wide:text-3xl;
+  }
+  .title-rule {
+    @apply mt-4 h-px w-full bg-gradient-to-r from-accent/60 via-edge-strong to-transparent;
+  }
+
+  /* --- a callout -----------------------------------------------------------
+     For the one sentence on a page that is the argument rather than a detail.
+     A thick left border and a raised ground; no icon, because an icon would be
+     decoration and the sentence is the point. */
+  .callout {
+    @apply relative rounded-r border-l-2 border-accent bg-ink-900 py-4 pl-5 pr-5;
+  }
   /* --- structure -----------------------------------------------------------
      There is no card. Sections are separated by space, and by a hairline only
      where a boundary carries meaning. Boxing every group was what made the old
@@ -123,7 +174,11 @@ body {
     @apply inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-xs font-medium;
   }
   .scroll-x {
-    @apply overflow-x-auto;
+    /* `min-w-0` is what actually makes this scroll. `overflow-x: auto` only
+       clips once the box is allowed to be narrower than its content, and a grid
+       or flex child defaults to `min-width: auto` — so without this the wrapper
+       grew to its table's width and pushed the document sideways instead. */
+    @apply min-w-0 overflow-x-auto;
     scrollbar-width: thin;
   }
   /* A row in a borderless list: separated by a hairline, lit on hover. */

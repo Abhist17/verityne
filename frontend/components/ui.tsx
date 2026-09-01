@@ -27,13 +27,20 @@ export function PageHeader({
   children?: React.ReactNode;
 }) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-      <div className="min-w-0 flex-1 basis-[min(100%,20rem)]">
-        {eyebrow && <div className="eyebrow mb-2.5">{eyebrow}</div>}
-        <h1 className="page-title">{title}</h1>
-        {children && <p className="mt-3 max-w-[62ch] text-sm leading-relaxed text-slate-500">{children}</p>}
+    <header>
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+        <div className="min-w-0 flex-1 basis-[min(100%,20rem)]">
+          {eyebrow && <div className="eyebrow mb-2.5">{eyebrow}</div>}
+          <h1 className="page-title">{title}</h1>
+        </div>
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {/* The rule anchors the title. A large heading on a dark page has no
+          baseline to sit on and floats away from the column beneath it. */}
+      <div className="title-rule" />
+      {children && (
+        <p className="mt-4 max-w-[68ch] text-sm leading-relaxed text-slate-500">{children}</p>
+      )}
     </header>
   );
 }
@@ -89,6 +96,26 @@ export function SectionLabel({ children, right }: { children: React.ReactNode; r
  *  a one-word heading ("Why", "Detectors"); these headings are sentences, and
  *  0.14em of tracking across forty characters stops being readable. Same rule,
  *  same rhythm, different type role. */
+/** The one sentence on a page that *is* the argument.
+ *
+ *  Used sparingly and never for a detail — if every paragraph is a callout then
+ *  none of them is. The label is what makes it work: it says what kind of claim
+ *  is about to be made before the claim arrives. */
+export function Callout({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <aside className="callout">
+      <div className="label text-accent">{label}</div>
+      <div className="mt-2 max-w-[76ch] text-sm leading-relaxed text-slate-300">{children}</div>
+    </aside>
+  );
+}
+
 export function Section({
   title,
   hint,
@@ -109,7 +136,11 @@ export function Section({
     // page. The charts already scale once the box is allowed to.
     <section className="min-w-0">
       <div className="flex min-w-0 items-baseline gap-3">
-        <h2 className="shrink-0 text-sm font-medium text-slate-200">{title}</h2>
+        {/* Not `shrink-0`. Monospace runs materially wider than the sans it
+            replaced, so a title like "What the headline number is made of" is
+            422px — wider than a phone — and a heading that cannot shrink took
+            the document with it. It wraps; the rule takes whatever is left. */}
+        <h2 className="num min-w-0 text-sm font-normal tracking-tight text-slate-200">{title}</h2>
         <span className="rule-soft min-w-0 flex-1" />
         {right && <span className="shrink-0 text-2xs text-slate-600">{right}</span>}
       </div>
