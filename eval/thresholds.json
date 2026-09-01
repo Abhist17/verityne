@@ -1,0 +1,800 @@
+{
+  "generated_at": "2026-09-01T13:08:20.951102+00:00",
+  "method": "5-fold identity-disjoint out-of-fold predictions on the 195-row training split. The estimator and its Platt calibrator are refitted inside every fold, and folds never split one identity, so no row is scored by a model that saw either it or another packet of the same person. The held-out split is not consulted.",
+  "economics": {
+    "base_rate": 0.03,
+    "avg_fraud_loss_inr": 85000.0,
+    "merchant_ltv_inr": 42000.0,
+    "false_reject_abandon_prob": 0.35,
+    "note": "Operator assumptions, not measurements. The reject threshold is the argmax of expected net benefit under them; change them and it moves."
+  },
+  "review_budget": 0.25,
+  "chosen": {
+    "min_risk_for_review": 0.45,
+    "min_risk_for_reject": 0.66
+  },
+  "out_of_fold": {
+    "review": {
+      "threshold": 0.45,
+      "net_benefit_inr": -15592407.0,
+      "recall": 0.6875,
+      "false_positive_rate": 0.2323,
+      "precision": 0.7416,
+      "false_accept_rate": 0.3125
+    },
+    "reject": {
+      "threshold": 0.66,
+      "net_benefit_inr": 9339282.0,
+      "recall": 0.4792,
+      "false_positive_rate": 0.0202,
+      "precision": 0.9583,
+      "false_accept_rate": 0.5208
+    },
+    "n": 195
+  },
+  "superseded": {
+    "min_risk_for_review": 0.4,
+    "min_risk_for_reject": 0.75,
+    "why": "Inherited from the leaked model, whose scores separated the classes far more widely. On the corrected model they sat in the wrong places."
+  },
+  "transfer_check": {
+    "out_of_fold_false_positive_rate": 0.0202,
+    "held_out_false_positive_rate": 0.1765,
+    "optimism_factor": 8.7,
+    "verdict": "NOT deployable from this corpus",
+    "why": "The threshold was chosen to hold a false-positive rate of 2.0% and produces 17.6% on a split it was not chosen on \u2014 8.7x optimistic. 195 rows cannot resolve an operating point that transfers: cross-validation re-uses the same small pool of genuine faces, and the score distribution shifts the moment the faces are new. Fitting on the held-out split instead would produce a number that reports itself."
+  },
+  "recommendation": "Do not deploy these as fixed constants. The selection procedure is sound and the corpus is too small for it: the chosen point's false-positive rate does not survive a split it was not chosen on. What ships instead is the cost curve \u2014 GET /metrics/cost-curve and the sliders on the metrics page \u2014 where an operator sets the point from their own fraud loss, merchant value and abandonment. This file is the evidence for why that is a design decision rather than an omission.",
+  "naive_comparison": {
+    "chosen_reject": 0.67,
+    "claimed_false_positive_rate": 0.0202,
+    "identity_disjoint_false_positive_rate": 0.0202,
+    "note": "Row-wise folds let a model score identities it was fitted on. The two false-positive rates below are the same threshold measured both ways; the first is what a careless cross-validation would have reported."
+  },
+  "held_out_check": {
+    "n": 105,
+    "at_review": {
+      "recall": 0.7593,
+      "false_positive_rate": 0.3922,
+      "precision": 0.6721,
+      "false_accept_rate": 0.2407
+    },
+    "at_reject": {
+      "recall": 0.4444,
+      "false_positive_rate": 0.1765,
+      "precision": 0.7273,
+      "false_accept_rate": 0.5556
+    },
+    "note": "Scored after the thresholds were chosen, to report what they produce. The held-out split was not consulted during selection."
+  },
+  "curve": [
+    {
+      "threshold": 0.05,
+      "net_benefit_inr": -117090000.0,
+      "recall": 1.0,
+      "false_positive_rate": 1.0,
+      "precision": 0.4923,
+      "false_accept_rate": 0.0
+    },
+    {
+      "threshold": 0.06,
+      "net_benefit_inr": -117090000.0,
+      "recall": 1.0,
+      "false_positive_rate": 1.0,
+      "precision": 0.4923,
+      "false_accept_rate": 0.0
+    },
+    {
+      "threshold": 0.07,
+      "net_benefit_inr": -117090000.0,
+      "recall": 1.0,
+      "false_positive_rate": 1.0,
+      "precision": 0.4923,
+      "false_accept_rate": 0.0
+    },
+    {
+      "threshold": 0.08,
+      "net_benefit_inr": -117090000.0,
+      "recall": 1.0,
+      "false_positive_rate": 1.0,
+      "precision": 0.4923,
+      "false_accept_rate": 0.0
+    },
+    {
+      "threshold": 0.09,
+      "net_benefit_inr": -117090000.0,
+      "recall": 1.0,
+      "false_positive_rate": 1.0,
+      "precision": 0.4923,
+      "false_accept_rate": 0.0
+    },
+    {
+      "threshold": 0.1,
+      "net_benefit_inr": -117090000.0,
+      "recall": 1.0,
+      "false_positive_rate": 1.0,
+      "precision": 0.4923,
+      "false_accept_rate": 0.0
+    },
+    {
+      "threshold": 0.11,
+      "net_benefit_inr": -117090000.0,
+      "recall": 1.0,
+      "false_positive_rate": 1.0,
+      "precision": 0.4923,
+      "false_accept_rate": 0.0
+    },
+    {
+      "threshold": 0.12,
+      "net_benefit_inr": -117090000.0,
+      "recall": 1.0,
+      "false_positive_rate": 1.0,
+      "precision": 0.4923,
+      "false_accept_rate": 0.0
+    },
+    {
+      "threshold": 0.13,
+      "net_benefit_inr": -117090000.0,
+      "recall": 1.0,
+      "false_positive_rate": 1.0,
+      "precision": 0.4923,
+      "false_accept_rate": 0.0
+    },
+    {
+      "threshold": 0.14,
+      "net_benefit_inr": -117090000.0,
+      "recall": 1.0,
+      "false_positive_rate": 1.0,
+      "precision": 0.4923,
+      "false_accept_rate": 0.0
+    },
+    {
+      "threshold": 0.15,
+      "net_benefit_inr": -117090000.0,
+      "recall": 1.0,
+      "false_positive_rate": 1.0,
+      "precision": 0.4923,
+      "false_accept_rate": 0.0
+    },
+    {
+      "threshold": 0.16,
+      "net_benefit_inr": -117090000.0,
+      "recall": 1.0,
+      "false_positive_rate": 1.0,
+      "precision": 0.4923,
+      "false_accept_rate": 0.0
+    },
+    {
+      "threshold": 0.17,
+      "net_benefit_inr": -117090000.0,
+      "recall": 1.0,
+      "false_positive_rate": 1.0,
+      "precision": 0.4923,
+      "false_accept_rate": 0.0
+    },
+    {
+      "threshold": 0.18,
+      "net_benefit_inr": -117355200.0,
+      "recall": 0.9896,
+      "false_positive_rate": 1.0,
+      "precision": 0.4897,
+      "false_accept_rate": 0.0104
+    },
+    {
+      "threshold": 0.19,
+      "net_benefit_inr": -115915041.0,
+      "recall": 0.9896,
+      "false_positive_rate": 0.9899,
+      "precision": 0.4922,
+      "false_accept_rate": 0.0104
+    },
+    {
+      "threshold": 0.2,
+      "net_benefit_inr": -115915041.0,
+      "recall": 0.9896,
+      "false_positive_rate": 0.9899,
+      "precision": 0.4922,
+      "false_accept_rate": 0.0104
+    },
+    {
+      "threshold": 0.21,
+      "net_benefit_inr": -114474882.0,
+      "recall": 0.9896,
+      "false_positive_rate": 0.9798,
+      "precision": 0.4948,
+      "false_accept_rate": 0.0104
+    },
+    {
+      "threshold": 0.22,
+      "net_benefit_inr": -108714246.0,
+      "recall": 0.9896,
+      "false_positive_rate": 0.9394,
+      "precision": 0.5053,
+      "false_accept_rate": 0.0104
+    },
+    {
+      "threshold": 0.23,
+      "net_benefit_inr": -107539287.0,
+      "recall": 0.9792,
+      "false_positive_rate": 0.9293,
+      "precision": 0.5054,
+      "false_accept_rate": 0.0208
+    },
+    {
+      "threshold": 0.24,
+      "net_benefit_inr": -103218810.0,
+      "recall": 0.9792,
+      "false_positive_rate": 0.899,
+      "precision": 0.5137,
+      "false_accept_rate": 0.0208
+    },
+    {
+      "threshold": 0.25,
+      "net_benefit_inr": -102311601.0,
+      "recall": 0.9583,
+      "false_positive_rate": 0.8889,
+      "precision": 0.5111,
+      "false_accept_rate": 0.0417
+    },
+    {
+      "threshold": 0.26,
+      "net_benefit_inr": -100871442.0,
+      "recall": 0.9583,
+      "false_positive_rate": 0.8788,
+      "precision": 0.514,
+      "false_accept_rate": 0.0417
+    },
+    {
+      "threshold": 0.27,
+      "net_benefit_inr": -95376006.0,
+      "recall": 0.9479,
+      "false_positive_rate": 0.8384,
+      "precision": 0.523,
+      "false_accept_rate": 0.0521
+    },
+    {
+      "threshold": 0.28,
+      "net_benefit_inr": -94466247.0,
+      "recall": 0.9271,
+      "false_positive_rate": 0.8283,
+      "precision": 0.5205,
+      "false_accept_rate": 0.0729
+    },
+    {
+      "threshold": 0.29,
+      "net_benefit_inr": -90145770.0,
+      "recall": 0.9271,
+      "false_positive_rate": 0.798,
+      "precision": 0.5298,
+      "false_accept_rate": 0.0729
+    },
+    {
+      "threshold": 0.3,
+      "net_benefit_inr": -82944975.0,
+      "recall": 0.9271,
+      "false_positive_rate": 0.7475,
+      "precision": 0.546,
+      "false_accept_rate": 0.0729
+    },
+    {
+      "threshold": 0.31,
+      "net_benefit_inr": -81504816.0,
+      "recall": 0.9271,
+      "false_positive_rate": 0.7374,
+      "precision": 0.5494,
+      "false_accept_rate": 0.0729
+    },
+    {
+      "threshold": 0.32,
+      "net_benefit_inr": -80329857.0,
+      "recall": 0.9167,
+      "false_positive_rate": 0.7273,
+      "precision": 0.55,
+      "false_accept_rate": 0.0833
+    },
+    {
+      "threshold": 0.33,
+      "net_benefit_inr": -77449539.0,
+      "recall": 0.9167,
+      "false_positive_rate": 0.7071,
+      "precision": 0.557,
+      "false_accept_rate": 0.0833
+    },
+    {
+      "threshold": 0.34,
+      "net_benefit_inr": -73662012.0,
+      "recall": 0.8958,
+      "false_positive_rate": 0.6768,
+      "precision": 0.5621,
+      "false_accept_rate": 0.1042
+    },
+    {
+      "threshold": 0.35,
+      "net_benefit_inr": -64376499.0,
+      "recall": 0.8646,
+      "false_positive_rate": 0.6061,
+      "precision": 0.5804,
+      "false_accept_rate": 0.1354
+    },
+    {
+      "threshold": 0.36,
+      "net_benefit_inr": -62026581.0,
+      "recall": 0.8438,
+      "false_positive_rate": 0.5859,
+      "precision": 0.5827,
+      "false_accept_rate": 0.1562
+    },
+    {
+      "threshold": 0.37,
+      "net_benefit_inr": -53385627.0,
+      "recall": 0.8438,
+      "false_positive_rate": 0.5253,
+      "precision": 0.609,
+      "false_accept_rate": 0.1562
+    },
+    {
+      "threshold": 0.38,
+      "net_benefit_inr": -49583841.0,
+      "recall": 0.8229,
+      "false_positive_rate": 0.4949,
+      "precision": 0.6172,
+      "false_accept_rate": 0.1771
+    },
+    {
+      "threshold": 0.39,
+      "net_benefit_inr": -45528564.0,
+      "recall": 0.8125,
+      "false_positive_rate": 0.4646,
+      "precision": 0.629,
+      "false_accept_rate": 0.1875
+    },
+    {
+      "threshold": 0.4,
+      "net_benefit_inr": -43446396.0,
+      "recall": 0.7812,
+      "false_positive_rate": 0.4444,
+      "precision": 0.6303,
+      "false_accept_rate": 0.2188
+    },
+    {
+      "threshold": 0.41,
+      "net_benefit_inr": -31280565.0,
+      "recall": 0.75,
+      "false_positive_rate": 0.3535,
+      "precision": 0.6729,
+      "false_accept_rate": 0.25
+    },
+    {
+      "threshold": 0.42,
+      "net_benefit_inr": -28930647.0,
+      "recall": 0.7292,
+      "false_positive_rate": 0.3333,
+      "precision": 0.6796,
+      "false_accept_rate": 0.2708
+    },
+    {
+      "threshold": 0.43,
+      "net_benefit_inr": -23702961.0,
+      "recall": 0.7083,
+      "false_positive_rate": 0.2929,
+      "precision": 0.701,
+      "false_accept_rate": 0.2917
+    },
+    {
+      "threshold": 0.44,
+      "net_benefit_inr": -18472725.0,
+      "recall": 0.6875,
+      "false_positive_rate": 0.2525,
+      "precision": 0.7253,
+      "false_accept_rate": 0.3125
+    },
+    {
+      "threshold": 0.45,
+      "net_benefit_inr": -15592407.0,
+      "recall": 0.6875,
+      "false_positive_rate": 0.2323,
+      "precision": 0.7416,
+      "false_accept_rate": 0.3125
+    },
+    {
+      "threshold": 0.46,
+      "net_benefit_inr": -12712089.0,
+      "recall": 0.6875,
+      "false_positive_rate": 0.2121,
+      "precision": 0.7586,
+      "false_accept_rate": 0.3125
+    },
+    {
+      "threshold": 0.47,
+      "net_benefit_inr": -10629921.0,
+      "recall": 0.6562,
+      "false_positive_rate": 0.1919,
+      "precision": 0.7683,
+      "false_accept_rate": 0.3438
+    },
+    {
+      "threshold": 0.48,
+      "net_benefit_inr": -11425521.0,
+      "recall": 0.625,
+      "false_positive_rate": 0.1919,
+      "precision": 0.7595,
+      "false_accept_rate": 0.375
+    },
+    {
+      "threshold": 0.49,
+      "net_benefit_inr": -9985362.0,
+      "recall": 0.625,
+      "false_positive_rate": 0.1818,
+      "precision": 0.7692,
+      "false_accept_rate": 0.375
+    },
+    {
+      "threshold": 0.5,
+      "net_benefit_inr": -7370244.0,
+      "recall": 0.6146,
+      "false_positive_rate": 0.1616,
+      "precision": 0.7867,
+      "false_accept_rate": 0.3854
+    },
+    {
+      "threshold": 0.51,
+      "net_benefit_inr": -7370244.0,
+      "recall": 0.6146,
+      "false_positive_rate": 0.1616,
+      "precision": 0.7867,
+      "false_accept_rate": 0.3854
+    },
+    {
+      "threshold": 0.52,
+      "net_benefit_inr": -3580167.0,
+      "recall": 0.5938,
+      "false_positive_rate": 0.1313,
+      "precision": 0.8143,
+      "false_accept_rate": 0.4062
+    },
+    {
+      "threshold": 0.53,
+      "net_benefit_inr": -3580167.0,
+      "recall": 0.5938,
+      "false_positive_rate": 0.1313,
+      "precision": 0.8143,
+      "false_accept_rate": 0.4062
+    },
+    {
+      "threshold": 0.54,
+      "net_benefit_inr": -967599.0,
+      "recall": 0.5833,
+      "false_positive_rate": 0.1111,
+      "precision": 0.8358,
+      "false_accept_rate": 0.4167
+    },
+    {
+      "threshold": 0.55,
+      "net_benefit_inr": -1232799.0,
+      "recall": 0.5729,
+      "false_positive_rate": 0.1111,
+      "precision": 0.8333,
+      "false_accept_rate": 0.4271
+    },
+    {
+      "threshold": 0.56,
+      "net_benefit_inr": 3087678.0,
+      "recall": 0.5729,
+      "false_positive_rate": 0.0808,
+      "precision": 0.873,
+      "false_accept_rate": 0.4271
+    },
+    {
+      "threshold": 0.57,
+      "net_benefit_inr": 4262637.0,
+      "recall": 0.5625,
+      "false_positive_rate": 0.0707,
+      "precision": 0.8852,
+      "false_accept_rate": 0.4375
+    },
+    {
+      "threshold": 0.58,
+      "net_benefit_inr": 4262637.0,
+      "recall": 0.5625,
+      "false_positive_rate": 0.0707,
+      "precision": 0.8852,
+      "false_accept_rate": 0.4375
+    },
+    {
+      "threshold": 0.59,
+      "net_benefit_inr": 6612555.0,
+      "recall": 0.5417,
+      "false_positive_rate": 0.0505,
+      "precision": 0.9123,
+      "false_accept_rate": 0.4583
+    },
+    {
+      "threshold": 0.6,
+      "net_benefit_inr": 6079605.0,
+      "recall": 0.5208,
+      "false_positive_rate": 0.0505,
+      "precision": 0.9091,
+      "false_accept_rate": 0.4792
+    },
+    {
+      "threshold": 0.61,
+      "net_benefit_inr": 6079605.0,
+      "recall": 0.5208,
+      "false_positive_rate": 0.0505,
+      "precision": 0.9091,
+      "false_accept_rate": 0.4792
+    },
+    {
+      "threshold": 0.62,
+      "net_benefit_inr": 7254564.0,
+      "recall": 0.5104,
+      "false_positive_rate": 0.0404,
+      "precision": 0.9245,
+      "false_accept_rate": 0.4896
+    },
+    {
+      "threshold": 0.63,
+      "net_benefit_inr": 7254564.0,
+      "recall": 0.5104,
+      "false_positive_rate": 0.0404,
+      "precision": 0.9245,
+      "false_accept_rate": 0.4896
+    },
+    {
+      "threshold": 0.64,
+      "net_benefit_inr": 6989364.0,
+      "recall": 0.5,
+      "false_positive_rate": 0.0404,
+      "precision": 0.9231,
+      "false_accept_rate": 0.5
+    },
+    {
+      "threshold": 0.65,
+      "net_benefit_inr": 8429523.0,
+      "recall": 0.5,
+      "false_positive_rate": 0.0303,
+      "precision": 0.9412,
+      "false_accept_rate": 0.5
+    },
+    {
+      "threshold": 0.66,
+      "net_benefit_inr": 9339282.0,
+      "recall": 0.4792,
+      "false_positive_rate": 0.0202,
+      "precision": 0.9583,
+      "false_accept_rate": 0.5208
+    },
+    {
+      "threshold": 0.67,
+      "net_benefit_inr": 9074082.0,
+      "recall": 0.4688,
+      "false_positive_rate": 0.0202,
+      "precision": 0.9574,
+      "false_accept_rate": 0.5312
+    },
+    {
+      "threshold": 0.68,
+      "net_benefit_inr": 8275932.0,
+      "recall": 0.4375,
+      "false_positive_rate": 0.0202,
+      "precision": 0.9545,
+      "false_accept_rate": 0.5625
+    },
+    {
+      "threshold": 0.69,
+      "net_benefit_inr": 8275932.0,
+      "recall": 0.4375,
+      "false_positive_rate": 0.0202,
+      "precision": 0.9545,
+      "false_accept_rate": 0.5625
+    },
+    {
+      "threshold": 0.7,
+      "net_benefit_inr": 8010732.0,
+      "recall": 0.4271,
+      "false_positive_rate": 0.0202,
+      "precision": 0.9535,
+      "false_accept_rate": 0.5729
+    },
+    {
+      "threshold": 0.71,
+      "net_benefit_inr": 8010732.0,
+      "recall": 0.4271,
+      "false_positive_rate": 0.0202,
+      "precision": 0.9535,
+      "false_accept_rate": 0.5729
+    },
+    {
+      "threshold": 0.72,
+      "net_benefit_inr": 7745532.0,
+      "recall": 0.4167,
+      "false_positive_rate": 0.0202,
+      "precision": 0.9524,
+      "false_accept_rate": 0.5833
+    },
+    {
+      "threshold": 0.73,
+      "net_benefit_inr": 6682182.0,
+      "recall": 0.375,
+      "false_positive_rate": 0.0202,
+      "precision": 0.9474,
+      "false_accept_rate": 0.625
+    },
+    {
+      "threshold": 0.74,
+      "net_benefit_inr": 6682182.0,
+      "recall": 0.375,
+      "false_positive_rate": 0.0202,
+      "precision": 0.9474,
+      "false_accept_rate": 0.625
+    },
+    {
+      "threshold": 0.75,
+      "net_benefit_inr": 6416982.0,
+      "recall": 0.3646,
+      "false_positive_rate": 0.0202,
+      "precision": 0.9459,
+      "false_accept_rate": 0.6354
+    },
+    {
+      "threshold": 0.76,
+      "net_benefit_inr": 5618832.0,
+      "recall": 0.3333,
+      "false_positive_rate": 0.0202,
+      "precision": 0.9412,
+      "false_accept_rate": 0.6667
+    },
+    {
+      "threshold": 0.77,
+      "net_benefit_inr": 5088432.0,
+      "recall": 0.3125,
+      "false_positive_rate": 0.0202,
+      "precision": 0.9375,
+      "false_accept_rate": 0.6875
+    },
+    {
+      "threshold": 0.78,
+      "net_benefit_inr": 4934841.0,
+      "recall": 0.25,
+      "false_positive_rate": 0.0101,
+      "precision": 0.96,
+      "false_accept_rate": 0.75
+    },
+    {
+      "threshold": 0.79,
+      "net_benefit_inr": 4139241.0,
+      "recall": 0.2188,
+      "false_positive_rate": 0.0101,
+      "precision": 0.9545,
+      "false_accept_rate": 0.7812
+    },
+    {
+      "threshold": 0.8,
+      "net_benefit_inr": 3341091.0,
+      "recall": 0.1875,
+      "false_positive_rate": 0.0101,
+      "precision": 0.9474,
+      "false_accept_rate": 0.8125
+    },
+    {
+      "threshold": 0.81,
+      "net_benefit_inr": 3452700.0,
+      "recall": 0.1354,
+      "false_positive_rate": 0.0,
+      "precision": 1.0,
+      "false_accept_rate": 0.8646
+    },
+    {
+      "threshold": 0.82,
+      "net_benefit_inr": 2124150.0,
+      "recall": 0.0833,
+      "false_positive_rate": 0.0,
+      "precision": 1.0,
+      "false_accept_rate": 0.9167
+    },
+    {
+      "threshold": 0.83,
+      "net_benefit_inr": 795600.0,
+      "recall": 0.0312,
+      "false_positive_rate": 0.0,
+      "precision": 1.0,
+      "false_accept_rate": 0.9688
+    },
+    {
+      "threshold": 0.84,
+      "net_benefit_inr": 0.0,
+      "recall": 0.0,
+      "false_positive_rate": 0.0,
+      "precision": 0.0,
+      "false_accept_rate": 1.0
+    },
+    {
+      "threshold": 0.85,
+      "net_benefit_inr": 0.0,
+      "recall": 0.0,
+      "false_positive_rate": 0.0,
+      "precision": 0.0,
+      "false_accept_rate": 1.0
+    },
+    {
+      "threshold": 0.86,
+      "net_benefit_inr": 0.0,
+      "recall": 0.0,
+      "false_positive_rate": 0.0,
+      "precision": 0.0,
+      "false_accept_rate": 1.0
+    },
+    {
+      "threshold": 0.87,
+      "net_benefit_inr": 0.0,
+      "recall": 0.0,
+      "false_positive_rate": 0.0,
+      "precision": 0.0,
+      "false_accept_rate": 1.0
+    },
+    {
+      "threshold": 0.88,
+      "net_benefit_inr": 0.0,
+      "recall": 0.0,
+      "false_positive_rate": 0.0,
+      "precision": 0.0,
+      "false_accept_rate": 1.0
+    },
+    {
+      "threshold": 0.89,
+      "net_benefit_inr": 0.0,
+      "recall": 0.0,
+      "false_positive_rate": 0.0,
+      "precision": 0.0,
+      "false_accept_rate": 1.0
+    },
+    {
+      "threshold": 0.9,
+      "net_benefit_inr": 0.0,
+      "recall": 0.0,
+      "false_positive_rate": 0.0,
+      "precision": 0.0,
+      "false_accept_rate": 1.0
+    },
+    {
+      "threshold": 0.91,
+      "net_benefit_inr": 0.0,
+      "recall": 0.0,
+      "false_positive_rate": 0.0,
+      "precision": 0.0,
+      "false_accept_rate": 1.0
+    },
+    {
+      "threshold": 0.92,
+      "net_benefit_inr": 0.0,
+      "recall": 0.0,
+      "false_positive_rate": 0.0,
+      "precision": 0.0,
+      "false_accept_rate": 1.0
+    },
+    {
+      "threshold": 0.93,
+      "net_benefit_inr": 0.0,
+      "recall": 0.0,
+      "false_positive_rate": 0.0,
+      "precision": 0.0,
+      "false_accept_rate": 1.0
+    },
+    {
+      "threshold": 0.94,
+      "net_benefit_inr": 0.0,
+      "recall": 0.0,
+      "false_positive_rate": 0.0,
+      "precision": 0.0,
+      "false_accept_rate": 1.0
+    },
+    {
+      "threshold": 0.95,
+      "net_benefit_inr": 0.0,
+      "recall": 0.0,
+      "false_positive_rate": 0.0,
+      "precision": 0.0,
+      "false_accept_rate": 1.0
+    }
+  ]
+}
