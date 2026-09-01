@@ -321,3 +321,68 @@ def test_the_replay_attack_is_still_reported_as_beating_the_model():
         f"replay_human now scores {auc}; the README says it is at chance"
     )
     assert "chance" in README[README.index("#### The attack that beats it"):][:900]
+
+
+def test_the_corrections_table_matches_the_generated_file():
+    """The README's Corrections table is a rendering of eval/corrections.json.
+
+    Both the hero paragraph and the table quote the counts, and both are the kind
+    of number that goes stale the moment a finding is added. If a correction is
+    appended and the README is not regenerated, this is what says so.
+    """
+    d = load("corrections.json")
+    counts = d["counts"]
+
+    stated_n = re.search(r"\*\*(\d+) documented cases of this project", README)
+    assert stated_n, "the README hero no longer states how many corrections there are"
+    assert int(stated_n.group(1)) == d["n"]
+
+    fixed = re.search(r"^(\d+) are fixed\. (\d+) are still open", README, re.M)
+    assert fixed, "the README hero no longer states the fixed/open split"
+    assert int(fixed.group(1)) == counts.get("fixed")
+    assert int(fixed.group(2)) == counts.get("open")
+
+    section = re.search(
+        rf"^{d['n']} beliefs this project held, measured, and lost\. (\d+) fixed,\n(\d+) still open, (\d+) designed around\.",
+        README, re.M)
+    assert section, "the Corrections section no longer states its counts"
+    assert int(section.group(1)) == counts.get("fixed")
+    assert int(section.group(2)) == counts.get("open")
+    assert int(section.group(3)) == counts.get("designed_around", 0)
+
+    # Every correction must have a row, by title.
+    for c in d["corrections"]:
+        assert c["title"] in README, (
+            f"correction '{c['id']}' is not listed in the README's Corrections table"
+        )
+
+
+def test_the_third_party_face_numbers_match_their_report():
+    """Section 4's per-family table, against eval/real_faces.json."""
+    d = load("real_faces.json")
+    face = d["tracks"]["deepfakeface"]["protocols"]["face"]["per_family"]
+    sg = d["tracks"]["stylegan_140k"]["protocols"]["face"]["per_family"]["stylegan"]
+
+    start = README.index("### 4. The selfie detector on fakes we did not generate")
+    end = README.index("### 5. Liveness on recorded video", start)
+    section = README[start:end]
+
+    rows = dict(re.findall(r"^\| `(\w+)`[^|]*\| [\d.]+ \| \*\*([\d.]+)\*\*", section, re.M))
+    assert rows, "the per-family table is gone"
+    for family, rep in face.items():
+        assert family in rows, f"{family} is missing from the README table"
+        assert float(rows[family]) == pytest.approx(rep["auc"], abs=0.0006)
+    assert float(rows["stylegan"]) == pytest.approx(sg["auc"], abs=0.0006)
+
+
+def test_the_readme_does_not_claim_an_unserved_endpoint():
+    """`/threat/graph` was documented as 'contract defined, not yet served' while
+    it was a stub. It is served now, and a README that still says otherwise is
+    understating the project in the one place a reader checks first."""
+    from pathlib import Path as _P
+
+    routes = _P(__file__).resolve().parents[1] / "verityne" / "api" / "routes_threat.py"
+    if routes.exists() and "/threat/graph" in routes.read_text():
+        assert "not yet served" not in README, (
+            "/threat/graph is implemented, but the README still calls it unserved"
+        )

@@ -1,27 +1,41 @@
 # Verityne
 
-**Deepfake-aware KYC verification for payment platforms.**
+**Deepfake-aware KYC verification — with an audit trail you can argue with.**
 
 [![CI](https://github.com/Abhist17/verityne/actions/workflows/ci.yml/badge.svg)](https://github.com/Abhist17/verityne/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-3776ab.svg)](https://www.python.org/)
 [![Next.js 14](https://img.shields.io/badge/next.js-14-000000.svg)](https://nextjs.org/)
 
-Six independent detectors, a calibrated fusion layer, and a human-readable
-explanation behind every verdict — built on the assumption that the attacker has
-Stable Diffusion and DeepFaceLab on their laptop.
+Six independent detectors, a calibrated fusion layer, a human-readable
+explanation behind every verdict — and **9 documented cases of this project
+believing something about itself and then measuring it and being wrong**.
+4 are fixed. 3 are still open, including one that
+says a detector in this system does not work.
 
-Five of them inspect what the applicant uploaded. The sixth inspects how they
-filled the form, which is the one input a fraud kit cannot buy — fitted on
-168,595 real people's keystrokes against real browser automation, and honest
-about the one attack that beats it.
+That list is the point. Any vendor can show you a ROC curve; the question a
+fraud team actually needs answered is *where does it fail, and how would you
+know*. So the first thing this project did was benchmark the obvious
+off-the-shelf answer and find it at chance — and it has been turning the same
+instrument on its own code ever since. Every correction is generated from the
+evidence file it cites, so none of them can drift into being prose:
+[`eval/corrections.json`](eval/corrections.json), rendered at `/corrections`.
+
+The detectors themselves: five inspect what the applicant uploaded, and the
+sixth inspects how they filled the form — the one input a fraud kit cannot buy,
+fitted on 168,595 real people's keystrokes against real browser automation, and
+honest about the one attack that beats it.
 
 ```
 POST /verify  →  { verdict, risk score, top 3 reasons, heatmaps, per-detector breakdown }
 ```
 
-Held-out ROC-AUC **0.753** · 2.1 s per packet on GPU · every number in this file
-is reproducible with `make pipeline`, and the real-data numbers with `make real`.
+Held-out ROC-AUC **0.753** on an identity-disjoint split — a number that used to
+read 0.913 until [an ablation found half of it was a label this project had
+written into its own files](#what-the-headline-auc-is-actually-made-of). 2.1 s
+per packet on GPU. Every number in this file is reproducible with
+`make pipeline`, the real-data numbers with `make real`, and each one is checked
+against its evidence file by the test suite.
 
 The face-identity threshold is fitted on **LFW** (98.2% ± 0.4% over its official
 10-fold protocol) and tamper detection is measured on **real identity documents
@@ -33,6 +47,7 @@ that were printed, photographed and scanned** — see
 ## Contents
 
 - [The problem](#the-problem)
+- [Corrections](#corrections)
 - [The honest version of what this is](#the-honest-version-of-what-this-is)
 - [Quick start](#quick-start)
 - [Architecture](#architecture)
@@ -63,6 +78,37 @@ PAN + selfie + liveness kits sell in Telegram groups for a few hundred rupees.
 
 Every fake merchant that gets through becomes chargeback losses, laundering
 exposure, and a regulatory problem for the platform that onboarded them.
+
+## Corrections
+
+9 beliefs this project held, measured, and lost. 4 fixed,
+3 still open, 2 designed around.
+
+| # | What measuring it showed | Status | |
+| --- | --- | --- | --- |
+| 1 | The popular pretrained deepfake checkpoint is at chance on our data | designed around | [§](#the-honest-version-of-what-this-is) |
+| 2 | Half the headline AUC was a label we wrote into our own files | fixed | [§](#what-the-headline-auc-is-actually-made-of) |
+| 3 | The calibrator was quietly costing 0.02 AUC | fixed | [§](#the-calibrator-was-costing-002-auc) |
+| 4 | The identity threshold would have rejected two thirds of honest applicants | fixed | [§](#1-face-identity-on-lfw--and-two-thresholds-that-were-badly-wrong) |
+| 5 | Every genuine applicant false-linked to a stranger | fixed | [§](#2b-the-linkage-threshold-was-answering-the-wrong-question) |
+| 6 | The frequency head separates real Indian faces from real FFHQ faces | **open** | [§](#3-the-selfie-detector-is-reading-demography) |
+| 7 | The selfie detector does not work on fakes we did not generate | **open** | [§](#measured-on-real-data) |
+| 8 | We built the attack that defeats our own behavioral detector | **open** | [§](#the-attack-that-beats-it-which-we-built-ourselves) |
+| 9 | The stale thresholds could not be fixed by fitting them properly | designed around | [§](#the-thresholds-and-why-they-are-not-constants) |
+
+The table is not written by hand. `make corrections` assembles
+`eval/corrections.json` by resolving each entry's numbers out of the evidence
+file it names, and the build fails if a path does not resolve — so a correction
+cannot claim a figure no report contains. `/corrections` renders it, and
+`GET /metrics/corrections` serves it.
+
+**Only one of these was visible in an aggregate metric.** Three needed data this
+project did not generate, one needed submitting a genuine packet to the running
+API and reading the verdict, one needed regenerating a result and asking why a
+number had moved, and one needed building the attack against ourselves. That
+distribution is the argument for why a held-out AUC is not an audit.
+
+---
 
 ## The honest version of what this is
 
@@ -489,26 +535,41 @@ At the two shipped thresholds:
 | `REVIEW` @ 0.40 | 0.662 | 0.796 | 20.4% | 43.1% | 0.686 |
 | `REJECT` @ 0.75 | 0.815 | 0.407 | 59.3% | **9.8%** | 0.648 |
 
-**Those two rows are bad, and the thresholds producing them are stale.** `0.40`
-and `0.75` were chosen against the leaked model, whose scores separated the
-classes far more widely — mean genuine 0.266 against mean fraud 0.809, a gap of
-0.542. On the corrected model the same two means are 0.419 and
-0.606, a gap of 0.187. The distribution compressed towards the middle, so
-fixed cut points inherited from the old one now sit in the wrong places:
-`REJECT` at 0.75 catches only 40.7% of fraud, and `REVIEW` at 0.40 sends 43.1%
-of genuine merchants to a human.
+### The thresholds, and why they are not constants
 
-They have deliberately not been re-tuned. Picking new thresholds on the same
-held-out split that reports them is how a model gets graded on its own answer
-sheet, and this README has just finished writing up what that costs. Choosing
-them properly needs an operating point argued from fraud loss, merchant lifetime
-value and abandonment — which is what `/metrics/cost-curve` and the sliders on
-the Metrics page exist to do, and what `policy.yaml` exposes per merchant. The
-ranking is what the detectors earn; where to cut it is an operator's decision,
-and the honest thing is to show the curve rather than pick a flattering point on
-it.
+The two rows above are bad and the thresholds producing them were inherited from
+the leaked model. The obvious repair is to re-fit them — on the training split
+only, by cross-validation, never touching held-out. `make thresholds` does
+exactly that, and the result is the reason this project does not ship fixed
+cut points.
 
-What ranking is worth is 0.753, and that is the number to argue with.
+The procedure is clean: 195 training rows, five folds, the estimator *and*
+its Platt calibrator refitted inside every fold, folds made identity-disjoint,
+and the reject point chosen as the argmax of expected net benefit under the
+merchant's own economic inputs rather than as a round number. It picks
+0.66, holding a
+2.0% false-positive rate.
+
+On the held-out split that same threshold produces
+**17.6%** — 8.7× worse.
+
+It is not fold leakage: every training packet carries a distinct identity, and
+folding by identity changes nothing. It is that 195 genuine faces cannot
+resolve an operating point that survives new faces. The score distribution
+shifts the moment the applicants are people the model has not seen — genuine
+mean 0.372 on the rows it was fitted on, 0.419 on the rows it was not — and a
+threshold is exactly the statistic that shift moves.
+
+So the thresholds stay where they are, and the honest product decision follows
+from the measurement rather than from inertia: **where to cut a ranking is an
+operator's input, not a constant this corpus can supply.** `GET
+/metrics/cost-curve` and the sliders on the Metrics page take fraud loss,
+merchant lifetime value, abandonment probability and base rate, and return the
+whole curve. `policy.yaml` then carries a different point per merchant, because
+a crypto exchange and a gig marketplace do not have the same answer.
+
+The ranking is what the detectors earn — 0.753 — and that is the number to argue
+with. Report: `eval/thresholds.json`.
 
 ### Per detector
 
@@ -1117,7 +1178,76 @@ which is the failure this section exists to report. The bias audit
 [above](#bias-audit) buckets by ITA° on 105 packets and calls itself a harness
 rather than a conclusion; this is the measurement it could not make.
 
-### 4. Liveness on recorded video — built, not yet run
+### 4. The selfie detector on fakes we did not generate
+
+[§3](#3-the-selfie-detector-is-reading-demography) showed the selfie detector
+separating two groups that were *both real*. This asks the other half of the
+question, and the answer is worse: does it separate fake from real when somebody
+else made the fake?
+
+Two third-party tracks, chosen because they fail differently. **DeepFakeFace**
+is three generator families over the *same* IMDB-WIKI photographs, so identity,
+pose and subject are held fixed — `text2img` (Stable Diffusion from a prompt),
+`inpainting` (SD regenerating just the face) and `insight` (an InsightFace
+swap). **140k Real and Fake Faces** is StyleGAN against FFHQ, both distributed
+at 256×256.
+
+Geometry is not controlled by the pairing and had to be controlled by protocol:
+the genuine images are native IMDB-WIKI sizes while every fake is 512×512, so raw
+frames are separable on resampling history alone. Both classes are therefore
+face-detected, cropped at the same margin and resized to the same pixel size
+before an identical capture simulation — the same protocol
+[§3](#3-the-selfie-detector-is-reading-demography) uses, and for the same reason.
+Reproduce with `make eval-real-faces` → `eval/real_faces.json`.
+
+| Generator family | Whole frame | **Controlled** | n |
+| --- | --- | --- | --- |
+| `text2img` | 0.428 | **0.394** | 391 |
+| `inpainting` | 0.475 | **0.475** | 389 |
+| `insight` | 0.479 | **0.512** | 394 |
+| `stylegan` (140k) | 0.110 | **0.123** | 397 |
+
+**Every family is at or below chance.** Not weak — at or below the line where a
+coin does as well. `stylegan` at 0.123 is *inverted*: the detector
+scores those fakes as more genuine than real faces, consistently enough that
+flipping its sign would be an improvement.
+
+This is the same detector that scores 0.997 on `generated_selfie` in
+[Per attack type](#per-attack-type-worst-first). Both numbers are real. The
+corpus figure measures separability against **our own generator's settings** —
+one SD-Turbo checkpoint, one prompt list, one scheduler — and the detector
+learned those settings, exactly as [§3](#3-the-selfie-detector-is-reading-demography)
+found it learning the prompt list's demography. Against four generators it was
+not fitted on, there is nothing left.
+
+The false-positive side is measured on the same run, over FFHQ, IMDB-WIKI and
+LFW faces pooled — three genuine populations, no fakes:
+
+| Real faces scored above | Rate |
+| --- | --- |
+| 0.40 | 76.5% |
+| 0.50 | 60.2% |
+| 0.75 | 15.0% |
+
+At the review threshold the detector calls 76% of genuine
+photographs suspicious. That is the same disparity §3 measures, quantified
+against a third real population that has nothing to do with demography.
+
+**Why this does not sink the system, and what it does mean.** The fused verdict
+does not rest on this detector: the ablation puts it at 10.6% of above-chance
+AUC, behind provenance, face match and the document checks, and Detector 6 does
+not look at pixels at all. The honest reading is that Verityne's *fusion* is
+carrying weight its selfie CNN is not, and that a project marketed on deepfake
+detection has to print that sentence rather than the 0.997.
+
+What it forbids is the obvious fix. Fine-tuning the head on DeepFakeFace or the
+140k set would raise these numbers and mean nothing — the 140k track is the most
+common fine-tuning set for off-the-shelf deepfake checkpoints, so a good score on
+it cannot be distinguished from memorisation — the report carries a
+`leakage_warning` beside that number for exactly this reason. Fixing this needs a detector whose training set is disjoint
+from its evaluation set, and this project does not have one.
+
+### 5. Liveness on recorded video — built, not yet run
 
 `scripts/real_video.py` reads FaceForensics++, Celeb-DF v2 or the DFDC preview,
 whichever is extracted, uses each dataset's official test split where one is
@@ -1274,13 +1404,14 @@ this project keeps refusing to run.
 
 ## The dashboard
 
-Next.js 14 App Router, six pages:
+Next.js 14 App Router, seven pages:
 
 | Page | What it does |
 | --- | --- |
 | **Live Verify** (`/`) | Drag in a selfie, ID and liveness clip; get the verdict, the three reasons, the heatmaps and the per-detector breakdown. Also collects the form-fill telemetry Detector 6 reads, and says on screen that it is doing so. |
 | **Gauntlet** (`/gauntlet`) | Runs 10 genuine + 10 fraudulent fixtures over server-sent events, scoring live. |
-| **Metrics** (`/metrics`) | The held-out report rendered — ROC, per-attack recall, bias audit, and the cost-of-friction curve with operator-tunable ₹ sliders. |
+| **Metrics** (`/metrics`) | The held-out report rendered — ROC, per-attack recall, bias audit, Detector 6's evaluation, and the cost-of-friction curve with operator-tunable ₹ sliders. |
+| **Corrections** (`/corrections`) | The audit trail: every belief measured and lost, what it cost, and which are still open. Each entry renders the evidence file and path its numbers came from. |
 | **Attack Gallery** (`/attacks`) | Rejected submissions grouped by attack pattern, with the evidence that flagged each. |
 | **Threat Intelligence** (`/threat`) | Fraud rings as a node-link graph, generator-fingerprint mix, attack-pattern counts and a live feed. Clicking a node filters the feed to that cluster. |
 | **Review Queue** (`/review`) | Human-in-the-loop: everything that abstained, with accept/reject and an audit note. Tracks how often analysts agree with the model. |
@@ -1294,12 +1425,14 @@ Next.js 14 App Router, six pages:
 | `POST /verify` | Score one KYC packet (multipart: `selfie`, `liveness_video`, `id_document`, optional `behavioral_token`). |
 | `POST /behavioral` | Accept a form-fill telemetry buffer against a token the page minted on load, reduce it to features, and store only those. Posted before the files, because uploads fail and the buffer should not die with them. |
 | `GET /behavioral/{token}` | Read back one stored telemetry session with its score and the rules that fired. |
-| `GET /threat/graph` | **Contract defined, not yet served.** The fraud-ring graph the Threat Intelligence page reads: `{nodes, edges, rings, threshold}`, where each edge carries `kind: "face" \| "asset_exact" \| "asset_near"`. Until it exists the panel says so rather than drawing invented edges. Edges must be built at the *search* threshold (0.8169), not the verification point (0.5198) — at the latter every genuine applicant wires to a stranger ([§2b](#2b-the-linkage-threshold-was-answering-the-wrong-question)). |
+| `GET /threat/graph` | The fraud-ring graph the Threat Intelligence page reads: `{nodes, edges, rings, threshold}`, where each edge carries `kind: "face" \| "asset_exact" \| "asset_near"`. A ring built only from face edges is an inference and is labelled one; `has_exact_asset_reuse` marks the rings that rest on a byte-identical file. Edges are built at the *search* threshold (0.8169), not the verification point (0.5198) — at the latter every genuine applicant wires to a stranger ([§2b](#2b-the-linkage-threshold-was-answering-the-wrong-question)). Computed per request from the audit log and capped at 400 nodes; at production volume this becomes a job and a table. |
 | `POST /batch-verify` | Retroactive sweep — re-score history with the current model to find fakes that were let through. |
 | `GET /submissions` · `GET /submissions/{id}` | Browse the audit log; full record for one submission. |
 | `POST /submissions/{id}/rescore` | Re-run one stored packet against the current model. |
 | `GET /gauntlet` · `POST /gauntlet/run` · `GET /gauntlet/stream` | Fixtures, batch scoreboard, and the SSE live feed. |
 | `GET /metrics` | Held-out report plus live operational stats. |
+| `GET /metrics/corrections` | The audit trail — every belief this project measured and lost, generated from the evidence files each entry cites. |
+| `GET /metrics/behavioral` | Detector 6's evaluation: corpus sizes, the feature-set ablation, per-strategy generalisation, and the attack that beats it. |
 | `GET /metrics/real` | The same detectors measured on real third-party data; says which reports exist rather than treating a missing dataset as a zero. |
 | `GET /metrics/cost-curve` · `GET /metrics/thresholds` | Friction/fraud tradeoff, and where each merchant policy sits on it. |
 | `GET /attacks` | Flagged submissions grouped by attack pattern. |
@@ -1376,7 +1509,7 @@ Copy `.env.example` to `.env`. Every value has a working default.
 ## Testing
 
 ```bash
-make test                                  # 205 tests, ~2 s
+make test                                  # 234 tests, ~2 s
 .venv/bin/python -m pytest backend/tests -q -k verhoeff   # one group
 cd frontend && npx tsc --noEmit && npm run build          # dashboard gates
 ```
@@ -1445,7 +1578,7 @@ backend/
     calibrate_linkage_lfw.py  fit the linkage threshold as a search, over every LFW pair
     real_video.py         read FaceForensics++ / Celeb-DF / DFDC, whichever is present
     evaluate_real_video.py score liveness on recorded deepfakes
-  tests/              205 tests over the deterministic surface
+  tests/              234 tests over the deterministic surface
   requirements.txt          resolvable pins
   requirements-nodeps.txt   facenet-pytorch, installed second with --no-deps
 frontend/
