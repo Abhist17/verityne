@@ -34,6 +34,7 @@ datasets/manifest.json
 # Detector 6's corpora. The Aalto archive alone is 1.5 GB, and every file here is
 # third-party data fetched by `make behavioral-data` rather than anything of ours
 # — the same treatment LFW and MIDV-2020 get.
+datasets/deepfakeface/
 datasets/keystrokes/
 datasets/lfw/
 datasets/midv2020/
