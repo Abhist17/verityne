@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, ReferenceLine,
-  ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Bar, BarChart, CartesianGrid, Cell, ComposedChart, LabelList, Legend, Line,
+  LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import clsx from "clsx";
 import { api, fmtInr, fmtPct, type Ablation, type BehavioralReport, type RealFacesReport } from "@/lib/api";
@@ -338,6 +338,17 @@ export default function MetricsPage() {
    *  at zero produced no curve — Recharts would still draw it as a straight line
    *  from corner to corner, which reads as a real result at chance rather than
    *  as an absence. */
+  /** The threshold range where the system pays for itself, under the current
+   *  slider assumptions. This is the answer the panel exists to give, so it is
+   *  computed and shaded rather than left to be inferred from a line crossing an
+   *  unlabelled gridline. */
+  const profitable = useMemo(() => {
+    const curve: any[] = cost?.curve ?? [];
+    const pos = curve.filter((c) => (c.net_benefit_inr ?? 0) > 0);
+    if (!pos.length) return null;
+    return { from: pos[0].threshold, to: pos[pos.length - 1].threshold, n: pos.length };
+  }, [cost]);
+
   const rocSeries = useMemo(() => {
     const per: Record<string, any> = ev?.per_detector ?? {};
     const drawn: { key: string; label: string; auc: number; color: string }[] = [];
@@ -661,17 +672,38 @@ export default function MetricsPage() {
       <div className="grid gap-x-12 gap-y-14 wide:grid-cols-[1fr_340px]">
         <Section title="Recall by attack type"
           hint="Sorted worst-first on purpose. A single headline AUC hides which attack we are actually bad at.">
-          <ResponsiveContainer width="100%" height={Math.max(220, attackData.length * 34)}>
-            <BarChart data={attackData} layout="vertical" margin={{ top: 4, right: 40, bottom: 4, left: 8 }}>
+          {/* The value is printed on every bar, with the sample size beside it.
+              A bar chart asks the eye to measure length against a distant axis,
+              which is the wrong tool when the numbers are the point — and a
+              recall of 100% on n=6 is a different claim from 100% on n=60, so
+              the two are never shown apart. Fills sit at 45% with a full-strength
+              stroke: the shape stays readable without nine saturated blocks
+              shouting at once. */}
+          <ResponsiveContainer width="100%" height={Math.max(220, attackData.length * 36)}>
+            <BarChart data={attackData} layout="vertical" margin={{ top: 4, right: 104, bottom: 4, left: 8 }}>
               <CartesianGrid stroke={GRID} strokeDasharray="3 3" horizontal={false} />
-              <XAxis type="number" domain={[0, 1]} tick={AXIS} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
+              <XAxis type="number" domain={[0, 1]} tick={AXIS}
+                     tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} ticks={[0, 0.25, 0.5, 0.75, 1]} />
               <YAxis type="category" dataKey="attack" tick={{ ...AXIS, fontSize: 10 }} width={150} />
-              <Tooltip {...tooltipStyle}
+              <Tooltip {...tooltipStyle} cursor={{ fill: "#ffffff08" }}
                 formatter={(v: any, n: any) => [n === "recall" ? fmtPct(v, 0) : Number(v).toFixed(3), n]} />
-              <Bar dataKey="recall" name="caught at review threshold" radius={[0, 4, 4, 0]} barSize={16}>
-                {attackData.map((d, i) => (
-                  <Cell key={i} fill={d.recall >= 0.85 ? PASS : d.recall >= 0.6 ? REVIEW : REJECT} />
-                ))}
+              <Bar dataKey="recall" name="caught at review threshold" radius={[0, 3, 3, 0]} barSize={13}>
+                {attackData.map((d, i) => {
+                  const tone = d.recall >= 0.85 ? PASS : d.recall >= 0.6 ? REVIEW : REJECT;
+                  return <Cell key={i} fill={tone} fillOpacity={0.45} stroke={tone} strokeWidth={1} />;
+                })}
+                <LabelList
+                  dataKey="recall" position="right" offset={10}
+                  formatter={(v: any) => `${(Number(v) * 100).toFixed(0)}%`}
+                  fill="#cbd5e1"
+                  style={{ fontSize: 11, fontFamily: "var(--font-mono)" }}
+                />
+                <LabelList
+                  dataKey="n" position="right" offset={56}
+                  formatter={(v: any) => `n=${v}`}
+                  fill="#5b6172"
+                  style={{ fontSize: 10, fontFamily: "var(--font-mono)" }}
+                />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -712,24 +744,73 @@ export default function MetricsPage() {
       >
         {costError && <div className="mb-3 text-xs text-review">{costError}</div>}
         <div className="grid gap-x-12 gap-y-10 wide:grid-cols-[1fr_290px]">
+          {/* Net benefit is filled, not just stroked, and zero is drawn.
+              The whole question this panel answers is "which thresholds make
+              money", and on three bare lines that reduces to noticing where one
+              of them crosses an unlabelled gridline. Filled against a zero rule,
+              the profitable band is a shape you can see from across a room —
+              which for this project is most of the argument, because it is
+              narrow and it starts late. */}
           <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={cost?.curve ?? []} margin={{ top: 4, right: 8, bottom: 4, left: 8 }}>
+            <ComposedChart data={cost?.curve ?? []} margin={{ top: 10, right: 10, bottom: 4, left: 8 }}>
               <CartesianGrid stroke={GRID} strokeDasharray="3 3" />
-              <XAxis dataKey="threshold" tick={AXIS} tickFormatter={(v) => v.toFixed(2)}
-                label={{ value: "reject threshold", position: "insideBottom", offset: -2, fill: "#64748b", fontSize: 10 }} />
+              {/* The band where net benefit is positive.
+                  An Area fill was the obvious move and the wrong one: Recharts
+                  fills to the axis floor rather than to zero, so it washed the
+                  entire loss region in light grey and drew the eye to the part
+                  that does not matter. Shading the *x-range* that pays instead
+                  states the answer exactly — and on this system that band is
+                  narrow and starts late, which is the honest shape of it. */}
+              {profitable && (
+                <ReferenceArea
+                  x1={profitable.from} x2={profitable.to}
+                  fill={PASS} fillOpacity={0.09}
+                  stroke={PASS} strokeOpacity={0.28}
+                />
+              )}
+              <XAxis
+                dataKey="threshold" tick={AXIS} tickFormatter={(v) => v.toFixed(2)}
+                // Every 0.04 produced twenty-five crammed labels; the axis is a
+                // scale, not a table.
+                interval={4} minTickGap={18}
+                label={{ value: "reject threshold", position: "insideBottom", offset: -2,
+                         fill: "#64748b", fontSize: 10 }}
+              />
               <YAxis tick={AXIS} tickFormatter={(v) => fmtInr(v)} width={62} />
               <Tooltip {...tooltipStyle} formatter={(v: any, n: any) => [fmtInr(Number(v)), n]}
                 labelFormatter={(l) => `threshold ${Number(l).toFixed(2)}`} />
               <Legend iconType="plainline" iconSize={8} wrapperStyle={{ fontSize: 10, paddingTop: 6 }} />
-              <Line type="monotone" dataKey="fraud_prevented_inr" name="fraud prevented" stroke={PASS} strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="friction_cost_inr" name="lost to false rejects" stroke={REJECT} strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="net_benefit_inr" name="net benefit" stroke={ACCENT} strokeWidth={2.5} dot={false} />
+              {/* Break-even. Above it the system pays for itself; below it the
+                  friction costs more than the fraud it stops. */}
+              <ReferenceLine y={0} stroke="#4a4d5a" strokeWidth={1}
+                label={{ value: "break-even", position: "insideLeft", fill: "#5b6172", fontSize: 10 }} />
+              <Line type="monotone" dataKey="net_benefit_inr" name="net benefit"
+                    stroke={ACCENT} strokeWidth={2.5} dot={false} />
+              <Line type="monotone" dataKey="fraud_prevented_inr" name="fraud prevented"
+                    stroke={PASS} strokeWidth={1.6} strokeOpacity={0.8} dot={false} />
+              <Line type="monotone" dataKey="friction_cost_inr" name="lost to false rejects"
+                    stroke={REJECT} strokeWidth={1.6} strokeOpacity={0.8} dot={false} />
               {cost?.optimal && (
-                <ReferenceLine x={cost.optimal.threshold} stroke={ACCENT} strokeDasharray="4 4"
-                  label={{ value: `optimum ${cost.optimal.threshold}`, fill: ACCENT, fontSize: 10, position: "top" }} />
+                <ReferenceLine x={cost.optimal.threshold} stroke={ACCENT} strokeDasharray="3 4"
+                  strokeOpacity={0.7}
+                  label={{ value: `optimum ${cost.optimal.threshold}`, fill: ACCENT,
+                           fontSize: 10, position: "insideTopRight", offset: 8 }} />
               )}
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
+          {/* The band is too narrow to letter, and a label inside it collided
+              with the optimum marker. Said in prose it can also be exact. */}
+          {profitable && (
+            <p className="mt-2 text-2xs leading-relaxed text-slate-500">
+              <span className="text-pass">Shaded</span>: the only thresholds where this pays for
+              itself under the assumptions on the right —{" "}
+              <span className="num text-slate-300">
+                {profitable.from.toFixed(2)}–{profitable.to.toFixed(2)}
+              </span>
+              . Narrow, and it starts late. Move a slider and the band moves with it, which is the
+              point of showing a curve rather than a single ₹ figure.
+            </p>
+          )}
 
           <div className="space-y-4">
             {[
