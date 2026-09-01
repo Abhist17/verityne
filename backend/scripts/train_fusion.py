@@ -24,7 +24,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
 sys.path.insert(0, str(SCRIPT_DIR.parent))
 
-from verityne.config import DETECTOR_NAMES, EVAL_ROOT, MODEL_ROOT  # noqa: E402
+from verityne.config import EVAL_ROOT, FUSION_TRAINED_NAMES, MODEL_ROOT  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("train_fusion")
@@ -33,14 +33,22 @@ SCORES = EVAL_ROOT / "scores.json"
 
 
 def build_matrix(rows: List[Dict]) -> Tuple[np.ndarray, np.ndarray, List[str]]:
-    """Same layout as verityne.fusion.feature_vector - score and confidence per detector."""
+    """Same layout as `verityne.fusion.training_feature_names`.
+
+    `FUSION_TRAINED_NAMES`, not `DETECTOR_NAMES`: the corpus carries no form-fill
+    telemetry, so a behavioral column here would be identically zero on every
+    row. The model would learn nothing from it, the ablation would report it as
+    worthless, and both statements would be about the corpus rather than about
+    the detector. Detector 6 is combined downstream as an evidence channel
+    instead - see `config.FUSION_TRAINED_NAMES` and `fusion.behavioral_channel`.
+    """
     names: List[str] = []
-    for n in DETECTOR_NAMES:
+    for n in FUSION_TRAINED_NAMES:
         names += [f"{n}_score", f"{n}_conf"]
     X, y = [], []
     for r in rows:
         feats = []
-        for n in DETECTOR_NAMES:
+        for n in FUSION_TRAINED_NAMES:
             d = r["detectors"].get(n, {})
             ok = d.get("status") == "ok"
             feats.append(float(d.get("score", 0.0)) if ok else 0.0)

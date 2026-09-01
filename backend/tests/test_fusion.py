@@ -78,3 +78,51 @@ class TestDecide:
         strict = MerchantPolicy(min_risk_for_review=0.25, min_risk_for_reject=0.60, abstain_band=0.0)
         assert decide(0.65, strict)[0] == "REJECT"
         assert decide(0.65, self.policy)[0] == "REVIEW"
+
+
+class TestTrainedLayoutStaysPinned:
+    """The learned fusion model is fitted on a *subset* of the detectors.
+
+    Detector 6 is in `DETECTOR_NAMES` (it is a detector, and the dashboard shows
+    it) but deliberately not in `FUSION_TRAINED_NAMES` (the corpus has no
+    telemetry, so its column would be identically zero). Nothing in the type
+    system stops the two lists drifting back together, and the failure is silent:
+    the next `make train` would fit a model on a dead column and the ablation
+    would report a detector as worthless when what is actually worthless is the
+    data behind it.
+    """
+
+    def test_the_training_layout_excludes_behavioral(self):
+        from verityne.config import DETECTOR_NAMES, FUSION_TRAINED_NAMES
+
+        assert "behavioral" in DETECTOR_NAMES
+        assert "behavioral" not in FUSION_TRAINED_NAMES
+        assert set(FUSION_TRAINED_NAMES) < set(DETECTOR_NAMES)
+
+    def test_the_training_script_and_the_serving_path_agree(self):
+        """`train_fusion.build_matrix` and `fusion.training_feature_names` are two
+        implementations of one layout, in two files, that must not diverge."""
+        from train_fusion import build_matrix
+        from verityne.fusion import training_feature_names
+
+        _, _, names = build_matrix([])
+        assert names == training_feature_names()
+
+    def test_a_model_trained_before_detector_six_still_loads(self):
+        """Features are looked up by name, so an older model asks for the columns
+        it knows and never sees the one that was appended after it was fitted."""
+        from verityne.fusion import feature_vector, training_feature_names
+
+        b = breakdown(selfie_deepfake=0.8, liveness_video=0.3, id_forensics=0.6,
+                      face_match=0.2, metadata_exif=0.5, behavioral=0.99)
+        old_layout = training_feature_names()
+        x, order = feature_vector(b, old_layout)
+        assert order == old_layout
+        assert len(x) == len(old_layout)
+        assert not any(n.startswith("behavioral") for n in order)
+
+    def test_a_missing_feature_is_an_error_not_a_silent_zero(self):
+        from verityne.fusion import feature_vector
+
+        with pytest.raises(ValueError, match="fusion features unavailable"):
+            feature_vector(breakdown(selfie_deepfake=0.5), ["nonexistent_score"])

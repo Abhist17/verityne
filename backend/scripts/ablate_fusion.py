@@ -34,7 +34,12 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
 sys.path.insert(0, str(SCRIPT_DIR.parent))
 
-from verityne.config import DATASET_ROOT, DETECTOR_NAMES, EVAL_ROOT, PHYSICALLY_FRAUD_ONLY  # noqa: E402
+from verityne.config import (  # noqa: E402
+    DATASET_ROOT,
+    EVAL_ROOT,
+    FUSION_TRAINED_NAMES,
+    PHYSICALLY_FRAUD_ONLY,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("ablate")
@@ -50,7 +55,7 @@ def build_matrix(rows: List[Dict], drop: Optional[str] = None) -> Tuple[np.ndarr
     X, y = [], []
     for r in rows:
         feats: List[float] = []
-        for n in DETECTOR_NAMES:
+        for n in FUSION_TRAINED_NAMES:
             d = r["detectors"].get(n, {})
             ok = d.get("status") == "ok" and n != drop
             feats.append(float(d.get("score", 0.0)) if ok else 0.0)
@@ -167,7 +172,7 @@ def main() -> None:
     log.info("full model held-out AUC %.4f", full["roc_auc"])
 
     per_detector: Dict[str, Dict] = {}
-    for name in DETECTOR_NAMES:
+    for name in FUSION_TRAINED_NAMES:
         r = fit_and_score(train, test, drop=name)
         r["auc_drop"] = round(full["roc_auc"] - r["roc_auc"], 4)
         r["share_of_headline_auc_above_chance"] = (
