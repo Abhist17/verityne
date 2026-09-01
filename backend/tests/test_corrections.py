@@ -106,20 +106,37 @@ class TestShape:
         for c in corrections():
             assert c["how_found"] in legend, f"{c['id']} has an unexplained discovery method"
 
-    def test_readme_anchors_exist(self):
-        """Each entry deep-links into the README; a dead anchor is a dead link."""
-        import re
+    def test_doc_anchors_exist(self):
+        """Each entry deep-links at the section documenting it; a dead anchor is a dead link.
 
-        readme = (REPO / "README.md").read_text()
+        `readme` is a repo-relative `path.md#anchor` because the prose lives in
+        `docs/` now. Both halves are checked: the file has to exist and the
+        heading has to be in *that* file. One of these was dead for real —
+        `#the-thresholds-and-where-they-came-from` names a heading this project
+        has never had — and the previous version of this test could not see it,
+        because it resolved every anchor against one document.
+        """
+        import re
 
         def slug(h: str) -> str:
             s = re.sub(r"[^\w\s-]", "", h.strip().lower())
             return re.sub(r"\s", "-", s)
 
-        headings = {slug(m) for m in re.findall(r"^#{1,6}\s+(.*)$", readme, re.M)}
+        cache: dict[str, set] = {}
+
+        def headings(rel: str) -> set:
+            if rel not in cache:
+                p = REPO / rel
+                assert p.exists(), f"{rel} is cited by a correction but is not on disk"
+                cache[rel] = {slug(m) for m in re.findall(r"^#{1,6}\s+(.*)$", p.read_text(), re.M)}
+            return cache[rel]
+
         for c in corrections():
-            anchor = c["readme"].lstrip("#")
-            assert anchor in headings, f"{c['id']} links to #{anchor}, which no heading produces"
+            target, _, anchor = c["readme"].partition("#")
+            rel = target or "README.md"
+            assert anchor in headings(rel), (
+                f"{c['id']} links to {rel}#{anchor}, which no heading in that file produces"
+            )
 
 
 class TestHonesty:

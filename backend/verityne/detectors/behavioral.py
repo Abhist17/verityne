@@ -532,7 +532,7 @@ def score_features(
     if int(f.get("paste_into_sensitive") or 0) > 0:
         hits.append((
             "form:pasted_identity", 0.58,
-            f"The identity number was pasted rather than typed - it was being read out "
+            "The identity number was pasted rather than typed - it was being read out "
             "of a file, not out of the applicant's own wallet",
         ))
     if float(f.get("field_order_monotonic") or 0.0) >= 1.0 and int(f.get("fields_touched") or 0) >= 4:

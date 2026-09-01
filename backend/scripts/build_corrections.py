@@ -130,7 +130,7 @@ def build() -> List[Dict[str, Any]]:
                    "a confident number for a model that was guessing.",
         "how_found": "benchmark",
         "evidence": [{"file": "model_benchmark.json", "path": "results"}],
-        "readme": "#the-honest-version-of-what-this-is",
+        "readme": "docs/corrections.md#the-honest-version-of-what-this-is",
     })
 
     # 2 ---------------------------------------------------------------------
@@ -159,7 +159,7 @@ def build() -> List[Dict[str, Any]]:
             {"file": "ablation_leaked_corpus.json", "path": "full_model.roc_auc"},
             {"file": "ablation.json", "path": "full_model.roc_auc"},
         ],
-        "readme": "#what-the-headline-auc-is-actually-made-of",
+        "readme": "docs/results.md#what-the-headline-auc-is-actually-made-of",
     })
 
     # 3 ---------------------------------------------------------------------
@@ -187,7 +187,7 @@ def build() -> List[Dict[str, Any]]:
                      "class's docstring, and this entry says so rather than implying a file."},
             {"file": "metrics.json", "path": "fusion.roc_auc"},
         ],
-        "readme": "#the-calibrator-was-costing-002-auc",
+        "readme": "docs/fusion.md#the-calibrator-was-costing-002-auc",
     })
 
     # 4 ---------------------------------------------------------------------
@@ -216,7 +216,7 @@ def build() -> List[Dict[str, Any]]:
             {"file": "face_match_lfw.json", "path": LOW},
             {"file": "face_match_lfw.json", "path": "operating_points.far_1pct.tar"},
         ],
-        "readme": "#1-face-identity-on-lfw--and-two-thresholds-that-were-badly-wrong",
+        "readme": "docs/real-data.md#1-face-identity-on-lfw--and-two-thresholds-that-were-badly-wrong",
     })
 
     # 5 ---------------------------------------------------------------------
@@ -249,7 +249,7 @@ def build() -> List[Dict[str, Any]]:
             {"file": "linkage_lfw.json", "path": "superseded.per_applicant_false_link_rate.5000"},
             {"file": "linkage_lfw.json", "path": "fitted.per_applicant_false_link_rate.5000"},
         ],
-        "readme": "#2b-the-linkage-threshold-was-answering-the-wrong-question",
+        "readme": "docs/real-data.md#2b-the-linkage-threshold-was-answering-the-wrong-question",
     })
 
     # 6 ---------------------------------------------------------------------
@@ -284,7 +284,7 @@ def build() -> List[Dict[str, Any]]:
             {"file": "indian_faces.json", "path": "face.shortcut_auc.spectral_p_fake"},
             {"file": "indian_faces.json", "path": "face.shortcut_auc.cnn_p_fake"},
         ],
-        "readme": "#3-the-selfie-detector-is-reading-demography",
+        "readme": "docs/real-data.md#3-the-selfie-detector-is-reading-demography",
     })
 
     # 7 ---------------------------------------------------------------------
@@ -316,7 +316,7 @@ def build() -> List[Dict[str, Any]]:
             {"file": "real_faces.json", "path": "headline.per_family_auc"},
             {"file": "real_faces.json", "path": "headline.worst_family_auc"},
         ],
-        "readme": "#measured-on-real-data",
+        "readme": "docs/real-data.md#measured-on-real-data",
     })
 
     # 8 ---------------------------------------------------------------------
@@ -345,7 +345,7 @@ def build() -> List[Dict[str, Any]]:
             {"file": "behavioral.json", "path": "headline.worst_unseen_strategy_auc"},
             {"file": "behavioral.json", "path": "headline.held_out_auc"},
         ],
-        "readme": "#the-attack-that-beats-it-which-we-built-ourselves",
+        "readme": "docs/behavioral.md#the-attack-that-beats-it-which-we-built-ourselves",
     })
 
     # 9 ---------------------------------------------------------------------
@@ -372,17 +372,22 @@ def build() -> List[Dict[str, Any]]:
             ],
             "reference": {"label": "what was chosen for", "value": oof_fpr},
             "status": "designed_around",
-            "outcome": "The thresholds are not being set from this corpus, and that is now a "
-                       "documented decision rather than an omission. What ships is the cost "
-                       "curve: an operator sets the point from their own fraud loss, merchant "
-                       "value and abandonment, which is the only input that can answer where to "
-                       "cut a ranking. The report this cites is the evidence for why.",
+            "outcome": "So the defaults do not come from cross-validation. They come from the "
+                       "system's own cost curve, which priced the shipped 0.75 reject line at "
+                       "negative expected net benefit and put its argmax at 0.80 — moving there "
+                       "took the false-reject rate from 9.8% to 2.0% and precision from 0.815 to "
+                       "0.952. The review line, which the cost model does not cover, moved from "
+                       "0.40 to 0.45 because 0.40 sat barely above the genuine median and sent "
+                       "39% of honest merchants to a human. Both are read off held-out, so they "
+                       "report themselves: an operating point, not a generalisation claim. The "
+                       "mechanism that matters is still per-merchant policy plus the cost curve, "
+                       "and the defaults are only a sane place to start.",
             "how_found": "reproduced",
             "evidence": [
                 {"file": "thresholds.json", "path": "transfer_check.out_of_fold_false_positive_rate"},
                 {"file": "thresholds.json", "path": "transfer_check.held_out_false_positive_rate"},
             ],
-            "readme": "#the-thresholds-and-why-they-are-not-constants",
+            "readme": "docs/results.md#the-thresholds-and-where-they-came-from",
         })
 
     return out

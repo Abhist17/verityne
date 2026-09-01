@@ -7,7 +7,6 @@ rather than baked into a headline number.
 """
 from __future__ import annotations
 
-import datetime as dt
 import json
 from typing import Dict, List, Optional
 
@@ -17,7 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..config import EVAL_ROOT, get_policy
-from ..db import Submission, Verdict
+from ..db import Verdict
 from ..fusion import detector_weights
 from .deps import db_session
 

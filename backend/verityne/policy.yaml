@@ -1,8 +1,32 @@
 # Verityne merchant policy. One file, hot-reloadable via POST /admin/reload-policy.
 # `default` applies to every merchant; anything under `merchants:` overlays it.
 default:
-  min_risk_for_reject: 0.75
-  min_risk_for_review: 0.40
+  # Chosen from this system's own cost curve, not inherited.
+  #
+  # 0.75 and 0.40 came from the leaked model, whose scores separated the classes
+  # far more widely, and they survived the corpus fix unchanged. On the corrected
+  # model they are not merely stale, they contradict the product: GET
+  # /metrics/cost-curve at these same default assumptions prices every threshold
+  # below 0.74 at negative expected net benefit, and 0.75 sits inside that
+  # region. Shipping a default the system's own cost model calls loss-making is
+  # not a defensible position to demo from.
+  #
+  # 0.80 is that curve's argmax. Against held-out it rejects 2.0% of genuine
+  # applicants and auto-rejects 37.0% of fraud, where 0.75 rejected 9.8% of
+  # genuine to catch 40.7% — four times the friction for three points of recall.
+  #
+  # The review line is a capacity decision the cost curve does not model, so it
+  # is set from the genuine distribution instead: 0.40 sat close enough to the
+  # genuine median (0.357) to send 43% of honest merchants to a human. 0.45 sends
+  # 39.2% and still puts 75.9% of fraud in front of one.
+  #
+  # The caveat, stated because this repo states them: both figures are read off
+  # the held-out split, so they report themselves and are an operating point
+  # rather than a generalisation claim. eval/thresholds.json is the record of why
+  # the training split cannot supply one either. Per-merchant overrides below are
+  # the mechanism that matters; this is only a sane place to start.
+  min_risk_for_reject: 0.80
+  min_risk_for_review: 0.45
   require_liveness: true
   require_id_document: true
   abstain_band: 0.05
@@ -22,7 +46,7 @@ merchants:
   # A low-value, high-volume marketplace: friction is expensive, loosen up.
   gig_marketplace_02:
     min_risk_for_reject: 0.88
-    min_risk_for_review: 0.55
+    min_risk_for_review: 0.45
     require_liveness: false
     avg_fraud_loss_inr: 12000
     merchant_ltv_inr: 9000

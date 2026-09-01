@@ -26,7 +26,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
 sys.path.insert(0, str(SCRIPT_DIR.parent))
 
-from verityne.config import DETECTOR_LABELS, DETECTOR_NAMES, EVAL_ROOT, MODEL_ROOT, get_policy  # noqa: E402
+from verityne.config import DETECTOR_LABELS, DETECTOR_NAMES, EVAL_ROOT, get_policy  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("evaluate")

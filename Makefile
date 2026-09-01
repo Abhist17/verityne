@@ -14,7 +14,8 @@ export PYTHONPATH := $(CURDIR)/backend
 .PHONY: help setup setup-backend setup-frontend pipeline dataset benchmark calibrate score train evaluate \
         ablate gauntlet redteam backend frontend dev demo test clean clean-data fresh \
         real data-real calibrate-face real-docs eval-real-docs eval-real-video \
-        indian-faces calibrate-linkage
+        indian-faces calibrate-linkage thresholds corrections eval-real-faces \
+        behavioral behavioral-data behavioral-corpus behavioral-bots behavioral-train
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
@@ -106,6 +107,8 @@ indian-faces: ## is the selfie detector reading demography? real Indian faces vs
 	$(PY) backend/scripts/evaluate_indian_faces.py --n $(or $(N),300) --shards $(or $(SHARDS),1)
 
 real: calibrate-face calibrate-linkage real-docs eval-real-docs eval-real-faces indian-faces ## the real-data track that needs no gated access
+	@echo "real-data track complete — see eval/face_match_lfw.json, eval/real_docs.json"
+	@echo "and eval/indian_faces.json, eval/linkage_lfw.json"
 
 # ---------------------------------------------------------------- detector 6
 # Both halves of Detector 6's corpus are real: the genuine side is 168,595
@@ -134,9 +137,6 @@ behavioral-train: ## fit and evaluate the keystroke model → eval/behavioral.js
 	$(PY) backend/scripts/train_behavioral.py --sweep
 
 behavioral: behavioral-data behavioral-corpus behavioral-bots behavioral-train ## the whole Detector 6 track
-
-	@echo "real-data track complete — see eval/face_match_lfw.json, eval/real_docs.json"
-	@echo "and eval/indian_faces.json, eval/linkage_lfw.json"
 
 gauntlet: ## load the 10 genuine + 10 fraudulent demo fixtures
 	$(PY) backend/scripts/seed_gauntlet.py --real 10 --fake 10

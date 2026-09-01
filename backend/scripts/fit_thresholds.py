@@ -40,7 +40,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict
 
 import numpy as np
 
@@ -205,7 +205,6 @@ def main() -> None:
         from verityne import fusion
 
         Xte, yte, _ = build_matrix(test)
-        shipped = np.array([fusion.fuse({})[0] for _ in range(0)])  # placeholder, unused
         bundle = fusion._load_model()
         if bundle is not None:
             p = bundle["model"].predict_proba(Xte)[:, 1]
