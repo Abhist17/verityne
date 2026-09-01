@@ -20,6 +20,7 @@ from .api import (
     routes_live,
     routes_metrics,
     routes_ops,
+    routes_threat,
     routes_verify,
 )
 from .config import HEATMAP_DIR, UPLOAD_DIR, get_policy, resolve_device
@@ -88,6 +89,7 @@ app.include_router(routes_gauntlet.router, tags=["gauntlet"])
 app.include_router(routes_metrics.router, tags=["metrics"])
 app.include_router(routes_live.router, tags=["live"])
 app.include_router(routes_ops.router, tags=["ops"])
+app.include_router(routes_threat.router, tags=["threat"])
 
 app.mount("/static/heatmaps", StaticFiles(directory=str(HEATMAP_DIR)), name="heatmaps")
 app.mount("/static/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
@@ -109,5 +111,5 @@ def root():
     return {
         "name": "Verityne",
         "docs": "/docs",
-        "endpoints": ["/verify", "/behavioral", "/face-match/live", "/batch-verify", "/gauntlet/stream", "/metrics", "/attacks", "/review-queue"],
+        "endpoints": ["/verify", "/behavioral", "/face-match/live", "/batch-verify", "/gauntlet/stream", "/metrics", "/attacks", "/threat/graph", "/review-queue"],
     }
