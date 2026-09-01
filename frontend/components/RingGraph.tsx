@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import type { ThreatEdge, ThreatGraph, ThreatNode, Verdict } from "@/lib/api";
+import { AXIS_STROKE, INK, REJECT, VERDICT_HEX } from "@/lib/palette";
 
 /**
  * Fraud rings as a node-link diagram.
@@ -23,9 +24,9 @@ import type { ThreatEdge, ThreatGraph, ThreatNode, Verdict } from "@/lib/api";
  */
 
 const VERDICT_FILL: Record<Verdict, string> = {
-  PASS: "#3ddc97",
-  REVIEW: "#e8b04b",
-  REJECT: "#f4626f",
+  PASS: VERDICT_HEX.PASS,
+  REVIEW: VERDICT_HEX.REVIEW,
+  REJECT: VERDICT_HEX.REJECT,
 };
 
 interface Sim extends ThreatNode {
@@ -227,7 +228,7 @@ export function RingGraph({
                 y1={a.y}
                 x2={b.x}
                 y2={b.y}
-                stroke={exact ? "#f4626f" : "#4b5565"}
+                stroke={exact ? REJECT : AXIS_STROKE}
                 strokeWidth={exact ? 1.6 : 1}
                 // Dashed = a similarity claim. Solid = a byte-identical file.
                 strokeDasharray={exact ? undefined : "3 3"}
@@ -250,7 +251,7 @@ export function RingGraph({
                 fill={VERDICT_FILL[n.verdict]}
                 fillOpacity={faded ? 0.15 : 0.9}
                 // A 2px surface ring keeps overlapping nodes legible.
-                stroke={selected === n.id ? "#f1f5f9" : "#0c0e13"}
+                stroke={selected === n.id ? "#f1f5f9" : INK[900]}
                 strokeWidth={2}
                 className="cursor-pointer"
                 onMouseEnter={() => setHover({ node: n, x: p.x, y: p.y })}
@@ -305,7 +306,7 @@ export function RingGraphLegend({ threshold }: { threshold: ThreatGraph["thresho
       ))}
       <span className="flex items-center gap-1.5">
         <svg width="18" height="6" aria-hidden>
-          <line x1="0" y1="3" x2="18" y2="3" stroke="#f4626f" strokeWidth="1.6" />
+          <line x1="0" y1="3" x2="18" y2="3" stroke={REJECT} strokeWidth="1.6" />
         </svg>
         byte-identical file — a fact
       </span>

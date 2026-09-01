@@ -19,42 +19,68 @@ const config: Config = {
       colors: {
         // Surface ramp: even perceptual steps, faintly cool so the accent reads
         // as the same family rather than a sticker on top of grey.
+        // Surface ramp. Warmed very slightly off true blue-black: a pure cool
+        // grey next to the ochre and red-earth verdicts reads as two unrelated
+        // palettes stacked, and the small amount of red in the ground is what
+        // makes them look chosen together.
         ink: {
-          950: "#08090c",
-          900: "#0c0e13",
-          850: "#101319",
-          800: "#161a22",
-          750: "#1c212b",
-          700: "#232935",
-          600: "#2f3644",
+          950: "#0a0a0c",
+          900: "#0e0e12",
+          850: "#131318",
+          800: "#191920",
+          750: "#1f2028",
+          700: "#272833",
+          600: "#343542",
         },
         edge: {
-          DEFAULT: "#1e2430", // hairline between surfaces
-          strong: "#2b3342", // hairline that needs to be seen
+          DEFAULT: "#20212a", // hairline between surfaces
+          strong: "#2d2f3b", // hairline that needs to be seen
         },
-        // Verdicts. Desaturated from the usual traffic-light set: at 12% alpha on
-        // a near-black ground the saturated versions glow, and a glow reads as
-        // urgency the score has not earned.
-        pass: { DEFAULT: "#3ddc97", dim: "#0e2a20" },
-        review: { DEFAULT: "#e8b04b", dim: "#2c2211" },
-        reject: { DEFAULT: "#f4626f", dim: "#301218" },
-        accent: { DEFAULT: "#6d8cff", dim: "#151c33" },
+        // Verdicts, and the one interactive hue.
+        //
+        // Taken from pigment rather than from a screen: verdigris, yellow ochre,
+        // and red earth, against an ink blue. The previous set was mint, gold and
+        // coral at full luminosity, which on a near-black ground *emits* rather
+        // than sits — everything glowed, so nothing was emphatic, and a REJECT
+        // could not look more serious than a PASS because both were already at
+        // maximum. These are all held around 55-62% lightness and under 45%
+        // saturation, which is where print keeps its warning colours, and leaves
+        // headroom to brighten a single element when something is genuinely wrong.
+        //
+        // Hue assignment is forced, not chosen: the verdict ramp has to be the
+        // traffic-light set because that is what a reviewer already reads without
+        // being taught, which leaves blue as the only hue far enough from all
+        // three to mark an affordance without being mistaken for a state.
+        pass: { DEFAULT: "#5a9e79", dim: "#12241c" },
+        review: { DEFAULT: "#c39a4e", dim: "#26200f" },
+        reject: { DEFAULT: "#c15f66", dim: "#2a1417" },
+        accent: { DEFAULT: "#5b83a8", dim: "#141b24" },
       },
       fontFamily: {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       fontSize: {
-        // A tighter ramp than Tailwind's default. An ops console is read at a
-        // glance and at density; the default 16px body is one step too loose.
-        "2xs": ["10px", { lineHeight: "14px", letterSpacing: "0.04em" }],
-        xs: ["11px", { lineHeight: "16px" }],
-        sm: ["12.5px", { lineHeight: "18px" }],
-        base: ["13.5px", { lineHeight: "20px" }],
-        lg: ["15px", { lineHeight: "22px" }],
-        xl: ["18px", { lineHeight: "24px", letterSpacing: "-0.011em" }],
-        "2xl": ["22px", { lineHeight: "28px", letterSpacing: "-0.018em" }],
-        "3xl": ["28px", { lineHeight: "34px", letterSpacing: "-0.022em" }],
+        // Editorial scale: a wide gap between the labels and the numbers, because
+        // in this design the number IS the interface. Nothing sits in the middle
+        // of the ramp — text is either quiet chrome or the thing you came to read.
+        // No tracking on the size itself. This step is used for two different
+        // things — uppercase micro-labels and the explanatory sentence under a
+        // chart — and 0.11em is correct for the first and actively unreadable
+        // for the second. `.label` carries its own tracking, so letter-spacing
+        // now belongs to the *role* rather than to the size, and prose at this
+        // step reads as prose.
+        "2xs": ["10.5px", { lineHeight: "15px" }],
+        xs: ["12px", { lineHeight: "18px" }],
+        sm: ["13px", { lineHeight: "20px" }],
+        base: ["14px", { lineHeight: "22px" }],
+        lg: ["16px", { lineHeight: "24px", letterSpacing: "-0.006em" }],
+        xl: ["19px", { lineHeight: "26px", letterSpacing: "-0.014em" }],
+        "2xl": ["26px", { lineHeight: "32px", letterSpacing: "-0.02em" }],
+        "3xl": ["34px", { lineHeight: "38px", letterSpacing: "-0.025em" }],
+        // The heroes.
+        display: ["58px", { lineHeight: "58px", letterSpacing: "-0.035em" }],
+        "display-lg": ["76px", { lineHeight: "74px", letterSpacing: "-0.04em" }],
       },
       keyframes: {
         shimmer: { "0%": { transform: "translateX(-100%)" }, "100%": { transform: "translateX(300%)" } },
