@@ -64,6 +64,49 @@ export interface Ablation {
   note: string;
 }
 
+export interface BehavioralStrategyResult {
+  n: number;
+  n_positive?: number;
+  auc: number | null;
+  ap: number | null;
+  threshold: number;
+  recall_at_threshold: number;
+  false_positive_rate: number;
+}
+
+export interface BehavioralReport {
+  corpus: {
+    human_aalto_sessions: number;
+    human_cmu_sessions: number;
+    bot_sessions: number;
+    strategies: Record<string, number>;
+    human_source: string;
+    bot_source: string;
+  };
+  shipped_feature_set: string;
+  threshold: number;
+  human_fpr_budget: number;
+  hyperparameters: Record<string, number>;
+  headline: {
+    held_out_auc: number | null;
+    held_out_recall: number;
+    human_false_positive_rate: number;
+    worst_unseen_strategy: string;
+    worst_unseen_strategy_auc: number | null;
+    transfer_false_positive_rate: number | null;
+  };
+  ablation: Record<string, {
+    n_features: number;
+    threshold: number;
+    held_out_subject_disjoint: any;
+    leave_one_strategy_out: Record<string, BehavioralStrategyResult>;
+    transfer_to_unseen_population: any;
+  }>;
+  feature_importance: { feature: string; gain: number }[];
+  sweep: { ran: boolean; configurations?: number; objective?: string; top?: any[] };
+  note: string;
+}
+
 export interface FaceMatchResult {
   similarity: number | null;
   match: boolean | null;
@@ -213,6 +256,10 @@ export const api = {
   metrics: () => request<any>("/metrics"),
 
   ablation: () => request<Ablation>("/metrics/ablation"),
+
+  /** Detector 6's evaluation report. 404s until the corpus has been built and
+   *  the model fitted — the page reports that absence rather than drawing zeros. */
+  behavioralMetrics: () => request<BehavioralReport>("/metrics/behavioral"),
 
   costCurve: (p: Record<string, number>) => {
     const qs = new URLSearchParams(Object.entries(p).map(([k, v]) => [k, String(v)]));

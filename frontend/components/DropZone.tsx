@@ -65,9 +65,10 @@ export function DropZone({
         "group relative cursor-pointer overflow-hidden rounded-lg transition-colors duration-150",
         "focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent",
         file
-          ? "border border-edge bg-ink-900"
-          : "border border-dashed bg-ink-900/60 " +
-              (over ? "border-accent bg-accent/[0.07]" : "border-edge hover:border-edge-strong hover:bg-ink-850"),
+          ? "bg-ink-900"
+          : over
+          ? "bg-accent/[0.07] ring-1 ring-inset ring-accent/50"
+          : "bg-ink-900/70 hover:bg-ink-850",
         className
       )}
     >

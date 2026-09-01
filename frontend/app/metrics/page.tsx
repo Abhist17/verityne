@@ -6,25 +6,23 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import clsx from "clsx";
-import { api, fmtInr, fmtPct, type Ablation } from "@/lib/api";
+import { api, fmtInr, fmtPct, type Ablation, type BehavioralReport } from "@/lib/api";
 import { Empty, ErrorBox, PageHeader, Spinner, StatTile } from "@/components/ui";
 
 // Charts read the same palette the rest of the app does. The per-detector
 // series are deliberately dimmer and thinner than fusion: the point of the ROC
 // panel is whether fusion dominates them, so fusion has to be the figure and
 // they have to be the ground.
-const ACCENT = "#6d8cff";
-const PASS = "#3ddc97";
-const REVIEW = "#e8b04b";
-const REJECT = "#f4626f";
-const SERIES_COLORS = [ACCENT, PASS, REVIEW, "#b48ce8", "#e88ca4"];
-const AXIS = { stroke: "#4b5565", fontSize: 10 };
-const GRID = "#1a202a";
+import { ACCENT, AXIS_STROKE, GRID_STROKE, INK, EDGE_STRONG, PASS, REJECT, REVIEW, SERIES } from "@/lib/palette";
+
+const SERIES_COLORS = SERIES;
+const AXIS = { stroke: AXIS_STROKE, fontSize: 10 };
+const GRID = GRID_STROKE;
 
 const tooltipStyle = {
   contentStyle: {
-    background: "#0c0e13",
-    border: "1px solid #2b3342",
+    background: INK[900],
+    border: `1px solid ${EDGE_STRONG}`,
     borderRadius: 6,
     fontSize: 11,
     boxShadow: "0 8px 24px rgb(0 0 0 / 0.5)",
@@ -45,10 +43,103 @@ function Section({ title, hint, children }: { title: string; hint?: React.ReactN
   );
 }
 
+/**
+ * Detector 6, measured.
+ *
+ * The layout puts the weakest number in the largest type. Every other panel on
+ * this page leads with what works; this one leads with the strategy that beats
+ * the model, because a reviewer who finds that on slide twelve stops believing
+ * slides one through eleven.
+ */
+function BehavioralSection({ r }: { r: BehavioralReport }) {
+  const shipped = r.ablation[r.shipped_feature_set];
+  const strategies = Object.entries(shipped?.leave_one_strategy_out ?? {});
+  const worstAuc = r.headline.worst_unseen_strategy_auc;
+
+  return (
+    <Section
+      title="Detector 6 — keystroke rhythm, measured on real data"
+      hint={
+        <>
+          Genuine sessions from {r.corpus.human_aalto_sessions.toLocaleString()} Aalto and{" "}
+          {r.corpus.human_cmu_sessions.toLocaleString()} CMU typing sessions; automated sessions from{" "}
+          {r.corpus.bot_sessions.toLocaleString()} runs of a real headless Chromium, captured by the
+          collector this app ships. Neither half was written to look like what we expected.
+        </>
+      }
+    >
+      <div className="grid gap-4 wide:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-3">
+            <StatTile label="Held-out AUC" value={r.headline.held_out_auc?.toFixed(3) ?? "—"} />
+            <StatTile label="Recall" value={fmtPct(r.headline.held_out_recall, 0)} />
+            <StatTile label="Human FPR" value={fmtPct(r.headline.human_false_positive_rate, 1)} />
+          </div>
+          <p className="text-2xs leading-relaxed text-slate-500">
+            Subject-disjoint: no participant appears in both train and test. Keystroke dynamics
+            identifies people, so a row-wise split would measure that instead. The threshold
+            ({shipped?.threshold.toFixed(3)}) is read off held-out humans for a{" "}
+            {fmtPct(r.human_fpr_budget, 0)} false-positive budget, not assumed at 0.5.
+          </p>
+          {r.sweep?.ran && (
+            <p className="text-2xs leading-relaxed text-slate-500">
+              {r.sweep.configurations} configurations searched, ranked by transfer to an unseen
+              human population rather than by held-out AUC — every configuration reaches 1.000 there,
+              so ranking on it would have picked one at random and called it tuned.
+            </p>
+          )}
+        </div>
+
+        <div>
+          <div className="label mb-2">Against automation it has never seen</div>
+          <div className="space-y-1">
+            {strategies.map(([name, v]) => {
+              const beaten = (v.auc ?? 1) < 0.65;
+              return (
+                <div key={name} className="flex items-center gap-3 border-t border-edge/60 py-1.5">
+                  <span className="num min-w-0 flex-1 truncate text-xs text-slate-400">{name}</span>
+                  <span className="num w-24 text-right text-xs text-slate-500">
+                    recall {fmtPct(v.recall_at_threshold, 0)}
+                  </span>
+                  <span
+                    className={clsx("num w-14 text-right text-xs", beaten ? "text-reject" : "text-slate-300")}
+                  >
+                    {v.auc?.toFixed(3) ?? "—"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-2xs leading-relaxed text-slate-500">
+            Each row trains without that strategy and tests on it. This is the number that describes
+            deployment: the kit in production next month is not in this corpus.
+          </p>
+        </div>
+      </div>
+
+      {worstAuc !== null && worstAuc < 0.65 && (
+        <div className="mt-4 border-t border-edge pt-3.5">
+          <div className="label text-reject">The attack that defeats it</div>
+          <p className="mt-1.5 max-w-[78ch] text-xs leading-relaxed text-slate-400">
+            <span className="num text-slate-200">{r.headline.worst_unseen_strategy}</span> replays a
+            real person&apos;s dwell and flight timings through the devtools protocol, rollover
+            included, and scores{" "}
+            <span className="num text-reject">{worstAuc.toFixed(3)}</span> — chance. It is not a bug
+            in the model: the rhythm genuinely is human, so no rhythm model can separate it. What
+            still catches it is that a replayed recording is a <em>reused</em> one, which is a
+            linkage problem rather than a timing one.
+          </p>
+        </div>
+      )}
+    </Section>
+  );
+}
+
 export default function MetricsPage() {
   const [data, setData] = useState<any>(null);
   const [cost, setCost] = useState<any>(null);
   const [ablation, setAblation] = useState<Ablation | null>(null);
+  const [behav, setBehav] = useState<BehavioralReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [costError, setCostError] = useState<string | null>(null);
 
@@ -58,6 +149,9 @@ export default function MetricsPage() {
   const [baseRate, setBaseRate] = useState(0.03);
 
   useEffect(() => { api.metrics().then(setData).catch((e) => setError(e.message)); }, []);
+  // Absent until the corpus is built and the model fitted; the section simply
+  // does not render rather than showing a measurement nobody made.
+  useEffect(() => { api.behavioralMetrics().then(setBehav).catch(() => setBehav(null)); }, []);
   useEffect(() => { api.ablation().then(setAblation).catch(() => setAblation(null)); }, []);
 
   useEffect(() => {
@@ -493,6 +587,8 @@ export default function MetricsPage() {
           )}
         </Section>
       </div>
+
+      {behav && <BehavioralSection r={behav} />}
 
       <Section title="Known limitations" hint="Stated up front, because a reviewer will find them anyway.">
         <ul className="space-y-2">

@@ -3,146 +3,131 @@
 import clsx from "clsx";
 import type { Verdict } from "@/lib/api";
 
-/** Every page opens the same way: title, one line of what you are looking at,
- *  and its controls pinned right. Defined once so the pages cannot drift. */
+/** Title, optional controls, nothing else. The explanatory paragraph that used
+ *  to live here is gone on purpose: it was the same three lines on every page
+ *  and it pushed the actual content below the fold. */
 export function PageHeader({
   title,
-  children,
   actions,
+  children,
 }: {
   title: string;
-  children?: React.ReactNode;
   actions?: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   return (
-    <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 pb-1">
-      {/* The basis is what makes this wrap instead of overflow: with `min-w-0`
-          alone the title shrinks toward nothing and keeps the actions on the
-          same line until they run off the right edge. Claiming a real minimum
-          width forces the actions onto their own row first. */}
-      <div className="min-w-0 flex-1 basis-[min(100%,26rem)]">
-        <h1 className="text-xl font-semibold text-slate-100">{title}</h1>
-        {children && <p className="prose-note mt-1 max-w-[68ch]">{children}</p>}
+    <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3">
+      <div className="min-w-0 flex-1 basis-[min(100%,20rem)]">
+        <h1 className="text-xl font-medium tracking-tight text-slate-100">{title}</h1>
+        {children && <p className="mt-1 max-w-[62ch] text-sm text-slate-500">{children}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
   );
 }
 
-const VERDICT_TONE: Record<Verdict, string> = {
-  PASS: "bg-pass/10 text-pass ring-pass/30",
-  REVIEW: "bg-review/10 text-review ring-review/30",
-  REJECT: "bg-reject/10 text-reject ring-reject/30",
+/** Section heading: a tiny label over a fading hairline. This is what replaced
+ *  the card border — it opens a section without boxing it. */
+export function SectionLabel({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
+  return (
+    <div className="mb-3 flex items-baseline gap-3">
+      <span className="label shrink-0">{children}</span>
+      <span className="rule-soft min-w-0 flex-1" />
+      {right && <span className="shrink-0 text-2xs text-slate-600">{right}</span>}
+    </div>
+  );
+}
+
+const VERDICT_TEXT: Record<Verdict, string> = {
+  PASS: "text-pass",
+  REVIEW: "text-review",
+  REJECT: "text-reject",
 };
 
+/** No pill, no ring — just the word, in its colour, at weight. At this size the
+ *  word is the badge; a chip around it only added a rectangle to the page. */
 export function VerdictBadge({ verdict, size = "md" }: { verdict: Verdict; size?: "sm" | "md" | "lg" }) {
   const sizing =
-    size === "lg" ? "px-2.5 py-1 text-sm" : size === "sm" ? "px-1.5 py-0.5 text-2xs" : "px-2 py-0.5 text-xs";
+    size === "lg"
+      ? "text-2xl tracking-[-0.01em]"
+      : size === "sm"
+      ? "text-2xs tracking-[0.14em]"
+      : "text-xs tracking-[0.12em]";
   return (
-    <span className={clsx("chip font-semibold uppercase tracking-wider ring-1", VERDICT_TONE[verdict], sizing)}>
-      {verdict}
-    </span>
+    <span className={clsx("font-medium uppercase", VERDICT_TEXT[verdict], sizing)}>{verdict}</span>
   );
 }
 
 export const scoreTone = (score: number, reviewAt = 0.4, rejectAt = 0.75) =>
   score >= rejectAt ? "reject" : score >= reviewAt ? "review" : "pass";
 
-const HEX = { pass: "#3ddc97", review: "#e8b04b", reject: "#f4626f" } as const;
+import { PASS, REJECT, REVIEW } from "@/lib/palette";
+
+const HEX = { pass: PASS, review: REVIEW, reject: REJECT } as const;
 
 /**
- * Risk gauge. A three-quarter arc, with the merchant's two policy thresholds cut
- * into the track as gaps rather than drawn on top of it.
+ * The risk readout: an oversized numeral, the verdict beside it, and one full
+ * width meter with the policy bands named underneath.
  *
- * The gaps matter: the number alone does not say whether 0.61 is a comfortable
- * pass or one point below a rejection, and that depends entirely on a policy
- * that differs per merchant. Cutting the track shows the bands the score is
- * being read against, so the same dial stays honest under a strict policy and a
- * lenient one without any legend.
+ * This replaced a radial dial. The dial looked like a gauge and read like an
+ * ornament: an arc cannot show you *where the thresholds are* without a legend,
+ * and the thresholds are the entire reason a 0.61 means something. A straight
+ * line can — the bands are laid out along it, labelled, in the merchant's own
+ * policy positions, so a strict policy and a lenient one visibly differ.
  */
-export function ScoreDial({
+export function ScoreMeter({
   score,
   verdict,
   reviewAt = 0.4,
   rejectAt = 0.75,
-  size = 150,
 }: {
   score: number;
   verdict: Verdict;
   reviewAt?: number;
   rejectAt?: number;
-  size?: number;
 }) {
-  const stroke = 8;
-  const r = size / 2 - stroke - 8;
-  const c = size / 2;
-  const SWEEP = 270; // degrees of live track
-  const circ = 2 * Math.PI * r;
+  const pct = Math.min(100, Math.max(0, score * 100));
   const color = HEX[verdict === "PASS" ? "pass" : verdict === "REVIEW" ? "review" : "reject"];
-  const clamped = Math.min(1, Math.max(0, score));
-
-  // Track split into three band segments with a 2.5deg gap at each threshold.
-  const GAP = 2.5;
-  const bands = [
-    { from: 0, to: reviewAt, tone: HEX.pass },
-    { from: reviewAt, to: rejectAt, tone: HEX.review },
-    { from: rejectAt, to: 1, tone: HEX.reject },
-  ];
-
-  const seg = (from: number, to: number) => {
-    const a0 = from * SWEEP + (from > 0 ? GAP / 2 : 0);
-    const a1 = to * SWEEP - (to < 1 ? GAP / 2 : 0);
-    const len = Math.max(0, ((a1 - a0) / 360) * circ);
-    return { offset: (a0 / 360) * circ, len };
-  };
 
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      role="img"
-      aria-label={`Risk score ${score.toFixed(2)}, verdict ${verdict}`}
-      className="shrink-0"
-    >
-      <g transform={`rotate(135 ${c} ${c})`} fill="none" strokeLinecap="butt">
-        {bands.map((b) => {
-          const { offset, len } = seg(b.from, b.to);
-          return (
-            <circle
-              key={b.from}
-              cx={c}
-              cy={c}
-              r={r}
-              stroke={b.tone}
-              strokeOpacity={0.16}
-              strokeWidth={stroke}
-              strokeDasharray={`${len} ${circ}`}
-              strokeDashoffset={-offset}
-            />
-          );
-        })}
-        <circle
-          cx={c}
-          cy={c}
-          r={r}
-          stroke={color}
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={`${(clamped * SWEEP * circ) / 360} ${circ}`}
-          style={{ transition: "stroke-dasharray 650ms cubic-bezier(.2,.8,.2,1), stroke 250ms" }}
+    <div>
+      <div className="label">Risk</div>
+      <div className="mt-2 flex flex-wrap items-baseline gap-x-6 gap-y-1">
+        <span className="hero" style={{ color }}>
+          {score.toFixed(2)}
+        </span>
+        <VerdictBadge verdict={verdict} size="lg" />
+      </div>
+
+      <div className="relative mt-5 h-[3px] w-full rounded-full bg-ink-800">
+        <div
+          className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
+          style={{ width: `${pct}%`, background: color }}
         />
-      </g>
-      <text x={c} y={c + 2} textAnchor="middle" fill="#f1f5f9" className="font-mono text-[26px] font-medium">
-        {score.toFixed(2)}
-      </text>
-      <text x={c} y={c + 19} textAnchor="middle" fill="#64748b" className="text-[9px] uppercase tracking-[0.18em]">
-        risk
-      </text>
-    </svg>
+        {[reviewAt, rejectAt].map((t) => (
+          <span
+            key={t}
+            className="absolute -top-1 h-[11px] w-px bg-ink-600"
+            style={{ left: `${t * 100}%` }}
+            aria-hidden
+          />
+        ))}
+      </div>
+      {/* Band names sit at their own thresholds, so the scale is self-describing. */}
+      <div className="relative mt-2 h-4 text-2xs text-slate-600">
+        <span className="absolute left-0">pass</span>
+        <span className="absolute" style={{ left: `${reviewAt * 100}%` }}>
+          review {reviewAt}
+        </span>
+        <span className="absolute" style={{ left: `${rejectAt * 100}%` }}>
+          reject {rejectAt}
+        </span>
+      </div>
+    </div>
   );
 }
 
+/** A number and its name. No border, no background — the scale does the work. */
 export function StatTile({
   label,
   value,
@@ -155,18 +140,24 @@ export function StatTile({
   tone?: "default" | "pass" | "review" | "reject";
 }) {
   const toneCls =
-    tone === "pass" ? "text-pass" : tone === "review" ? "text-review" : tone === "reject" ? "text-reject" : "text-slate-100";
+    tone === "pass"
+      ? "text-pass"
+      : tone === "review"
+      ? "text-review"
+      : tone === "reject"
+      ? "text-reject"
+      : "text-slate-100";
   return (
-    <div className="card-pad">
+    <div>
       <div className="label">{label}</div>
       <div className={clsx("stat mt-2", toneCls)}>{value}</div>
-      {sub && <div className="mt-1.5 text-xs leading-relaxed text-slate-500">{sub}</div>}
+      {sub && <div className="mt-1.5 text-xs leading-snug text-slate-600">{sub}</div>}
     </div>
   );
 }
 
-/** Horizontal 0..1 meter. Thresholds are notches cut through the bar, for the
- *  same reason the dial cuts its track: a score means nothing without them. */
+/** Hairline meter for a list row. Thin on purpose: at this weight a column of
+ *  them reads as a distribution rather than as a stack of progress bars. */
 export function ScoreBar({
   score,
   status,
@@ -183,16 +174,17 @@ export function ScoreBar({
   const tone = scoreTone(score, reviewAt, rejectAt);
   const fill = tone === "reject" ? "bg-reject" : tone === "review" ? "bg-review" : "bg-pass";
   return (
-    <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-ink-750">
+    <div className="relative h-px w-full bg-ink-750">
       <div
-        className={clsx("h-full rounded-full transition-all duration-700", fill, dim && "opacity-30")}
+        className={clsx("absolute inset-y-0 left-0 transition-all duration-700", fill, dim && "opacity-25")}
         style={{ width: `${Math.min(100, Math.max(0, score * 100))}%` }}
       />
       {[reviewAt, rejectAt].map((t) => (
         <span
           key={t}
-          className="pointer-events-none absolute inset-y-0 w-0.5 bg-ink-950"
+          className="absolute -top-[3px] h-[7px] w-px bg-ink-700"
           style={{ left: `${t * 100}%` }}
+          aria-hidden
         />
       ))}
     </div>
@@ -201,10 +193,10 @@ export function ScoreBar({
 
 export function Empty({ title, hint, icon }: { title: string; hint?: React.ReactNode; icon?: React.ReactNode }) {
   return (
-    <div className="card flex flex-col items-center justify-center gap-2 px-6 py-14 text-center">
-      {icon && <div className="mb-1 text-slate-700">{icon}</div>}
-      <div className="text-sm font-medium text-slate-300">{title}</div>
-      {hint && <div className="max-w-[52ch] text-xs leading-relaxed text-slate-500">{hint}</div>}
+    <div className="flex flex-col items-center justify-center gap-2 px-6 py-20 text-center">
+      {icon && <div className="mb-1 text-ink-600">{icon}</div>}
+      <div className="text-sm text-slate-400">{title}</div>
+      {hint && <div className="max-w-[46ch] text-xs leading-relaxed text-slate-600">{hint}</div>}
     </div>
   );
 }
@@ -212,7 +204,7 @@ export function Empty({ title, hint, icon }: { title: string; hint?: React.React
 export function Spinner({ label }: { label?: string }) {
   return (
     <span className="inline-flex items-center gap-2 text-sm">
-      <span className="h-3 w-3 shrink-0 animate-spin rounded-full border-[1.5px] border-current/25 border-t-current" />
+      <span className="h-3 w-3 shrink-0 animate-spin rounded-full border-[1.5px] border-current/20 border-t-current" />
       {label}
     </span>
   );
@@ -220,9 +212,9 @@ export function Spinner({ label }: { label?: string }) {
 
 export function ErrorBox({ error }: { error: string }) {
   return (
-    <div className="card border-reject/40 bg-reject/[0.04] p-3.5">
-      <div className="text-sm font-medium text-reject">Something went wrong</div>
-      <div className="num mt-1 break-words text-xs text-reject/70">{error}</div>
+    <div className="border-l-2 border-reject/60 pl-3">
+      <div className="text-sm text-reject">Something went wrong</div>
+      <div className="num mt-1 break-words text-xs text-reject/60">{error}</div>
     </div>
   );
 }

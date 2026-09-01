@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body className="min-h-screen">
         <Nav />
-        <main className="mx-auto w-full max-w-[1440px] px-5 pb-20 pt-5">{children}</main>
+        <main className="mx-auto w-full max-w-[1180px] px-6 pb-32 pt-8">{children}</main>
       </body>
     </html>
   );

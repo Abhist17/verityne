@@ -8,87 +8,87 @@
 
 body {
   @apply bg-ink-950 text-slate-300 antialiased;
-  /* One very soft cool wash from the top-left, and nothing else. The previous
-     pair of coloured radial gradients competed with the verdict colours, which
-     are the only things on the page that are supposed to be coloured. */
-  background-image: radial-gradient(1200px 600px at 15% -20%, rgba(109, 140, 255, 0.055), transparent 70%);
-  background-attachment: fixed;
 }
 
 @layer components {
-  /* --- surfaces ----------------------------------------------------------- */
-  /* The top inset highlight is what separates a card from the page without
-     spending a border on it: one hairline of light where a raised surface would
-     catch it. It is why these read as panels rather than as outlined boxes. */
-  .card {
+  /* --- structure -----------------------------------------------------------
+     There is no card. Sections are separated by space, and by a hairline only
+     where a boundary carries meaning. Boxing every group was what made the old
+     dashboard read as dense rather than considered. */
+  .rule {
+    @apply border-t border-edge;
+  }
+  /* A hairline that fades out at both ends — a rule that stops shouting at the
+     margins. Used to open a section without drawing a full-width line. */
+  .rule-soft {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, theme("colors.edge.DEFAULT") 12%, theme("colors.edge.DEFAULT") 88%, transparent);
+  }
+  /* The rare genuinely-raised surface: tooltips, the graph canvas, a popover. */
+  .surface {
     @apply rounded-lg border border-edge bg-ink-900;
-    box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.03);
-  }
-  .card-pad {
-    @apply card p-4;
-  }
-  .card-hover {
-    @apply transition-colors duration-150 hover:border-edge-strong hover:bg-ink-850;
   }
 
-  /* --- type --------------------------------------------------------------- */
+  /* --- type ---------------------------------------------------------------- */
   .label {
-    @apply text-2xs font-medium uppercase tracking-[0.14em] text-slate-500;
+    @apply text-2xs font-medium uppercase tracking-[0.14em] text-slate-600;
   }
-  .stat {
-    @apply font-mono text-2xl font-medium tabular-nums text-slate-100;
+  /* The hero numeral. Light weight at large size reads as precision rather than
+     as shouting — a bold 58px number looks like an advert, not an instrument. */
+  .hero {
+    @apply font-mono text-display font-light tabular-nums text-slate-100;
   }
   .num {
     @apply font-mono tabular-nums;
   }
-  .prose-note {
-    @apply text-sm leading-relaxed text-slate-400;
+  .stat {
+    @apply font-mono text-3xl font-light tabular-nums text-slate-100;
   }
 
-  /* --- controls ----------------------------------------------------------- */
+  /* --- controls ------------------------------------------------------------
+     Quiet at rest, legible on hover. Nothing has a resting border except the
+     things you must be able to find without hunting. */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md border border-edge bg-ink-800
-           px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors duration-150
-           hover:border-edge-strong hover:bg-ink-750 hover:text-slate-100
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm
+           font-medium text-slate-400 transition-colors duration-150
+           hover:bg-ink-800 hover:text-slate-100
            focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent
-           disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ink-800;
+           disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent;
   }
   .btn-primary {
-    @apply btn border-accent/40 bg-accent/10 text-accent
-           hover:border-accent/70 hover:bg-accent/20 hover:text-accent;
+    @apply btn bg-ink-800 text-slate-100 hover:bg-ink-700;
   }
-  .btn-ghost {
-    @apply btn border-transparent bg-transparent text-slate-400 hover:bg-ink-800;
+  .btn-accent {
+    @apply btn text-accent hover:bg-accent/10 hover:text-accent;
   }
   .input {
-    @apply w-full rounded-md border border-edge bg-ink-900 px-3 py-1.5 text-sm text-slate-200
-           placeholder:text-slate-600 focus:border-accent/50 focus:outline-none;
+    @apply w-full rounded-md border-0 bg-ink-900 px-3 py-2 text-sm text-slate-200
+           ring-1 ring-inset ring-edge placeholder:text-slate-600
+           focus:outline-none focus:ring-1 focus:ring-accent/60;
   }
-
-  /* --- fragments ---------------------------------------------------------- */
-  .chip {
-    @apply inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-xs font-medium;
-  }
-  /* A segmented control: one bordered track, borderless children. */
   .segment {
-    @apply inline-flex rounded-md border border-edge bg-ink-900 p-0.5;
+    @apply inline-flex gap-0.5 rounded-md bg-ink-900 p-0.5;
   }
   .segment > button {
-    @apply rounded-[5px] px-2.5 py-1 text-xs text-slate-400 transition-colors duration-150 hover:text-slate-200;
+    @apply rounded px-2.5 py-1 text-xs text-slate-500 transition-colors duration-150 hover:text-slate-300;
   }
   .segment > button[data-active="true"] {
     @apply bg-ink-750 text-slate-100;
   }
-  .hairline {
-    @apply border-t border-edge;
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-xs font-medium;
   }
   .scroll-x {
     @apply overflow-x-auto;
     scrollbar-width: thin;
   }
+  /* A row in a borderless list: separated by a hairline, lit on hover. */
+  .row {
+    @apply flex items-center gap-4 border-t border-edge/60 py-2.5 transition-colors duration-150;
+  }
 }
 
-/* Numeric columns should not jitter as digits change. */
 table {
   font-variant-numeric: tabular-nums;
 }
@@ -101,8 +101,8 @@ table {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #232935;
-  border: 3px solid #08090c;
+  background: #1c212b;
+  border: 3px solid #0a0a0c;
   border-radius: 6px;
 }
 ::-webkit-scrollbar-thumb:hover {
