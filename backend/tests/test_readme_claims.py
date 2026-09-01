@@ -75,6 +75,12 @@ CLAIMS = [
     ("demography: shortcut AUC of the pretrained CNN, controlled",
      r"\| — the pretrained CNN alone \| [\d.]+ \| \*\*([\d.]+)\*\* \|",
      "indian_faces.json", "face.shortcut_auc.cnn_p_fake"),
+    ("detector 6: held-out AUC",
+     r"\| Held-out ROC-AUC, subject-disjoint \| \*\*([\d.]+)\*\* \|",
+     "behavioral.json", "headline.held_out_auc"),
+    ("detector 6: the strategy that defeats it",
+     r"\| Worst unseen strategy \| \*\*`\w+` at ([\d.]+)\*\* \|",
+     "behavioral.json", "headline.worst_unseen_strategy_auc"),
 ]
 
 
@@ -227,3 +233,91 @@ def test_the_demographic_shortcut_table_matches_its_evidence():
         frame, face = float(m.group(1)), float(m.group(2))
         assert frame == pytest.approx(d["frame"]["shortcut_auc"][key], abs=0.0006)
         assert face == pytest.approx(d["face"]["shortcut_auc"][key], abs=0.0006)
+
+
+def behavioral_section() -> str:
+    """Just the Detector 6 section.
+
+    Scoping matters: the per-strategy table and the per-attack-type table
+    elsewhere in this README have the same column shape and both use backticked
+    row labels, so a document-wide regex matches rows from the wrong table and
+    reports a mismatch that is really a search bug.
+    """
+    start = README.index("### Detector 6, measured")
+    end = README.index("## Fusion and policy", start)
+    return README[start:end]
+
+
+def test_the_behavioral_corpus_sizes_match():
+    """Both halves of Detector 6's corpus, as the README describes them."""
+    d = load("behavioral.json")
+    c = d["corpus"]
+    for pattern, key in (
+        (r"\*\*The genuine half\*\* is ([\d,]+) typing sessions", "human_aalto_sessions"),
+        (r"plus ([\d,]+) sessions from the\n?CMU", "human_cmu_sessions"),
+        (r"automated half\*\* is\n?([\d,]+) runs of a real headless Chromium", "bot_sessions"),
+    ):
+        m = re.search(pattern, README)
+        assert m, f"README no longer states the corpus size for {key}"
+        assert int(m.group(1).replace(",", "")) == c[key], (
+            f"README says {m.group(1)} for {key}; behavioral.json says {c[key]}"
+        )
+
+
+def test_the_feature_set_ablation_matches():
+    """Both rows of the core / core+context table.
+
+    That table is the entire argument for which features ship: identical held-out
+    AUC, very different false-positive rates on a population never fitted on. If
+    a refit moves either transfer number the argument changes, so the README may
+    not keep claiming the old one.
+    """
+    d = load("behavioral.json")
+    rows = re.findall(
+        r"^\| \**`?(core\+context|core)`?\**[^|]*\| (\d+) \| ([\d.]+) \| \**([\d.]+)%\**",
+        behavioral_section(), re.M,
+    )
+    assert rows, "README no longer states the feature-set ablation table"
+    for name, n_features, auc, transfer in rows:
+        a = d["ablation"][name]
+        assert int(n_features) == a["n_features"]
+        assert float(auc) == pytest.approx(
+            a["held_out_subject_disjoint"]["xgboost"]["auc"], abs=0.0006)
+        assert float(transfer) == pytest.approx(
+            100 * a["transfer_to_unseen_population"]["false_positive_rate"], abs=0.06)
+
+
+def test_the_unseen_strategy_table_matches():
+    """Every row of the leave-one-strategy-out table."""
+    d = load("behavioral.json")
+    los = d["ablation"][d["shipped_feature_set"]]["leave_one_strategy_out"]
+    rows = re.findall(r"^\| `(\w+)` \| ([\d.]+) \| (\d+)% \| ([\d.]+)% \|",
+                      behavioral_section(), re.M)
+    assert rows, "README no longer states the per-strategy table"
+    assert {r[0] for r in rows} == set(los), (
+        f"README lists strategies {sorted(r[0] for r in rows)}; "
+        f"behavioral.json has {sorted(los)}"
+    )
+    for name, auc, recall, fpr in rows:
+        v = los[name]
+        assert float(auc) == pytest.approx(v["auc"], abs=0.0006)
+        assert float(recall) == pytest.approx(100 * v["recall_at_threshold"], abs=0.6)
+        assert float(fpr) == pytest.approx(100 * v["false_positive_rate"], abs=0.06)
+
+
+def test_the_replay_attack_is_still_reported_as_beating_the_model():
+    """The most important sentence in that section is the one admitting a hole.
+
+    If a refit ever does separate `replay_human`, this test failing is the signal
+    to rewrite the section rather than quietly keep a claim that flatters us in
+    the wrong direction.
+    """
+    d = load("behavioral.json")
+    auc = d["headline"]["worst_unseen_strategy_auc"]
+    assert d["headline"]["worst_unseen_strategy"] == "replay_human", (
+        "a different strategy is now the worst; the README names replay_human"
+    )
+    assert auc is not None and auc < 0.65, (
+        f"replay_human now scores {auc}; the README says it is at chance"
+    )
+    assert "chance" in README[README.index("#### The attack that beats it"):][:900]

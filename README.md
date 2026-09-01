@@ -12,7 +12,9 @@ explanation behind every verdict — built on the assumption that the attacker h
 Stable Diffusion and DeepFaceLab on their laptop.
 
 Five of them inspect what the applicant uploaded. The sixth inspects how they
-filled the form, which is the one input a fraud kit cannot buy.
+filled the form, which is the one input a fraud kit cannot buy — fitted on
+168,595 real people's keystrokes against real browser automation, and honest
+about the one attack that beats it.
 
 ```
 POST /verify  →  { verdict, risk score, top 3 reasons, heatmaps, per-detector breakdown }
@@ -35,6 +37,7 @@ that were printed, photographed and scanned** — see
 - [Quick start](#quick-start)
 - [Architecture](#architecture)
 - [The six detectors](#the-six-detectors)
+- [Detector 6, measured](#detector-6-measured)
 - [Fusion and policy](#fusion-and-policy)
 - [Results](#results)
 - [Measured on real data](#measured-on-real-data)
@@ -266,7 +269,7 @@ over CPU-bound work would have bought nothing.
 | 3 | **ID forensics** | OCR with positional confusion repair, then *structural* validation — a PAN's 4th character is a holder-type code and its 5th is the surname initial; Aadhaar carries a Verhoeff check digit. Plus edge-normalised Error Level Analysis, and the printed portrait run through the deepfake classifier. **The ELA component is measured at chance on real captured documents** — see [Measured on real data](#measured-on-real-data); the structural checks are deterministic and unaffected. |
 | 4 | **Face match** | 512-d FaceNet embeddings, selfie vs the portrait on the card. Flagged in both directions: too low is impersonation, too high means the "selfie" is a copy of the ID photo. The lower bound is **fitted on LFW's 6,000 real pairs** (`eval/face_match_lfw.json`, 98.2% accuracy); the upper bound still comes from the corpus, because LFW contains no documents. |
 | 5 | **Metadata / EXIF** | Deterministic provenance: generator tags, editor software, capture-to-submission age, device/resolution consistency, screen re-capture, and an upscale check that asks whether the file carries the detail its resolution claims. |
-| 6 | **Behavioral biometrics** | Not an artifact at all — *how the form was filled*. Keystroke dwell and flight timing and their variance, pointer path straightness, tremor and sampling regularity, paste events into identity fields, field-revisit order, time on form, and device/locale coherence. **No held-out number is claimed for it** — see [Detector 6 has no evaluation number, and why](#detector-6-has-no-evaluation-number-and-why). |
+| 6 | **Behavioral biometrics** | Not an artifact at all — *how the form was filled*. Keystroke dwell and flight timing and their distribution shape, key rollover, pointer path straightness and sampling regularity, paste events into identity fields, field-revisit order, time on form, and device/locale coherence. A gradient-boosted model over the keystroke features is fitted on **168,595 real people's typing against real browser automation** — 1.000 held-out AUC, 0.07% of genuine humans flagged, and one attack that defeats it entirely ([§](#detector-6-measured)). |
 
 Beyond the six, two cross-cutting signals: **cross-submission linkage** (one
 face onboarding under several names is a ring, and the embeddings are already
@@ -274,57 +277,119 @@ computed) and **generator fingerprinting** (which model made this fake — free
 labels, because we generated the fakes ourselves; 89.2% train accuracy over
 `stable_diffusion` / `faceswap` / `real`).
 
-### Detector 6 has no evaluation number, and why
+### Detector 6, measured
 
-Every other number in this README is reproducible from a file in `eval/`. This
-detector has none, and printing one would be worse than printing nothing.
+Both halves of this corpus are real, and that is the only reason the numbers
+below are worth printing.
 
-To measure it we would need labelled form-fill telemetry: real Indian merchants
-completing a real KYC form, and real fraud kits completing the same one. We have
-neither. The only way to manufacture a corpus would be to write a generator for
-the human side *and* a generator for the bot side — and then any AUC we reported
-would be measuring whether our bot generator differs from our human generator,
-which we already know, because we wrote both. This repository has published that
-exact mistake twice ([§](#what-the-headline-auc-is-actually-made-of)); doing it a
-third time deliberately, on the detector the pitch leans hardest on, is not a
-trade we are willing to make.
+**The genuine half** is 12,000 typing sessions drawn from the
+Aalto 136M keystroke study — 168,595 people typing in a browser, with press and
+release timestamps per key — plus 2,040 sessions from the
+CMU Killourhy-Maxion benchmark's 51 subjects. **The automated half** is
+3,000 runs of a real headless Chromium, driven through the
+automation APIs a kit actually uses and recorded by the *same collector this app
+ships* (`frontend/lib/telemetry.ts`, compiled, not reimplemented). Nothing here
+was written by us to look like what we expected it to look like.
 
-So three things are true about Detector 6 as shipped, and all three are stated
-rather than buried:
+| | |
+| --- | --- |
+| Held-out ROC-AUC, subject-disjoint | **1.000** |
+| Recall at the operating threshold | **100%** |
+| Genuine humans flagged | **0.07%** |
+| Worst unseen strategy | **`replay_human` at 0.500** |
 
-1. **Its thresholds are priors, not fits.** Every constant lives in one named
-   block at the top of `detectors/behavioral.py` — the ~15 ms floor a finger can
-   physically achieve, the dwell-variance level below which a timer is more
-   likely than a hand, the round-number sleeps a kit pads with. They are set in
-   the direction that costs a false accept rather than a false reject, and
-   re-fitting them on real telemetry is a diff to that block alone.
-2. **It is not in the trained fusion model.** `config.FUSION_TRAINED_NAMES` is
-   deliberately shorter than `DETECTOR_NAMES`. Feeding a logistic regression a
-   feature we could only have synthesised would corrupt the one number in this
-   README that *is* honest. Detector 6 is combined afterwards as an evidence
-   channel — `max()`, with a ceiling — the same way linkage is.
-3. **Statistical evidence from it cannot reject anyone.** Low dwell variance, a
-   straight pointer path and a fast fill all describe some real person having an
-   unusual day: a practised operator on their fourth signup of the morning types
-   fast, does not correct, and moves in straight lines. Those hits are capped one
-   abstention band below the merchant's reject threshold, so they route to a
-   human. Only *categorical* evidence — a flight time below the physical floor,
-   or a browser that sets `navigator.webdriver` about itself — may carry a
-   rejection, because neither has an innocent explanation.
+The split is **subject-disjoint**: no participant appears on both sides. Keystroke
+dynamics is a biometric — people are individually identifiable from it — so a
+row-wise split would have measured whether the model can recognise a person, not
+whether it can recognise automation. The threshold is read off held-out humans
+for a stated 1% false-positive budget, the same way the
+linkage threshold is chosen from a false-link budget, rather than left at 0.5.
 
-What the test suite does hold it to is separation on the two cases we can
-construct honestly, and the asymmetry between them: `test_behavioral.py` asserts
-that no rule fires on any simulated genuine fill, that every simulated kit
-outscores every simulated human, and that the false-positive path lands in review
-rather than rejection. That is a statement about the wiring, not about field
-accuracy, and it is not an AUC.
+648 hyperparameter configurations were searched, ranked **by
+transfer to a human population never fitted on** rather than by held-out AUC.
+Ranking on AUC would have been meaningless: every configuration in the grid
+reaches 1.000 there, so the search would have picked one at random and called it
+tuned. Fitting is seconds of compute — the expensive part of this detector was
+acquiring data neither half of which we wrote.
 
-**The argument for building it anyway** is that it is the only detector here
-whose adversary is not on a release cycle. Detectors 1–5 degrade every time a
-better generator ships. Defeating Detector 6 needs a rig that reproduces human
-motor timing under a form that changes its own field order — not a download. It
-is also the cheapest signal in the system: no model, no GPU, no allocation,
-sub-millisecond.
+#### The first fit was reading our own preprocessing
+
+Its highest-gain feature was `n_keys`, at 0.435 — session length. Human sessions
+are accumulated to a target length and automated ones fill a fixed five-field
+form, so length was an artefact of how the corpus was *chopped*, and the model
+had found it immediately. Two more features were nearly as bad: `backspace_rate`
+(Aalto participants make typos, our automation never does, and the CMU corpus
+contains only clean entries) and `pause_rate` (an artefact of Aalto's
+sentence-by-sentence protocol).
+
+That model scored a held-out AUC of 1.000 and flagged **93% of CMU's
+participants** as bots. Dropping `n_keys` and splitting the rest into features
+grounded in motor physiology versus features describing the task is what the
+`core` / `core+context` ablation measures:
+
+| Feature set | Features | Held-out AUC | False positives on a human population never fitted on |
+| --- | --- | --- | --- |
+| **`core`** — dwell/flight distribution shape, rollover, quantisation | 22 | 1.000 | **38.8%** |
+| `core+context` — plus backspaces, pauses, typing speed | 25 | 1.000 | 81.6% |
+
+Identical held-out AUC; twice the false-positive rate on strangers. `core` ships.
+`n_keys` is in neither set and is not computed into either.
+
+That remaining 39% is
+the honest ceiling on this detector, and it is stated rather than buried: CMU's
+subjects typed one memorised password four hundred times on a lab rig, which is
+about as far from a merchant filling a KYC form on a phone as a human typing
+corpus gets. It is the hardest transfer test available to us and the number is
+not good. An Indian KYC queue is a third population again, and nothing here
+measures it.
+
+#### Generalising to automation it has never seen
+
+Each row trains on every strategy but one and tests on the one held back, because
+the kit in production next month is not in this corpus:
+
+| Unseen strategy | ROC-AUC | Recall | False positives |
+| --- | --- | --- | --- |
+| `replay_human` | 0.500 | 0% | 0.0% |
+| `type_gaussian` | 0.998 | 17% | 0.0% |
+| `cdp_raw` | 1.000 | 100% | 0.0% |
+| `type_fixed` | 1.000 | 100% | 0.0% |
+| `type_jitter` | 1.000 | 100% | 0.0% |
+| `type_no_delay` | 1.000 | 100% | 0.0% |
+
+`type_gaussian` is worth reading twice: it ranks almost perfectly
+(0.998) but only
+17% of its sessions clear the
+threshold. A competent attacker with plausible gaussian delays is *separable* but
+not *separated* at an operating point chosen to protect genuine users — which is
+what a false-positive budget costs, and why it is quoted next to the recall
+rather than in a footnote.
+
+`fill_value` — setting `input.value` directly — is absent from this table because
+it emits **no key events at all**. There is no rhythm to model, so its 500
+sessions are excluded from the keystroke corpus entirely. It is caught by the
+rules instead (an empty keystroke buffer, a straight pointer path, a sub-15s
+fill), which is what the rule layer is still there for.
+
+#### The attack that beats it, which we built ourselves
+
+`replay_human` scores **0.500** — chance. It takes a real
+Aalto session and replays that person's exact dwell and flight timings through
+the devtools protocol, including the key rollover that every other strategy is
+structurally unable to produce, by laying the presses and releases on a timeline
+and dispatching in time order rather than key by key.
+
+This is not a bug to be fixed by a better model. The rhythm genuinely *is* human,
+so no model of rhythm can separate it, and the honest way to report Detector 6 is
+that it raises the cost of automating a KYC form from *free* to *you must first
+record a real human filling one*. Against a fraud kit that has also hidden its
+`navigator.webdriver` flag and randomised its field order, the full detector's
+score on these sessions falls from 0.96 to 0.30.
+
+What still catches it is that a replayed recording is a **reused** one — the same
+timings arriving under many identities — which is the linkage problem this repo
+already solves for faces and files, not a timing problem. That is the roadmap
+item, and it is stated here rather than implied by a number that does not exist.
 
 ---
 
@@ -1311,7 +1376,7 @@ Copy `.env.example` to `.env`. Every value has a working default.
 ## Testing
 
 ```bash
-make test                                  # 182 tests, ~2 s
+make test                                  # 205 tests, ~2 s
 .venv/bin/python -m pytest backend/tests -q -k verhoeff   # one group
 cd frontend && npx tsc --noEmit && npm run build          # dashboard gates
 ```
@@ -1380,7 +1445,7 @@ backend/
     calibrate_linkage_lfw.py  fit the linkage threshold as a search, over every LFW pair
     real_video.py         read FaceForensics++ / Celeb-DF / DFDC, whichever is present
     evaluate_real_video.py score liveness on recorded deepfakes
-  tests/              182 tests over the deterministic surface
+  tests/              205 tests over the deterministic surface
   requirements.txt          resolvable pins
   requirements-nodeps.txt   facenet-pytorch, installed second with --no-deps
 frontend/
