@@ -38,6 +38,38 @@ export function SectionLabel({ children, right }: { children: React.ReactNode; r
   );
 }
 
+/** A section on a dense page: a sentence-case title inline with a fading
+ *  hairline, an optional hint beneath it, and the content in open space.
+ *
+ *  This is SectionLabel's shape at a larger scale, and it is what replaced the
+ *  card on the analysis pages. SectionLabel's uppercase micro-label is right for
+ *  a one-word heading ("Why", "Detectors"); these headings are sentences, and
+ *  0.14em of tracking across forty characters stops being readable. Same rule,
+ *  same rhythm, different type role. */
+export function Section({
+  title,
+  hint,
+  right,
+  children,
+}: {
+  title: React.ReactNode;
+  hint?: React.ReactNode;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <div className="flex items-baseline gap-3">
+        <h2 className="shrink-0 text-sm font-medium text-slate-200">{title}</h2>
+        <span className="rule-soft min-w-0 flex-1" />
+        {right && <span className="shrink-0 text-2xs text-slate-600">{right}</span>}
+      </div>
+      {hint && <p className="mt-1.5 max-w-[74ch] text-2xs leading-relaxed text-slate-500">{hint}</p>}
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+
 const VERDICT_TEXT: Record<Verdict, string> = {
   PASS: "text-pass",
   REVIEW: "text-review",

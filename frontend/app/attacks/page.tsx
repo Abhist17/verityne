@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import clsx from "clsx";
 import { motion } from "framer-motion";
 import { api, fmtPct } from "@/lib/api";
-import { Empty, ErrorBox, PageHeader, Spinner, VerdictBadge } from "@/components/ui";
+import { Empty, ErrorBox, PageHeader, Section, Spinner, VerdictBadge } from "@/components/ui";
 
 const WINDOWS = [
   { hours: 24, label: "24h" },
@@ -42,7 +42,7 @@ export default function AttackGalleryPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-12">
       <PageHeader
         title="Attack Gallery"
         actions={
@@ -67,16 +67,16 @@ export default function AttackGalleryPage() {
       {error && <ErrorBox error={error} />}
 
       {redteam && redteam.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="card-pad border-accent/40">
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="border-l-2 border-accent/60 pl-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <div className="label text-accent">Live red-team result</div>
             <div className="text-xs text-slate-500">
               generated after the model was frozen — never seen in training or evaluation
             </div>
           </div>
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
+          <div className="mt-4 grid gap-x-8 gap-y-5 md:grid-cols-3">
             {redteam.map((r) => (
-              <div key={r.submission_id} className="rounded border border-edge bg-ink-850 p-3">
+              <div key={r.submission_id} className="border-t border-edge/60 pt-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <VerdictBadge verdict={r.verdict} size="sm" />
                   <span className="num text-sm text-slate-200">{r.final_score.toFixed(2)}</span>
@@ -107,36 +107,37 @@ export default function AttackGalleryPage() {
             <span>attack patterns in the last {hours >= 8760 ? "all time" : `${hours}h`}</span>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-14">
             {data.groups.map((g: any) => (
-              <section key={g.pattern} className="card overflow-hidden">
-                <div className="flex flex-wrap items-center gap-4 border-b border-edge bg-ink-850 px-5 py-3">
-                  <div className="flex items-baseline gap-3">
-                    <span className="num text-2xl font-medium text-slate-100">{g.count}</span>
-                    <h2 className="text-sm font-medium text-slate-200">{g.label}</h2>
-                  </div>
-                  <div className="ml-auto flex flex-wrap items-center gap-4 text-xs text-slate-500">
+              <section key={g.pattern}>
+                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                  <span className="num text-2xl font-light text-slate-100">{g.count}</span>
+                  <h2 className="text-sm font-medium text-slate-200">{g.label}</h2>
+                  <span className="rule-soft mx-1 hidden min-w-0 flex-1 sm:block" />
+                  <div className="flex flex-wrap items-baseline gap-4 text-xs text-slate-500">
                     <span>mean risk <span className="num text-slate-300">{g.mean_score.toFixed(2)}</span></span>
                     <span>{g.merchants.length} merchant{g.merchants.length === 1 ? "" : "s"}</span>
                     {Object.keys(g.generators ?? {}).length > 0 && (
-                      <span className="chip bg-ink-800 text-slate-400 ring-1 ring-edge">
+                      <span className="num text-2xs text-slate-600">
                         {Object.entries(g.generators).map(([k, v]: any) => `${k} ×${v}`).join(" · ")}
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="grid gap-3 p-4 sm:grid-cols-2 wide:grid-cols-3 xl:grid-cols-4">
+                {/* The thumbnail is the evidence, so it keeps its frame — this is
+                    the image itself, not a box drawn around a group of text. */}
+                <div className="mt-4 grid gap-x-5 gap-y-6 sm:grid-cols-2 wide:grid-cols-3 xl:grid-cols-4">
                   {g.samples.map((s: any) => (
-                    <div key={s.submission_id} className="group overflow-hidden rounded border border-edge bg-ink-850">
+                    <div key={s.submission_id} className="group">
                       {s.thumb_url ? (
-                        <img src={s.thumb_url} alt="" className="h-32 w-full object-cover" />
+                        <img src={s.thumb_url} alt="" className="h-32 w-full rounded object-cover" />
                       ) : (
-                        <div className="flex h-32 items-center justify-center bg-ink-900 text-xs text-slate-600">
+                        <div className="flex h-32 items-center justify-center rounded bg-ink-900 text-xs text-slate-600">
                           no preview
                         </div>
                       )}
-                      <div className="space-y-1.5 p-2.5">
+                      <div className="mt-2 space-y-1.5">
                         <div className="flex items-center justify-between gap-2">
                           <VerdictBadge verdict={s.verdict} size="sm" />
                           <span className="num text-xs text-slate-300">{s.score.toFixed(2)}</span>

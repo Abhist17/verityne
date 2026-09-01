@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import { api, fmtPct, type ThreatGraph, type Verdict } from "@/lib/api";
 import { RingGraph, RingGraphLegend } from "@/components/RingGraph";
-import { Empty, ErrorBox, PageHeader, StatTile, VerdictBadge } from "@/components/ui";
+import { Empty, ErrorBox, PageHeader, Section, StatTile, VerdictBadge } from "@/components/ui";
 
 const WINDOWS = [
   { hours: 24, label: "24h" },
@@ -54,7 +54,7 @@ export default function ThreatIntelPage() {
       setError(e.message ?? String(e));
     }
     // The graph is a separate endpoint and a separate failure: the rest of the
-    // page stays useful when it is missing, which it is until /threat/graph ships.
+    // page stays useful when that call fails on its own.
     try {
       setGraph(await api.threatGraph(hours));
       setGraphError(null);
@@ -128,7 +128,7 @@ export default function ThreatIntelPage() {
   }, [windowed, selected, graph]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-14">
       <PageHeader
         title="Threat Intelligence"
         actions={
@@ -160,7 +160,7 @@ export default function ThreatIntelPage() {
 
       {error && <ErrorBox error={error} />}
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(178px,1fr))] gap-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(178px,1fr))] gap-x-8 gap-y-8">
         <StatTile
           label="Flagged in window"
           value={flagged.length}
@@ -170,7 +170,7 @@ export default function ThreatIntelPage() {
         <StatTile
           label="Linked clusters"
           value={graph ? graph.rings.length : "—"}
-          sub={graph ? `${provenRings} with byte-identical reuse` : "needs /threat/graph"}
+          sub={graph ? `${provenRings} with byte-identical reuse` : "graph unavailable"}
           tone={provenRings > 0 ? "reject" : "default"}
         />
         <StatTile label="Merchants seen" value={merchants} sub="distinct in this window" />
@@ -181,19 +181,14 @@ export default function ThreatIntelPage() {
         />
       </div>
 
-      <div className="grid gap-5 wide:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-x-12 gap-y-14 wide:grid-cols-[minmax(0,1fr)_320px]">
         {/* ---------------- fraud rings ---------------- */}
-        <section className="card-pad">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <h2 className="text-sm font-semibold text-slate-200">Fraud rings</h2>
-            <p className="max-w-[58ch] text-2xs leading-relaxed text-slate-500">
-              Submissions linked by a shared face or a shared file. Click a node to filter the feed to it and
-              everything it touches.
-            </p>
-          </div>
-
+        <Section
+          title="Fraud rings"
+          hint="Submissions linked by a shared face or a shared file. Click a node to filter the feed to it and everything it touches."
+        >
           {graph && graph.nodes.length > 0 ? (
-            <div className="mt-3 space-y-3">
+            <div className="space-y-3">
               <RingGraph graph={graph} onSelect={setSelected} selected={selected} />
               <div className="border-t border-edge pt-2.5">
                 <RingGraphLegend threshold={graph.threshold} />
@@ -203,21 +198,21 @@ export default function ThreatIntelPage() {
               </div>
             </div>
           ) : graph ? (
-            <div className="mt-3">
+            <div>
               <Empty
                 title="No links in this window"
                 hint="Every submission here is isolated — nothing shares a face or a file with anything else. Widen the window, or run the Gauntlet to load fixtures that do."
               />
             </div>
           ) : (
-            <div className="mt-3">
+            <div>
               <Empty
-                title="Ring graph not available yet"
+                title="Ring graph could not be loaded"
                 hint={
                   <>
-                    This panel reads <code className="num text-accent">GET /threat/graph</code>, which is not
-                    served yet. It is left empty on purpose: a fabricated ring in a fraud tool is worse than a
-                    blank panel, so nothing is drawn until the real edges exist.
+                    This panel reads <code className="num text-accent">GET /threat/graph</code>, which did not
+                    answer. It is left empty on purpose: a fabricated ring in a fraud tool is worse than a
+                    blank panel, so nothing is drawn unless the real edges came back.
                     {graphError && (
                       <span className="num mt-2 block text-slate-600">{graphError.slice(0, 120)}</span>
                     )}
@@ -226,17 +221,16 @@ export default function ThreatIntelPage() {
               />
             </div>
           )}
-        </section>
+        </Section>
 
         {/* ---------------- side panels ---------------- */}
-        <div className="space-y-5">
-          <section className="card-pad">
-            <h2 className="text-sm font-semibold text-slate-200">Generator fingerprint</h2>
-            <p className="mt-1 text-2xs leading-relaxed text-slate-500">
-              Which synthesis family the spectral fingerprint attributed each flagged image to, over the window.
-            </p>
+        <div className="space-y-10">
+          <Section
+            title="Generator fingerprint"
+            hint="Which synthesis family the spectral fingerprint attributed each flagged image to, over the window."
+          >
             {generators.rows.length ? (
-              <ul className="mt-3 space-y-2.5">
+              <ul className="space-y-2.5">
                 {generators.rows.map((g) => (
                   <li key={g.label}>
                     <div className="flex items-baseline justify-between gap-2">
@@ -255,16 +249,15 @@ export default function ThreatIntelPage() {
                 ))}
               </ul>
             ) : (
-              <p className="mt-3 text-xs text-slate-600">
+              <p className="text-xs text-slate-600">
                 No generator attributed in this window. The fingerprint only reports above 0.5 confidence.
               </p>
             )}
-          </section>
+          </Section>
 
-          <section className="card-pad">
-            <h2 className="text-sm font-semibold text-slate-200">Attack patterns</h2>
+          <Section title="Attack patterns">
             {patterns.length ? (
-              <ul className="mt-3 space-y-1.5">
+              <ul className="space-y-1.5">
                 {patterns.map(([k, n]) => (
                   <li key={k} className="flex items-baseline justify-between gap-2 text-xs">
                     <span className="truncate text-slate-400">{k.replace(/_/g, " ")}</span>
@@ -273,16 +266,16 @@ export default function ThreatIntelPage() {
                 ))}
               </ul>
             ) : (
-              <p className="mt-3 text-xs text-slate-600">Nothing flagged in this window.</p>
+              <p className="text-xs text-slate-600">Nothing flagged in this window.</p>
             )}
-          </section>
+          </Section>
         </div>
       </div>
 
       {/* ---------------- live feed ---------------- */}
-      <section className="card overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-edge bg-ink-850 px-3 py-2">
-          <h2 className="text-sm font-semibold text-slate-200">
+      <Section
+        title={
+          <>
             Feed
             {selected && (
               <span className="ml-2 text-2xs font-normal text-slate-500">
@@ -292,23 +285,26 @@ export default function ThreatIntelPage() {
                 </button>
               </span>
             )}
-          </h2>
-          <span className="num text-2xs text-slate-500">
+          </>
+        }
+        right={
+          <span className="num">
             {feed.length} of {windowed.length} shown
           </span>
-        </div>
+        }
+      >
         {feed.length ? (
           <div className="scroll-x">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead className="border-b border-edge text-2xs uppercase tracking-wider text-slate-500">
                 <tr>
-                  <th className="px-3 py-2 font-medium">When</th>
-                  <th className="px-3 py-2 font-medium">Applicant</th>
-                  <th className="px-3 py-2 font-medium">Merchant</th>
-                  <th className="px-3 py-2 font-medium">Verdict</th>
-                  <th className="px-3 py-2 text-right font-medium">Risk</th>
-                  <th className="px-3 py-2 font-medium">Pattern</th>
-                  <th className="px-3 py-2 font-medium">Generator</th>
+                  <th className="py-2 pr-4 font-medium">When</th>
+                  <th className="py-2 pr-4 font-medium">Applicant</th>
+                  <th className="py-2 pr-4 font-medium">Merchant</th>
+                  <th className="py-2 pr-4 font-medium">Verdict</th>
+                  <th className="py-2 pr-4 text-right font-medium">Risk</th>
+                  <th className="py-2 pr-4 font-medium">Pattern</th>
+                  <th className="py-2 pr-4 font-medium">Generator</th>
                 </tr>
               </thead>
               <tbody>
@@ -317,25 +313,25 @@ export default function ThreatIntelPage() {
                     key={r.submission_id}
                     onClick={() => setSelected(selected === r.submission_id ? null : r.submission_id)}
                     className={clsx(
-                      "cursor-pointer border-b border-edge/60 transition-colors last:border-0 hover:bg-ink-850",
+                      "cursor-pointer border-b border-edge/60 transition-colors last:border-0 hover:bg-ink-900",
                       selected === r.submission_id && "bg-accent/[0.06]"
                     )}
                   >
-                    <td className="num px-3 py-2 text-2xs text-slate-500">{ago(r.created_at)}</td>
-                    <td className="px-3 py-2 text-xs text-slate-300">{r.claimed_name ?? "—"}</td>
-                    <td className="num px-3 py-2 text-2xs text-slate-500">{r.merchant_id}</td>
-                    <td className="px-3 py-2">
+                    <td className="num py-2 pr-4 text-2xs text-slate-500">{ago(r.created_at)}</td>
+                    <td className="py-2 pr-4 text-xs text-slate-300">{r.claimed_name ?? "—"}</td>
+                    <td className="num py-2 pr-4 text-2xs text-slate-500">{r.merchant_id}</td>
+                    <td className="py-2 pr-4">
                       {r.verdict ? <VerdictBadge verdict={r.verdict} size="sm" /> : <span className="text-slate-600">—</span>}
                     </td>
-                    <td className="num px-3 py-2 text-right text-xs text-slate-300">
+                    <td className="num py-2 pr-4 text-right text-xs text-slate-300">
                       {r.score !== null && r.score !== undefined ? r.score.toFixed(2) : "—"}
                     </td>
-                    <td className="px-3 py-2 text-2xs text-slate-500">
+                    <td className="py-2 pr-4 text-2xs text-slate-500">
                       {r.attack_pattern && r.attack_pattern !== "clean"
                         ? r.attack_pattern.replace(/_/g, " ")
                         : "—"}
                     </td>
-                    <td className="max-w-[220px] truncate px-3 py-2 text-2xs text-slate-500">
+                    <td className="max-w-[220px] truncate py-2 text-2xs text-slate-500">
                       {r.generator_guess ?? "—"}
                     </td>
                   </tr>
@@ -344,11 +340,11 @@ export default function ThreatIntelPage() {
             </table>
           </div>
         ) : (
-          <div className="px-4 py-10 text-center text-xs text-slate-600">
+          <div className="py-10 text-center text-xs text-slate-600">
             {rows === null ? "Loading…" : "Nothing in this window."}
           </div>
         )}
-      </section>
+      </Section>
     </div>
   );
 }

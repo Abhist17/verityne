@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/", label: "Verify" },
   { href: "/gauntlet", label: "Gauntlet" },
   { href: "/metrics", label: "Metrics" },
+  { href: "/corrections", label: "Corrections" },
   { href: "/attacks", label: "Attacks" },
   { href: "/threat", label: "Threat" },
   { href: "/review", label: "Review" },

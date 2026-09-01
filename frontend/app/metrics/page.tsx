@@ -6,8 +6,8 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import clsx from "clsx";
-import { api, fmtInr, fmtPct, type Ablation, type BehavioralReport } from "@/lib/api";
-import { Empty, ErrorBox, PageHeader, Spinner, StatTile } from "@/components/ui";
+import { api, fmtInr, fmtPct, type Ablation, type BehavioralReport, type RealFacesReport } from "@/lib/api";
+import { Empty, ErrorBox, PageHeader, Section, Spinner, StatTile } from "@/components/ui";
 
 // Charts read the same palette the rest of the app does. The per-detector
 // series are deliberately dimmer and thinner than fusion: the point of the ROC
@@ -30,18 +30,6 @@ const tooltipStyle = {
   labelStyle: { color: "#94a3b8", marginBottom: 2 },
   itemStyle: { padding: "1px 0" },
 };
-
-function Section({ title, hint, children }: { title: string; hint?: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <section className="card-pad">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="text-sm font-semibold text-slate-200">{title}</h2>
-        {hint && <p className="max-w-[62ch] text-2xs leading-relaxed text-slate-500">{hint}</p>}
-      </div>
-      <div className="mt-3.5">{children}</div>
-    </section>
-  );
-}
 
 /**
  * Detector 6, measured.
@@ -135,11 +123,150 @@ function BehavioralSection({ r }: { r: BehavioralReport }) {
   );
 }
 
+/**
+ * The selfie detector against fakes from elsewhere.
+ *
+ * Same rule as the panel above: worst number first. The extra job here is to
+ * show the *frame* column beside the *face* one, because the gap between them
+ * is how much of a naive evaluation was reading JPEG history rather than
+ * synthesis — and a reviewer who cannot see that gap has no reason to believe
+ * the controlled number either.
+ */
+function RealFacesSection({ r }: { r: RealFacesReport }) {
+  type Row = {
+    family: string;
+    track: string;
+    label?: string;
+    frame: number | null;
+    face: number | null;
+    recall: number | null;
+    leakage?: string;
+  };
+
+  const rows: Row[] = [];
+  for (const [trackName, track] of Object.entries(r.tracks ?? {})) {
+    const face = track.protocols?.face?.per_family ?? {};
+    const frame = track.protocols?.frame?.per_family ?? {};
+    for (const [family, rep] of Object.entries(face)) {
+      rows.push({
+        family,
+        track: trackName,
+        label: track.families?.[family],
+        face: rep.auc,
+        frame: frame[family]?.auc ?? null,
+        recall: rep.recall_at?.["0.75"] ?? null,
+        leakage: track.leakage_warning,
+      });
+    }
+  }
+  rows.sort((a, b) => (a.face ?? 1) - (b.face ?? 1));
+
+  const head = r.headline;
+  const lfw = r.tracks?.real_populations?.false_positive_rate?.face;
+  const leaky = rows.find((x) => x.leakage);
+
+  return (
+    <Section
+      title="Selfie detector — measured on fakes we did not generate"
+      hint={
+        <>
+          The corpus behind the panels above is ours, and{" "}
+          <span className="num">benchmark_models.py</span> picked this checkpoint on it, so that
+          number carries a selection effect. These are third-party fakes, scored per generator
+          family and never pooled — an attacker chooses the generator, so the worst column is the
+          one that describes deployment.
+        </>
+      }
+    >
+      {head && (
+        <div className="grid grid-cols-3 gap-3">
+          <StatTile
+            label={`Worst family — ${head.worst_family}`}
+            value={head.worst_family_auc.toFixed(3)}
+          />
+          <StatTile
+            label={`Best family — ${head.best_family}`}
+            value={head.best_family_auc.toFixed(3)}
+          />
+          <StatTile label="Spread a pooled average would hide" value={head.spread.toFixed(3)} />
+        </div>
+      )}
+
+      <div className="mt-4">
+        <div className="flex items-center gap-3 border-b border-edge pb-1.5">
+          <span className="label min-w-0 flex-1">Generator family</span>
+          <span className="label w-16 text-right">frame</span>
+          <span className="label w-16 text-right">face</span>
+          <span className="label w-20 text-right">recall @.75</span>
+        </div>
+        {rows.map((row) => {
+          const blind = (row.face ?? 1) < 0.65;
+          return (
+            <div key={`${row.track}/${row.family}`} className="border-t border-edge/60 py-1.5">
+              <div className="flex items-center gap-3">
+                <span className="num min-w-0 flex-1 truncate text-xs text-slate-400">
+                  {row.family}
+                </span>
+                <span className="num w-16 text-right text-xs text-slate-600">
+                  {row.frame?.toFixed(3) ?? "—"}
+                </span>
+                <span
+                  className={clsx(
+                    "num w-16 text-right text-xs",
+                    blind ? "text-reject" : "text-slate-300",
+                  )}
+                >
+                  {row.face?.toFixed(3) ?? "—"}
+                </span>
+                <span className="num w-20 text-right text-xs text-slate-500">
+                  {row.recall === null ? "—" : fmtPct(row.recall, 0)}
+                </span>
+              </div>
+              {row.label && (
+                <p className="mt-0.5 max-w-[70ch] text-2xs leading-relaxed text-slate-600">
+                  {row.label}
+                </p>
+              )}
+            </div>
+          );
+        })}
+        <p className="mt-2 max-w-[80ch] text-2xs leading-relaxed text-slate-500">
+          <span className="text-slate-400">frame</span> is the whole image;{" "}
+          <span className="text-slate-400">face</span> crops and resizes both classes alike before
+          an identical capture simulation. Where frame runs far above face, the difference was
+          resampling history, not synthesis — the DeepFakeFace fakes ship at a uniform 512&times;512
+          while their genuine originals do not.
+        </p>
+      </div>
+
+      {leaky && (
+        <div className="mt-4 border-t border-edge pt-3.5">
+          <div className="label text-review">Read this one with suspicion</div>
+          <p className="mt-1.5 max-w-[78ch] text-xs leading-relaxed text-slate-400">{leaky.leakage}</p>
+        </div>
+      )}
+
+      {lfw && (
+        <div className="mt-4 border-t border-edge pt-3.5">
+          <div className="label">What an honest applicant pays</div>
+          <p className="mt-1.5 max-w-[78ch] text-xs leading-relaxed text-slate-400">
+            On LFW — web-scraped news photography, a genuine population resembling neither FFHQ nor
+            IMDB-WIKI — <span className="num text-slate-200">{fmtPct(lfw["0.4"], 1)}</span> of real
+            faces score above the review threshold and{" "}
+            <span className="num text-slate-200">{fmtPct(lfw["0.75"], 1)}</span> above reject.
+          </p>
+        </div>
+      )}
+    </Section>
+  );
+}
+
 export default function MetricsPage() {
   const [data, setData] = useState<any>(null);
   const [cost, setCost] = useState<any>(null);
   const [ablation, setAblation] = useState<Ablation | null>(null);
   const [behav, setBehav] = useState<BehavioralReport | null>(null);
+  const [realFaces, setRealFaces] = useState<RealFacesReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [costError, setCostError] = useState<string | null>(null);
 
@@ -152,6 +279,13 @@ export default function MetricsPage() {
   // Absent until the corpus is built and the model fitted; the section simply
   // does not render rather than showing a measurement nobody made.
   useEffect(() => { api.behavioralMetrics().then(setBehav).catch(() => setBehav(null)); }, []);
+  // One endpoint carries every real-data report; this page renders the selfie one.
+  // A dataset that was never downloaded arrives as absent, and absent stays unrendered.
+  useEffect(() => {
+    api.realMetrics()
+      .then((m) => setRealFaces(m.reports?.selfie_faces ?? null))
+      .catch(() => setRealFaces(null));
+  }, []);
   useEffect(() => { api.ablation().then(setAblation).catch(() => setAblation(null)); }, []);
 
   useEffect(() => {
@@ -216,7 +350,7 @@ export default function MetricsPage() {
   const cmReview = ev.fusion?.at_review_threshold ?? {};
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-14">
       <PageHeader title="Metrics">
         Everything below is computed on an{" "}
         <strong className="font-medium text-slate-200">identity-disjoint held-out split</strong> — no face that
@@ -225,7 +359,7 @@ export default function MetricsPage() {
 
       {/* auto-fit rather than a fixed column count: five tiles into a 2- or
           4-column grid leaves a hole, and the hole reads as a missing metric. */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(178px,1fr))] gap-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(178px,1fr))] gap-x-8 gap-y-8">
         <StatTile label="Fusion ROC-AUC" value={ev.fusion?.roc_auc?.toFixed(3) ?? "—"}
           sub={`${ev.n_packets} held-out packets · ${ev.fusion_model}`} tone="pass" />
         <StatTile label="Recall @ reject" value={fmtPct(cm.recall, 0)}
@@ -235,11 +369,17 @@ export default function MetricsPage() {
         <StatTile label="False reject rate" value={fmtPct(cm.false_reject_rate, 1)}
           sub="genuine merchants blocked" tone={cm.false_reject_rate <= 0.1 ? "pass" : "review"} />
         <StatTile label="Latency p50 / p99"
-          value={`${data.live?.latency_ms?.p50?.toFixed(0) ?? "—"} / ${data.live?.latency_ms?.p99?.toFixed(0) ?? "—"}`}
+          value={
+            <span className="whitespace-nowrap">
+              {data.live?.latency_ms?.p50?.toFixed(0) ?? "—"}
+              <span className="text-slate-600"> / </span>
+              {data.live?.latency_ms?.p99?.toFixed(0) ?? "—"}
+            </span>
+          }
           sub="ms, live API traffic on this instance" />
       </div>
 
-      <div className="grid gap-5 wide:grid-cols-2">
+      <div className="grid gap-x-12 gap-y-14 wide:grid-cols-2">
         <Section title="ROC — fusion vs each detector"
           hint="The fusion curve should dominate. Where a single detector beats it, the fusion weights are wrong.">
           <ResponsiveContainer width="100%" height={300}>
@@ -387,7 +527,7 @@ export default function MetricsPage() {
                 </p>
                 <div className="mt-2 grid gap-1 font-mono text-xs sm:grid-cols-2">
                   {ablation.leaks.map((l) => (
-                    <div key={`${l.field}-${l.value}`} className="flex justify-between gap-2 rounded border border-reject/30 bg-reject/[0.07] px-2 py-1">
+                    <div key={`${l.field}-${l.value}`} className="flex justify-between gap-2 border-l-2 border-reject/60 py-0.5 pl-2.5">
                       <span className="truncate text-slate-400">{l.field}={l.value}</span>
                       <span className="text-reject">{l.n} packets, all {l.class}</span>
                     </div>
@@ -402,7 +542,7 @@ export default function MetricsPage() {
                 </p>
                 <div className="mt-1 grid gap-1 font-mono text-xs sm:grid-cols-2">
                   {ablation.one_sided_but_expected.map((l) => (
-                    <div key={`${l.field}-${l.value}`} className="rounded border border-edge bg-ink-850 px-2 py-1">
+                    <div key={`${l.field}-${l.value}`} className="border-t border-edge/60 py-1.5">
                       <div className="flex justify-between gap-2">
                         <span className="truncate text-slate-400">{l.field}={l.value}</span>
                         <span className="text-slate-500">{l.n} packets</span>
@@ -419,7 +559,7 @@ export default function MetricsPage() {
         </Section>
       )}
 
-      <div className="grid gap-5 wide:grid-cols-[1fr_340px]">
+      <div className="grid gap-x-12 gap-y-14 wide:grid-cols-[1fr_340px]">
         <Section title="Recall by attack type"
           hint="Sorted worst-first on purpose. A single headline AUC hides which attack we are actually bad at.">
           <ResponsiveContainer width="100%" height={Math.max(220, attackData.length * 34)}>
@@ -439,17 +579,20 @@ export default function MetricsPage() {
         </Section>
 
         <Section title="Confusion matrix" hint={`at the reject threshold (${cm.threshold})`}>
-          <div className="grid grid-cols-2 gap-2 text-center">
+          <div className="grid grid-cols-2 border-t border-edge">
             {[
               { k: "tp", label: "True positive", v: cm.tp, tone: "text-pass", note: "fraud caught" },
               { k: "fn", label: "False negative", v: cm.fn, tone: "text-reject", note: "fraud missed" },
               { k: "fp", label: "False positive", v: cm.fp, tone: "text-review", note: "genuine blocked" },
               { k: "tn", label: "True negative", v: cm.tn, tone: "text-slate-300", note: "genuine passed" },
-            ].map((c) => (
-              <div key={c.k} className="rounded border border-edge bg-ink-850 p-3">
-                <div className={clsx("num text-2xl font-medium", c.tone)}>{c.v ?? "—"}</div>
-                <div className="mt-0.5 text-2xs uppercase tracking-wider text-slate-500">{c.label}</div>
-                <div className="text-2xs text-slate-600">{c.note}</div>
+            ].map((c, i) => (
+              <div
+                key={c.k}
+                className={clsx("py-3", i % 2 === 0 ? "pr-4" : "border-l border-edge pl-4", i > 1 && "border-t")}
+              >
+                <div className={clsx("num text-2xl font-light", c.tone)}>{c.v ?? "—"}</div>
+                <div className="label mt-1">{c.label}</div>
+                <div className="mt-0.5 text-2xs text-slate-600">{c.note}</div>
               </div>
             ))}
           </div>
@@ -469,7 +612,7 @@ export default function MetricsPage() {
         hint="Four of these inputs are business assumptions, not measurements. They are sliders precisely so you can move them: a single ₹ figure would be unfalsifiable."
       >
         {costError && <div className="mb-3 text-xs text-review">{costError}</div>}
-        <div className="grid gap-5 wide:grid-cols-[1fr_290px]">
+        <div className="grid gap-x-12 gap-y-10 wide:grid-cols-[1fr_290px]">
           <ResponsiveContainer width="100%" height={320}>
             <LineChart data={cost?.curve ?? []} margin={{ top: 4, right: 8, bottom: 4, left: 8 }}>
               <CartesianGrid stroke={GRID} strokeDasharray="3 3" />
@@ -508,9 +651,9 @@ export default function MetricsPage() {
             ))}
 
             {cost?.optimal && (
-              <div className="rounded border border-accent/40 bg-accent/[0.07] p-3">
+              <div className="border-l-2 border-accent/60 pl-3">
                 <div className="label text-accent">Optimal threshold</div>
-                <div className="num mt-1 text-2xl font-medium text-accent">{cost.optimal.threshold}</div>
+                <div className="num mt-1 text-2xl font-light text-accent">{cost.optimal.threshold}</div>
                 <div className="mt-1.5 space-y-0.5 text-xs leading-relaxed text-slate-400">
                   <div>net {fmtInr(cost.optimal.net_benefit_inr)} per {cost.assumptions.per_onboardings.toLocaleString()} onboardings</div>
                   <div>FAR {fmtPct(cost.optimal.false_accept_rate, 1)} · FRR {fmtPct(cost.optimal.false_reject_rate, 1)}</div>
@@ -521,7 +664,7 @@ export default function MetricsPage() {
         </div>
       </Section>
 
-      <div className="grid gap-5 wide:grid-cols-2">
+      <div className="grid gap-x-12 gap-y-14 wide:grid-cols-2">
         <Section title="Bias audit — accuracy by skin-tone proxy"
           hint="Deepfake detectors are known to degrade on darker skin. Measuring it is the minimum bar.">
           <div className="scroll-x">
@@ -589,6 +732,8 @@ export default function MetricsPage() {
       </div>
 
       {behav && <BehavioralSection r={behav} />}
+
+      {realFaces && <RealFacesSection r={realFaces} />}
 
       <Section title="Known limitations" hint="Stated up front, because a reviewer will find them anyway.">
         <ul className="space-y-2">

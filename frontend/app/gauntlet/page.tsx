@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import clsx from "clsx";
 import { api, fmtPct, type GauntletResult, type GauntletSummary } from "@/lib/api";
-import { Empty, ErrorBox, PageHeader, StatTile, VerdictBadge } from "@/components/ui";
+import { Empty, ErrorBox, PageHeader, Section, StatTile, VerdictBadge } from "@/components/ui";
 
 type Running = Omit<GauntletSummary, "results">;
 
@@ -79,7 +79,7 @@ export default function GauntletPage() {
   const scored = new Set(results.map((r) => r.submission_id));
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-12">
       <PageHeader
         title="The Gauntlet"
         actions={
@@ -170,7 +170,7 @@ export default function GauntletPage() {
       )}
 
       {summary && (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(178px,1fr))] gap-3">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(178px,1fr))] gap-x-8 gap-y-8">
           <StatTile
             label="Detection rate"
             value={fmtPct(summary.detection_rate, 0)}
@@ -199,19 +199,19 @@ export default function GauntletPage() {
       )}
 
       {results.length > 0 && (
-        <div className="card overflow-hidden">
+        <Section title="Results" right={<span className="num">{results.length} scored</span>}>
           <div className="scroll-x">
             <table className="w-full min-w-[860px] text-left text-sm">
-              <thead className="border-b border-edge bg-ink-850 text-2xs uppercase tracking-wider text-slate-500">
+              <thead className="border-b border-edge text-2xs uppercase tracking-wider text-slate-500">
                 <tr>
-                  <th className="px-3 py-2 font-medium">Fixture</th>
-                  <th className="px-3 py-2 font-medium">Truth</th>
-                  <th className="px-3 py-2 font-medium">Attack</th>
-                  <th className="px-3 py-2 font-medium">Verdict</th>
-                  <th className="px-3 py-2 text-right font-medium">Score</th>
-                  <th className="px-3 py-2 font-medium">Top reason</th>
-                  <th className="px-3 py-2 text-right font-medium">ms</th>
-                  <th className="px-3 py-2 text-center font-medium">✓</th>
+                  <th className="py-2 pr-4 font-medium">Fixture</th>
+                  <th className="py-2 pr-4 font-medium">Truth</th>
+                  <th className="py-2 pr-4 font-medium">Attack</th>
+                  <th className="py-2 pr-4 font-medium">Verdict</th>
+                  <th className="py-2 pr-4 text-right font-medium">Score</th>
+                  <th className="py-2 pr-4 font-medium">Top reason</th>
+                  <th className="py-2 pr-4 text-right font-medium">ms</th>
+                  <th className="py-2 text-center font-medium">✓</th>
                 </tr>
               </thead>
               <tbody>
@@ -224,7 +224,7 @@ export default function GauntletPage() {
                       transition={{ duration: 0.7 }}
                       className="border-b border-edge/60 last:border-0"
                     >
-                      <td className="px-3 py-2">
+                      <td className="py-2 pr-4">
                         <div className="flex items-center gap-2">
                           {r.thumb_url && (
                             <img src={r.thumb_url} alt="" className="h-7 w-7 rounded object-cover ring-1 ring-edge" />
@@ -232,7 +232,7 @@ export default function GauntletPage() {
                           <span className="num text-xs text-slate-300">{r.name}</span>
                         </div>
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="py-2 pr-4">
                         <span
                           className={clsx(
                             "chip ring-1",
@@ -244,16 +244,16 @@ export default function GauntletPage() {
                           {r.truth}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-xs text-slate-500">{r.attack_type?.replace(/_/g, " ") ?? "—"}</td>
-                      <td className="px-3 py-2">
+                      <td className="py-2 pr-4 text-xs text-slate-500">{r.attack_type?.replace(/_/g, " ") ?? "—"}</td>
+                      <td className="py-2 pr-4">
                         <VerdictBadge verdict={r.verdict} size="sm" />
                       </td>
-                      <td className="num px-3 py-2 text-right text-slate-300">{r.score.toFixed(3)}</td>
-                      <td className="max-w-md px-3 py-2 text-xs leading-relaxed text-slate-400">
+                      <td className="num py-2 pr-4 text-right text-slate-300">{r.score.toFixed(3)}</td>
+                      <td className="max-w-md py-2 pr-4 text-xs leading-relaxed text-slate-400">
                         <span className="line-clamp-2">{r.top_reasons?.[0] ?? "—"}</span>
                       </td>
-                      <td className="num px-3 py-2 text-right text-xs text-slate-500">{r.latency_ms.toFixed(0)}</td>
-                      <td className="px-3 py-2 text-center">
+                      <td className="num py-2 pr-4 text-right text-xs text-slate-500">{r.latency_ms.toFixed(0)}</td>
+                      <td className="py-2 text-center">
                         {r.correct ? <span className="text-pass">✓</span> : <span className="text-reject">✗</span>}
                       </td>
                     </motion.tr>
@@ -262,13 +262,12 @@ export default function GauntletPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Section>
       )}
 
       {done && (
-        <div className="card-pad">
-          <div className="label">What this number is and is not</div>
-          <p className="mt-2 max-w-[90ch] text-xs leading-relaxed text-slate-400">
+        <Section title="What this number is and is not">
+          <p className="max-w-[90ch] text-xs leading-relaxed text-slate-400">
             {done.total} packets is a demonstration, not a measurement — the confidence interval on a rate
             estimated from {done.fakes_total} fakes is very wide. The statistically meaningful numbers live on
             the{" "}
@@ -278,7 +277,7 @@ export default function GauntletPage() {
             page, computed on an identity-disjoint held-out split that the fusion model never saw during
             training.
           </p>
-        </div>
+        </Section>
       )}
     </div>
   );

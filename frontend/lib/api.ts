@@ -107,6 +107,102 @@ export interface BehavioralReport {
   note: string;
 }
 
+/** One generator family scored against its real control. `auc` is null when a
+ *  group came back empty — drawn as an absence, never as a zero. */
+export interface RealFacesFamily {
+  n_real: number;
+  n_fake: number;
+  auc: number | null;
+  mean_real?: number;
+  mean_fake?: number;
+  recall_at?: Record<string, number>;
+  real_fpr_at?: Record<string, number>;
+}
+
+export interface RealFacesTrack {
+  source: string;
+  paired?: boolean;
+  pairing_note?: string;
+  /** Present on the StyleGAN track: a high score there may be memorisation,
+   *  because the checkpoint names no training data. Rendered beside the number. */
+  leakage_warning?: string;
+  why?: string;
+  families?: Record<string, string>;
+  face_detection_rate?: Record<string, number>;
+  false_positive_rate?: Record<string, Record<string, number>>;
+  protocols?: Record<string, { per_family: Record<string, RealFacesFamily> }>;
+}
+
+export interface RealFacesReport {
+  source: string;
+  generated_at: string;
+  detector: {
+    active_checkpoint: string | null;
+    cnn_weight: number;
+    spectral_weight: number;
+    note: string;
+  };
+  what_this_measures: string;
+  protocols: Record<string, string>;
+  operating_points: number[];
+  tracks: Record<string, RealFacesTrack>;
+  headline?: {
+    protocol: string;
+    per_family_auc: Record<string, number>;
+    worst_family: string;
+    worst_family_auc: number;
+    best_family: string;
+    best_family_auc: number;
+    spread: number;
+    note: string;
+  };
+}
+
+export interface RealMetrics {
+  available: string[];
+  missing: { name: string; source: string; expected_at: string }[];
+  reports: Record<string, any> & { selfie_faces?: RealFacesReport };
+  note: string;
+}
+
+export interface CorrectionEvidence {
+  file: string;
+  path?: string | string[];
+  source?: "code";
+  symbol?: string;
+  note?: string;
+}
+
+export interface Correction {
+  id: string;
+  order: number;
+  title: string;
+  believed: string;
+  measured: string;
+  metric: string;
+  /** Present on entries that moved one number. */
+  before?: number;
+  after?: number;
+  direction?: "up" | "down" | "down_is_honest";
+  /** Present instead of before/after when the finding is several values at once. */
+  series?: { label: string; value: number }[];
+  reference?: { label: string; value: number };
+  status: "fixed" | "open" | "designed_around";
+  outcome: string;
+  how_found: string;
+  evidence: CorrectionEvidence[];
+  readme: string;
+}
+
+export interface CorrectionsReport {
+  generated_by: string;
+  what_this_is: string;
+  how_found_legend: Record<string, string>;
+  counts: Record<string, number>;
+  n: number;
+  corrections: Correction[];
+}
+
 export interface FaceMatchResult {
   similarity: number | null;
   match: boolean | null;
@@ -261,14 +357,22 @@ export const api = {
    *  the model fitted — the page reports that absence rather than drawing zeros. */
   behavioralMetrics: () => request<BehavioralReport>("/metrics/behavioral"),
 
+  /** The audit trail. 404s until `make corrections` has assembled it. */
+  corrections: () => request<CorrectionsReport>("/metrics/corrections"),
+
+  /** Every detector result measured on third-party data. Each report inside is
+   *  independent and any may be absent; `available` says which actually ran, so
+   *  a dataset that was never downloaded reads as missing rather than as zero. */
+  realMetrics: () => request<RealMetrics>("/metrics/real"),
+
   costCurve: (p: Record<string, number>) => {
     const qs = new URLSearchParams(Object.entries(p).map(([k, v]) => [k, String(v)]));
     return request<any>(`/metrics/cost-curve?${qs}`);
   },
 
-  /** The fraud-ring graph. Served by `GET /threat/graph`; until that endpoint
-   *  exists this rejects and the page says so rather than drawing invented
-   *  edges — a fabricated ring in a fraud tool is worse than an empty panel. */
+  /** The fraud-ring graph, from `GET /threat/graph`. If the call fails the page
+   *  says so rather than drawing invented edges — a fabricated ring in a fraud
+   *  tool is worse than an empty panel. */
   threatGraph: (hours = 168) => request<ThreatGraph>(`/threat/graph?hours=${hours}`),
 
   attacks: (hours = 24) => request<any>(`/attacks?hours=${hours}`),

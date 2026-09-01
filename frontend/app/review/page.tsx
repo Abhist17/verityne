@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import clsx from "clsx";
 import { api, fmtPct } from "@/lib/api";
-import { Empty, ErrorBox, PageHeader, ScoreBar, Spinner, VerdictBadge } from "@/components/ui";
+import { Empty, ErrorBox, PageHeader, ScoreBar, Section, Spinner, VerdictBadge } from "@/components/ui";
 
 export default function ReviewQueuePage() {
   const [queue, setQueue] = useState<any>(null);
@@ -39,7 +39,7 @@ export default function ReviewQueuePage() {
   const current = items.find((i) => i.submission_id === active) ?? items[0];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-12">
       <PageHeader
         title="Review Queue"
         actions={
@@ -72,17 +72,17 @@ export default function ReviewQueuePage() {
       )}
 
       {items.length > 0 && (
-        <div className="grid gap-5 wide:grid-cols-[290px_minmax(0,1fr)]">
-          <div className="space-y-2">
+        <div className="grid gap-x-12 gap-y-10 wide:grid-cols-[290px_minmax(0,1fr)]">
+          <div className="space-y-0.5">
             {items.map((it) => (
               <button
                 key={it.submission_id}
                 onClick={() => setActive(it.submission_id)}
                 className={clsx(
-                  "w-full rounded border p-2.5 text-left transition-colors duration-150",
+                  "w-full border-l-2 py-2.5 pl-3 pr-2 text-left transition-colors duration-150",
                   it.submission_id === current?.submission_id
-                    ? "border-accent/50 bg-accent/[0.07]"
-                    : "border-edge bg-ink-900 hover:border-edge-strong hover:bg-ink-850"
+                    ? "border-accent bg-accent/[0.06]"
+                    : "border-transparent hover:border-edge-strong hover:bg-ink-900"
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -106,30 +106,28 @@ export default function ReviewQueuePage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -8 }}
                 transition={{ duration: 0.18 }}
-                className="space-y-4"
+                className="space-y-12"
               >
-                <div className="card-pad">
-                  <div className="flex flex-wrap items-center gap-3">
+                <div>
+                  <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                     <VerdictBadge verdict="REVIEW" size="lg" />
                     <span className="num text-lg text-slate-100">{current.score.toFixed(3)}</span>
-                    <span className="chip bg-ink-800 text-slate-300 ring-1 ring-edge">
+                    <span className="text-xs text-slate-500">
                       {current.pattern_label ?? "unclassified"}
                     </span>
-                    <span className="ml-auto num text-xs text-slate-600">{current.submission_id}</span>
+                    <span className="num ml-auto text-2xs text-slate-700">{current.submission_id}</span>
                   </div>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-300">{current.explanation}</p>
+                  <p className="mt-4 max-w-[68ch] text-sm leading-relaxed text-slate-300">{current.explanation}</p>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-5 md:grid-cols-2">
                   {["selfie", "id_document"].map((k) => {
                     const asset = current.assets?.[k];
                     const heat = current.heatmaps?.[k === "selfie" ? "selfie_deepfake" : "id_forensics"];
                     if (!asset && !heat) return null;
                     return (
-                      <div key={k} className="card overflow-hidden">
-                        <div className="border-b border-edge px-3 py-2 text-xs uppercase tracking-wider text-slate-500">
-                          {k.replace("_", " ")}
-                        </div>
+                      <div key={k} className="surface overflow-hidden">
+                        <div className="label border-b border-edge px-3 py-2">{k.replace("_", " ")}</div>
                         <div className="grid grid-cols-2">
                           {asset && <img src={asset} alt={k} className="aspect-square w-full object-cover" />}
                           {heat && <img src={heat} alt={`${k} heatmap`} className="aspect-square w-full object-cover" />}
@@ -139,19 +137,18 @@ export default function ReviewQueuePage() {
                   })}
                 </div>
 
-                <div className="card-pad">
-                  <div className="label">Why it is here</div>
-                  <ol className="mt-2 space-y-2">
+                <Section title="Why it is here">
+                  <ol className="space-y-3">
                     {current.top_reasons?.map((r: string, i: number) => (
-                      <li key={i} className="flex gap-3 text-sm leading-relaxed text-slate-300">
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink-800 num text-xs text-slate-400 ring-1 ring-edge">
-                          {i + 1}
+                      <li key={i} className="flex gap-4 text-sm leading-relaxed text-slate-300">
+                        <span className="num shrink-0 text-2xs text-slate-700">
+                          {String(i + 1).padStart(2, "0")}
                         </span>
-                        {r}
+                        <span className="max-w-[62ch]">{r}</span>
                       </li>
                     ))}
                   </ol>
-                  <div className="mt-4 grid gap-2 border-t border-edge pt-3 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="mt-6 grid gap-x-8 gap-y-2 border-t border-edge/60 pt-4 sm:grid-cols-2 xl:grid-cols-3">
                     {Object.entries(current.detector_summary ?? {}).map(([k, d]: any) => (
                       <div key={k} className="flex items-center gap-2 text-xs">
                         <span className="w-32 truncate text-slate-500">{d.label}</span>
@@ -160,16 +157,15 @@ export default function ReviewQueuePage() {
                       </div>
                     ))}
                   </div>
-                </div>
+                </Section>
 
-                <div className="card-pad">
-                  <div className="label">Decision</div>
+                <Section title="Decision">
                   <textarea
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="Optional note for the audit log…"
                     rows={2}
-                    className="input mt-2 resize-none bg-ink-950"
+                    className="input resize-none bg-ink-950"
                   />
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button onClick={() => decide(current.submission_id, "approve")} disabled={!!busy}
@@ -189,7 +185,7 @@ export default function ReviewQueuePage() {
                     Decisions are written to the audit log with the model&apos;s score attached — that pairing is the
                     label source for the next retrain, and it is how analyst-vs-model agreement is measured.
                   </p>
-                </div>
+                </Section>
               </motion.div>
             )}
           </AnimatePresence>
