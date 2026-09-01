@@ -8,6 +8,33 @@ import { Empty, ErrorBox, PageHeader, Section, StatTile, VerdictBadge } from "@/
 
 type Running = Omit<GauntletSummary, "results">;
 
+/** What each number will mean, before there is one.
+ *
+ *  Deliberately not zeros: a zero is a measurement and there has not been one.
+ *  An em dash says "not yet", and the sub-line says what the number has to be
+ *  for the run to have gone well — which is the part a reader cannot infer and
+ *  the part that makes watching it fill in worth doing. */
+function ScoreboardAtRest({ total }: { total: number }) {
+  const tiles: [string, string][] = [
+    ["Detection rate", "share of fraudulent fixtures that reach a human — REVIEW counts"],
+    ["False accepts", "fraud that would have been approved outright"],
+    ["Genuine not passed", "rejected and reviewed are counted apart; they are not the same failure"],
+    ["Accuracy", `over all ${total || 20} fixtures`],
+    ["Wall clock", "the full API path per packet, linkage included"],
+  ];
+  return (
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(178px,1fr))] gap-x-8 gap-y-8">
+      {tiles.map(([label, sub]) => (
+        <div key={label}>
+          <div className="label">{label}</div>
+          <div className="stat mt-2 text-slate-700">—</div>
+          <p className="mt-1.5 max-w-[26ch] text-2xs leading-relaxed text-slate-600">{sub}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function GauntletPage() {
   const [manifest, setManifest] = useState<any>(null);
   const [results, setResults] = useState<GauntletResult[]>([]);
@@ -169,7 +196,14 @@ export default function GauntletPage() {
         </div>
       )}
 
-      {summary && (
+      {/* The scoreboard exists before the run, not after it.
+          Rendering it only once results arrive left the page ending at the
+          fixture grid with most of the viewport blank, which reads as a page
+          that has not loaded rather than one waiting for you to press a button.
+          At rest the tiles carry their labels and what each number would have to
+          be to count as good, so the page is legible before anything happens and
+          the run fills it in rather than constructing it. */}
+      {summary ? (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(178px,1fr))] gap-x-8 gap-y-8">
           <StatTile
             label="Detection rate"
@@ -196,6 +230,8 @@ export default function GauntletPage() {
             sub={`${summary.mean_latency_ms.toFixed(0)} ms mean per packet`}
           />
         </div>
+      ) : (
+        <ScoreboardAtRest total={total} />
       )}
 
       {results.length > 0 && (

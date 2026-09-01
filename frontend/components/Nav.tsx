@@ -65,7 +65,14 @@ export function Nav() {
           <span
             className={clsx("h-1.5 w-1.5 rounded-full", up ? "bg-pass" : "bg-reject")}
             title={up ? `online · ${device ?? ""}` : "offline"}
+            aria-hidden
           />
+          {/* The dot alone carries the status visually, which was the point. It
+              carries nothing at all to a screen reader, and `title` is not an
+              accessible name — so the state is also announced in text. */}
+          <span role="status" className="sr-only">
+            {up ? `API online${device ? `, running on ${device}` : ""}` : "API offline"}
+          </span>
         </div>
       </div>
     </header>
