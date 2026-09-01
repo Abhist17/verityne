@@ -8,10 +8,17 @@
  * tokens moved. They import from here now; `tailwind.config.ts` is the only
  * other definition, and the two are meant to be read side by side.
  *
- * The hues are pigment rather than screen — verdigris, yellow ochre, red earth,
- * ink blue — held around 55-62% lightness and under 45% saturation. That is
- * where print keeps warning colours, and it is what leaves a genuine alarm
- * somewhere brighter to go.
+ * The hues are pigment rather than screen — verdigris, yellow ochre, red earth
+ * — held around 55-62% lightness and under 45% saturation. That is where print
+ * keeps warning colours, and it is what leaves a genuine alarm somewhere
+ * brighter to go.
+ *
+ * The accent has no hue. The verdict triad takes green through red, and the
+ * hues that were left all read as a default template, so interaction is marked
+ * by being the brightest thing on screen instead: colour means a verdict,
+ * brightness means you can act on it. As a chart series that makes the fused
+ * curve the figure and the per-detector curves the ground, which is what the
+ * ROC panel is actually asking you to compare.
  */
 export const INK = {
   950: "#0a0a0c",
@@ -24,7 +31,7 @@ export const INK = {
 export const EDGE = "#20212a";
 export const EDGE_STRONG = "#2d2f3b";
 
-export const ACCENT = "#5b83a8";
+export const ACCENT = "#e8e2d5";
 export const PASS = "#5a9e79";
 export const REVIEW = "#c39a4e";
 export const REJECT = "#c15f66";

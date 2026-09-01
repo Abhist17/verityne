@@ -19,7 +19,7 @@ function ScoreboardAtRest({ total }: { total: number }) {
     ["Detection rate", "share of fraudulent fixtures that reach a human — REVIEW counts"],
     ["False accepts", "fraud that would have been approved outright"],
     ["Genuine not passed", "rejected and reviewed are counted apart; they are not the same failure"],
-    ["Accuracy", `over all ${total || 20} fixtures`],
+    ["Wrongly rejected", "genuine applicants turned away with no human in the loop"],
     ["Wall clock", "the full API path per packet, linkage included"],
   ];
   return (
@@ -223,7 +223,19 @@ export default function GauntletPage() {
             sub={`${summary.reals_rejected} rejected, ${summary.reals_reviewed} to review, of ${summary.reals_total}`}
             tone={summary.reals_rejected > 0 ? "reject" : summary.false_reject_rate <= 0.1 ? "pass" : "review"}
           />
-          <StatTile label="Accuracy" value={fmtPct(summary.accuracy, 0)} sub={`${summary.total} packets scored`} />
+          {/* Not accuracy. This page's own copy says a fake in REVIEW counts as
+              caught, and then an accuracy figure counted every genuine merchant
+              in REVIEW as a miss — so the tile contradicted the paragraph above
+              it and read ~50% on a run where nothing had gone wrong. What a
+              merchant actually cares about is whether an honest applicant was
+              turned away with no human involved, and that number is zero or it
+              is not. */}
+          <StatTile
+            label="Wrongly rejected"
+            value={summary.reals_rejected}
+            sub={`of ${summary.reals_total} genuine — auto-rejected with no human in the loop`}
+            tone={summary.reals_rejected === 0 ? "pass" : "reject"}
+          />
           <StatTile
             label={live ? "Elapsed" : "Wall clock"}
             value={`${((done?.wall_clock_ms ?? elapsed) / 1000).toFixed(1)}s`}

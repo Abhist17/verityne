@@ -506,7 +506,7 @@ export default function MetricsPage() {
           </div>
 
           <p className="mt-3 text-xs leading-relaxed text-slate-500">
-            <span className="text-accent">Blue</span> is the share of the above-chance AUC that detector
+            <span className="text-accent">The bar</span> is the share of the above-chance AUC that detector
             carries. <span className="text-reject">Red</span> is a negative share — muting it made the model{" "}
             <em>better</em>, so it was contributing noise rather than signal.
           </p>

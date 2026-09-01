@@ -49,12 +49,21 @@ const config: Config = {
         //
         // Hue assignment is forced, not chosen: the verdict ramp has to be the
         // traffic-light set because that is what a reviewer already reads without
-        // being taught, which leaves blue as the only hue far enough from all
-        // three to mark an affordance without being mistaken for a state.
+        // being taught. That spoken for, there was no hue left for the accent
+        // worth having — the traffic lights occupy green through red, and cyan,
+        // violet and magenta are the ones that read as a default template rather
+        // than a decision.
+        //
+        // So the accent carries no hue at all. It is warm bone, and it is the
+        // brightest value in the interface: **colour means a verdict, brightness
+        // means you can act on it.** That is a cleaner rule than any fourth hue
+        // would have given, and it means a chart series or a progress bar can
+        // never be mistaken for a state. It reads warm against the slate text
+        // ramp, which is cool, so the two stay separable side by side.
         pass: { DEFAULT: "#5a9e79", dim: "#12241c" },
         review: { DEFAULT: "#c39a4e", dim: "#26200f" },
         reject: { DEFAULT: "#c15f66", dim: "#2a1417" },
-        accent: { DEFAULT: "#5b83a8", dim: "#141b24" },
+        accent: { DEFAULT: "#e8e2d5", dim: "#1e1c18" },
       },
       fontFamily: {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
