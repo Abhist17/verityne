@@ -31,6 +31,10 @@ datasets/manifest.json
 # LFW, MIDV-2020 and Celeb-DF are fetched from their sources, not vendored.
 # Celeb-DF in particular is covered by a licence agreement that is granted to a
 # named requester, so redistributing it through this repo is not ours to do.
+# Detector 6's corpora. The Aalto archive alone is 1.5 GB, and every file here is
+# third-party data fetched by `make behavioral-data` rather than anything of ours
+# — the same treatment LFW and MIDV-2020 get.
+datasets/keystrokes/
 datasets/lfw/
 datasets/midv2020/
 datasets/celebdf/
