@@ -332,6 +332,44 @@ export default function MetricsPage() {
     return h.counts.map((c: number, i: number) => ({ bucket: `${Math.round(h.edges[i])}`, count: c }));
   }, [data]);
 
+  /** ROC series, ranked, with the ones that never ran taken out.
+   *
+   *  `coverage` is the share of packets a detector actually scored. A detector
+   *  at zero produced no curve — Recharts would still draw it as a straight line
+   *  from corner to corner, which reads as a real result at chance rather than
+   *  as an absence. */
+  const rocSeries = useMemo(() => {
+    const per: Record<string, any> = ev?.per_detector ?? {};
+    const drawn: { key: string; label: string; auc: number; color: string }[] = [];
+    const excluded: string[] = [];
+    let i = 1;
+    for (const [key, d] of Object.entries(per)) {
+      // Legend labels sit in a narrow column beside their AUC, and the full
+      // detector names truncate to "Metadata / EXIF A…". The trailing noun adds
+      // nothing next to five siblings that are all detectors.
+      const label = (d.label ?? key)
+        .replace(/ \(.*\)$/, "")
+        .replace(/ (Detector|Auditor|Analyzer)$/, "")
+        .replace(/^ID Document Forensics$/, "ID forensics");
+      if ((d.coverage ?? 1) <= 0) {
+        excluded.push(label);
+        continue;
+      }
+      drawn.push({
+        key, label,
+        auc: d.auc_all_rows ?? 0.5,
+        color: SERIES_COLORS[i % SERIES_COLORS.length],
+      });
+      i += 1;
+    }
+    const fusionAuc = ev?.fusion?.roc_auc ?? 0;
+    const legend = [
+      { key: "fusion", label: "fusion", auc: fusionAuc, color: ACCENT },
+      ...drawn.slice().sort((a, b) => b.auc - a.auc),
+    ];
+    return { detectors: drawn, legend, excluded };
+  }, [ev]);
+
   if (error) return <ErrorBox error={error} />;
   if (!data) return <div className="py-24"><Spinner label="Loading metrics…" /></div>;
 
@@ -351,7 +389,7 @@ export default function MetricsPage() {
 
   return (
     <div className="space-y-14">
-      <PageHeader title="Metrics">
+      <PageHeader title="Metrics" eyebrow="Held-out evaluation">
         Everything below is computed on an{" "}
         <strong className="font-medium text-slate-200">identity-disjoint held-out split</strong> — no face that
         trained the fusion layer appears in these numbers. The uncomfortable numbers are here too.
@@ -380,24 +418,85 @@ export default function MetricsPage() {
       </div>
 
       <div className="grid gap-x-12 gap-y-14 wide:grid-cols-2">
-        <Section title="ROC — fusion vs each detector"
-          hint="The fusion curve should dominate. Where a single detector beats it, the fusion weights are wrong.">
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={rocData} margin={{ top: 4, right: 8, bottom: 4, left: -18 }}>
+        <Section
+          title="ROC — fusion vs each detector"
+          hint="The fusion curve should dominate. Where a single detector beats it, the fusion weights are wrong."
+        >
+          {/* Fusion is the figure; the detectors are the ground.
+              Seven curves at equal weight is spaghetti — the eye cannot hold
+              which line is which, and the legend makes you look away from the
+              chart to find out. So fusion is drawn thick in the accent (the only
+              achromatic, brightest value) and every detector is thin and
+              partially transparent, and the legend below carries each series'
+              AUC so it ranks rather than merely names.
+
+              A detector that never ran is excluded outright: `behavioral` has no
+              telemetry in this corpus, so its "curve" is the 0.5 diagonal, and
+              drawing it adds a line that means nothing. It is named under the
+              chart instead. */}
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={rocData} margin={{ top: 6, right: 10, bottom: 6, left: -18 }}>
               <CartesianGrid stroke={GRID} strokeDasharray="3 3" />
-              <XAxis dataKey="fpr" type="number" domain={[0, 1]} tick={AXIS} tickFormatter={(v) => v.toFixed(1)}
-                label={{ value: "false positive rate", position: "insideBottom", offset: -2, fill: "#64748b", fontSize: 10 }} />
+              <XAxis
+                dataKey="fpr" type="number" domain={[0, 1]} tick={AXIS}
+                tickFormatter={(v) => v.toFixed(1)}
+                label={{ value: "false positive rate", position: "insideBottom", offset: -4,
+                         fill: "#64748b", fontSize: 10 }}
+              />
               <YAxis type="number" domain={[0, 1]} tick={AXIS} tickFormatter={(v) => v.toFixed(1)} />
-              <Tooltip {...tooltipStyle} formatter={(v: any) => (typeof v === "number" ? v.toFixed(3) : v)} />
-              <Legend iconType="plainline" iconSize={8} wrapperStyle={{ fontSize: 10, paddingTop: 6 }} />
-              <Line type="monotone" dataKey="fusion" stroke={ACCENT} strokeWidth={2.5} dot={false} name="fusion" />
-              {Object.keys(ev.per_detector ?? {}).map((k, i) => (
-                <Line key={k} type="monotone" dataKey={k} stroke={SERIES_COLORS[(i + 1) % SERIES_COLORS.length]}
-                  strokeWidth={1.3} dot={false} strokeOpacity={0.75} name={k.replace(/_/g, " ")} />
+              <Tooltip {...tooltipStyle}
+                       formatter={(v: any) => (typeof v === "number" ? v.toFixed(3) : v)} />
+              {/* Chance, labelled. An unlabelled dashed diagonal is furniture;
+                  labelled, it is the line every curve is being judged against. */}
+              <ReferenceLine
+                segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]}
+                stroke="#3a3f4d" strokeDasharray="4 4"
+                label={{ value: "chance", position: "insideBottomRight",
+                         fill: "#5b6172", fontSize: 10 }}
+              />
+              {rocSeries.detectors.map((d) => (
+                <Line
+                  key={d.key} type="monotone" dataKey={d.key} stroke={d.color}
+                  strokeWidth={1.25} dot={false} strokeOpacity={0.55}
+                  name={d.label} isAnimationActive={false}
+                />
               ))}
-              <ReferenceLine segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]} stroke="#333c4c" strokeDasharray="4 4" />
+              <Line
+                type="monotone" dataKey="fusion" stroke={ACCENT} strokeWidth={2.75}
+                dot={false} name="fusion" isAnimationActive={false}
+              />
             </LineChart>
           </ResponsiveContainer>
+
+          {/* The legend is a ranking, not a colour key: sorted by AUC, with the
+              number beside the name, so the panel answers "did fusion win, and
+              by how much" without a glance at the table below. */}
+          <ul className="mt-3 grid gap-x-6 gap-y-1 sm:grid-cols-2 wide:grid-cols-3">
+            {rocSeries.legend.map((d) => (
+              <li key={d.key} className="flex items-center gap-2.5 text-2xs">
+                <svg width="16" height="4" aria-hidden className="shrink-0">
+                  <line x1="0" y1="2" x2="16" y2="2" stroke={d.color}
+                        strokeWidth={d.key === "fusion" ? 2.75 : 1.25}
+                        strokeOpacity={d.key === "fusion" ? 1 : 0.55} />
+                </svg>
+                <span className={clsx("flex-1 truncate",
+                  d.key === "fusion" ? "text-slate-200" : "text-slate-500")}>
+                  {d.label}
+                </span>
+                <span className={clsx("num tabular-nums",
+                  d.key === "fusion" ? "text-slate-100"
+                    : d.auc >= 0.7 ? "text-pass" : d.auc >= 0.55 ? "text-slate-400" : "text-reject")}>
+                  {d.auc.toFixed(3)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {rocSeries.excluded.length > 0 && (
+            <p className="mt-2.5 text-2xs leading-relaxed text-slate-600">
+              {rocSeries.excluded.join(", ")} not drawn — no coverage on this corpus, so the curve
+              would be the chance diagonal rather than a measurement.
+            </p>
+          )}
         </Section>
 
         <Section title="Per-detector performance"
