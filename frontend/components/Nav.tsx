@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
 const LINKS = [
-  { href: "/", label: "Verify" },
+  { href: "/verify", label: "Verify" },
   { href: "/gauntlet", label: "Gauntlet" },
   { href: "/metrics", label: "Metrics" },
   { href: "/corrections", label: "Corrections" },
@@ -28,7 +28,7 @@ export function Nav() {
   const device = health?.device;
 
   return (
-    <header className="sticky top-0 z-40 bg-ink-950/85 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-edge bg-ink-950/85 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-[1180px] items-center gap-6 px-6 py-4">
         <Link href="/" className="group flex items-center gap-2" aria-label="Verityne home">
           <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] text-accent" fill="none" stroke="currentColor" strokeWidth="2">
@@ -39,21 +39,30 @@ export function Nav() {
         </Link>
 
         {/* The active tab is marked by an underline flush with the header's own
-            border, so the panel below reads as belonging to that tab. */}
+            border, so the panel below reads as belonging to that tab.
+            The rule is drawn on the header and the marker on the link, and the
+            link's `-bottom-4` is the `py-4` on the row — the two have to stay in
+            step or the marker floats above the border it is meant to sit in. */}
         <nav className="flex items-center gap-5">
           {LINKS.map((l) => {
-            const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
+            const active = pathname === l.href || (l.href !== "/" && pathname.startsWith(l.href));
             return (
               <Link
                 key={l.href}
                 href={l.href}
                 aria-current={active ? "page" : undefined}
                 className={clsx(
-                  "text-sm transition-colors duration-150",
+                  "relative text-sm transition-colors duration-150",
                   active ? "text-slate-100" : "text-slate-600 hover:text-slate-400"
                 )}
               >
                 {l.label}
+                {active && (
+                  <span
+                    className="absolute inset-x-0 -bottom-4 h-px bg-accent"
+                    aria-hidden
+                  />
+                )}
               </Link>
             );
           })}
