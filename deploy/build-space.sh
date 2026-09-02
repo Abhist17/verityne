@@ -45,7 +45,13 @@ fi
 rm -rf "$OUT"
 mkdir -p "$OUT/seed"
 
-cp deploy/hf-space/Dockerfile deploy/hf-space/README.md deploy/hf-space/.gitattributes "$OUT/"
+# Every file the Dockerfile COPYs has to be here, prefetch_models.py included -
+# a missing one fails the build ~10 minutes in, on Hugging Face's builder rather
+# than on this laptop.
+cp deploy/hf-space/Dockerfile \
+   deploy/hf-space/README.md \
+   deploy/hf-space/.gitattributes \
+   deploy/hf-space/prefetch_models.py "$OUT/"
 
 # Source the image needs. `backend` and `eval` are tracked, so they come from
 # the working tree as-is.
@@ -66,6 +72,12 @@ tar -czf "$SEED" \
     --exclude='storage/verityne-prepollution.db' \
     -C "$REPO" \
     storage/models storage/verityne.db storage/uploads storage/heatmaps
+
+# ---------------------------------------------------------------- verify
+# Every local path the Dockerfile COPYs must exist in the bundle.
+while read -r src; do
+  [ -e "$OUT/$src" ] || { echo "assembled bundle is missing $src, which the Dockerfile COPYs" >&2; exit 1; }
+done < <(grep -E '^COPY ' "$OUT/Dockerfile" | sed -E 's/^COPY +//; s/ +[^ ]+$//' | tr ' ' '\n' | grep -v '^$')
 
 # ---------------------------------------------------------------- report
 size=$(du -h "$SEED" | cut -f1)
