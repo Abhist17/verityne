@@ -7,6 +7,12 @@ FROM node:20-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY frontend/ ./
+# `next build` resolves rewrites() and writes the result into
+# routes-manifest.json, so the API origin is fixed at BUILD time. Setting
+# NEXT_PUBLIC_API_URL in the runtime environment does nothing: next start reads
+# the manifest, not the config. It has to arrive here, as an argument.
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 

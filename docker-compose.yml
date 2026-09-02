@@ -30,8 +30,13 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+      args:
+        # Build-time, not runtime: see the ARG in frontend/Dockerfile. This is
+        # the dashboard's own server calling the API over the compose network,
+        # so it is the service name - the browser never sees this host, it only
+        # ever talks to the dashboard origin.
+        NEXT_PUBLIC_API_URL: http://backend:8000
     environment:
-      NEXT_PUBLIC_API_URL: http://backend:8000
       NEXT_PUBLIC_API_KEY: ${VERITYNE_API_KEY:-verityne-demo-key}
     depends_on:
       backend:
