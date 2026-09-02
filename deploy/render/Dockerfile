@@ -16,6 +16,16 @@ WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm install --no-audit --no-fund
 COPY frontend/ ./
+
+# The landing page is statically rendered from the evidence files at BUILD
+# time: lib/evidence.ts reads `process.cwd()/../eval`, which is /eval when the
+# frontend sits at /app. Copying eval only into the runtime stage - which is
+# what this did - is too late. `read()` catches the missing file and returns
+# null "survivably", so nothing failed: the page just rendered without its
+# numbers. The deployed landing page lost 0.753, 0.123, 1.000, the audit strip,
+# the hero grid and the corrections table, and said nothing about it.
+COPY eval /eval
+
 # `next build` bakes rewrites() into routes-manifest.json, so the API origin is
 # fixed here, not at runtime. localhost:8000 is right because the API is in this
 # same container - the browser never resolves it, the Next server does.
