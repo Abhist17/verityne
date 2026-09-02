@@ -5,8 +5,8 @@ import { Mark } from "@/components/Mark";
  * The close. Pages used to stop dead at their last row, which reads as a page
  * that ran out rather than one that finished.
  *
- * It carries the one claim this project wants a reader leaving with — that the
- * numbers have files behind them and the files are in the repository — rather
+ * It carries the one claim this project wants a reader leaving with - that the
+ * numbers have files behind them and the files are in the repository - rather
  * than the usual footer furniture of a company that does not exist.
  */
 
@@ -32,12 +32,12 @@ export function Footer() {
           </div>
           {/* No counts here on purpose. The number of corrections changes every
               time one is found, and a hard-coded "nine" in a footer is exactly
-              the kind of figure that goes stale silently — which is a thing this
+              the kind of figure that goes stale silently - which is a thing this
               project has a page about. The count lives in one place, generated
               from the evidence, and this links to it. */}
           <p className="mt-2.5 text-xs leading-relaxed text-slate-500">
             Deepfake-aware KYC verification, and a published record of every belief this project
-            measured and lost — the ones still open included.
+            measured and lost - the ones still open included.
           </p>
           <p className="mt-3 text-2xs leading-relaxed text-slate-600">
             Every figure in the dashboard is read from a committed evidence file, and the test

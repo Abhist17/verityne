@@ -7,8 +7,8 @@ Why
 ---
 ``eval/metrics.json`` reports ID forensics at 0.526 AUC, and tamper-only at
 0.664 on photos and 0.565 on scans. Those numbers were measured on cards this
-repo drew itself in ``scripts/idcards.py``. The detector's core signal — Error
-Level Analysis — reads an image's *compression history*, and a card we render
+repo drew itself in ``scripts/idcards.py``. The detector's core signal - Error
+Level Analysis - reads an image's *compression history*, and a card we render
 and save once has a compression history we manufactured. Whether the check works
 on a document that was actually printed, actually photographed and actually
 JPEG'd by a phone is a question that corpus cannot answer.
@@ -24,8 +24,8 @@ documents, all rectified out of their frames and all written through **one
 identical encode path**. That last part is not a detail. If tampered files were
 saved at a different JPEG quality, or resized differently, or written by a
 different code path than genuine ones, the detector would learn the encoder and
-report a beautiful AUC that means nothing. Every image here — genuine and
-tampered alike — is rectified to the same long side and saved at the same
+report a beautiful AUC that means nothing. Every image here - genuine and
+tampered alike - is rectified to the same long side and saved at the same
 quality by the same function. The only difference between the classes is the
 edit itself.
 
@@ -35,7 +35,7 @@ The three tampers are the ones that actually happen to identity documents:
                     most common document fraud, and the one with the largest
                     compression-history discontinuity.
 ``field_splice``    A text field lifted from a different document of the same
-                    type and pasted over this one's — a changed name, number or
+                    type and pasted over this one's - a changed name, number or
                     date sourced from another card.
 ``copy_move``       A text block copied from *elsewhere on the same document*
                     and pasted over another. Deliberately the hard case: the
@@ -92,7 +92,7 @@ def text_boxes(rgb: np.ndarray, face_box: Optional[Tuple[int, int, int, int]] = 
     """Locate text-line rectangles on a card, largest first.
 
     A morphological gradient followed by a wide horizontal close merges glyphs
-    into lines. This does not need to be a good text detector — it only needs to
+    into lines. This does not need to be a good text detector - it only needs to
     hand back rectangles that contain printed text, so the splice lands
     somewhere a forger would actually edit rather than on blank laminate.
     """
@@ -152,7 +152,7 @@ def pick_compatible(dst_boxes: Sequence[Tuple[int, int, int, int]],
     """Choose a (destination, source) text-line pair of comparable shape.
 
     Without this the splice stretches a short line across a long one and the
-    result is an illegible smear — visually obvious, and obvious for a reason
+    result is an illegible smear - visually obvious, and obvious for a reason
     that has nothing to do with compression history. A forger pastes a field
     that fits. Constraining the pair to a similar aspect ratio and height keeps
     the text legible, so what the detector has to find is the error-level seam
@@ -225,7 +225,7 @@ def _match_tone(patch: np.ndarray, target: np.ndarray) -> np.ndarray:
 
 
 def _recompress(rgb: np.ndarray, quality: int) -> np.ndarray:
-    """One extra JPEG generation — what a patch picked up before being pasted."""
+    """One extra JPEG generation - what a patch picked up before being pasted."""
     buf = io.BytesIO()
     Image.fromarray(rgb).save(buf, "JPEG", quality=quality)
     buf.seek(0)
@@ -307,7 +307,7 @@ def admissible(face, boxes, rng: random.Random) -> bool:
 
     Both classes are filtered by this, and that symmetry is the point. An
     earlier version of this script applied the test only where it was
-    structurally necessary — a "tampered" document was dropped when no attack
+    structurally necessary - a "tampered" document was dropped when no attack
     would fit, while genuine documents were taken as they came. That silently
     made the two classes different populations: the tampered class would have
     been drawn only from documents with a findable portrait and two compatible
@@ -485,13 +485,13 @@ def main() -> None:
         "attacks": {
             "portrait_swap": "another person's portrait pasted over the document photo",
             "field_splice": "a text line lifted from a different document of the same type",
-            "copy_move": "a text block copied from elsewhere on the same document — shares the "
+            "copy_move": "a text block copied from elsewhere on the same document - shares the "
                          "host's compression history, so the hardest of the three",
         },
         "seed": args.seed,
         "class_balance": {
             "admission_test": "has a locatable portrait and at least two mutually compatible "
-                              "text lines — applied identically to both classes, so the only "
+                              "text lines - applied identically to both classes, so the only "
                               "systematic difference between genuine and tampered is the edit",
             "per_capture": admission,
         },

@@ -9,7 +9,7 @@ import { Empty, ErrorBox, PageHeader, Spinner } from "@/components/ui";
  * The audit trail: every belief this project held, measured, and lost.
  *
  * This page is the argument. Every other page reports what the system scores;
- * this one reports what it used to score and why that was wrong — which is the
+ * this one reports what it used to score and why that was wrong - which is the
  * only evidence a fraud team can actually use, because a vendor's headline
  * number is unfalsifiable and a vendor's list of its own defects is not.
  *
@@ -17,7 +17,7 @@ import { Empty, ErrorBox, PageHeader, Spinner } from "@/components/ui";
  *
  *   * **Nothing here is prose about a number.** Each entry names the evidence
  *     file and the path its figures came from, and `build_corrections.py`
- *     resolves every one at build time — an entry citing a number no report
+ *     resolves every one at build time - an entry citing a number no report
  *     contains fails the build. The citations are rendered rather than hidden
  *     in a tooltip, because being able to check them is the point.
  *   * **Open findings are not sorted to the bottom.** Three of these are
@@ -60,7 +60,7 @@ function Delta({ c }: { c: Correction }) {
   );
 }
 
-/** Several values against one reference line — used where the finding is not a
+/** Several values against one reference line - used where the finding is not a
  *  before/after but a spread, like four generator families all at chance. */
 function Series({ c }: { c: Correction }) {
   if (!c.series?.length) return null;
@@ -97,7 +97,7 @@ function Series({ c }: { c: Correction }) {
       })}
       {c.reference && (
         <p className="pl-[10.75rem] text-2xs text-slate-600">
-          vertical rule — {c.reference.label} ({fmt(c.reference.value)})
+          vertical rule - {c.reference.label} ({fmt(c.reference.value)})
         </p>
       )}
     </div>
@@ -209,7 +209,7 @@ export default function CorrectionsPage() {
     <div className="space-y-8">
       <PageHeader title="Corrections" eyebrow="Audit trail">
         Every belief this project held, measured, and lost. Generated from the evidence files each
-        entry cites — an entry claiming a number no report contains fails the build.
+        entry cites - an entry claiming a number no report contains fails the build.
       </PageHeader>
 
       {error && <ErrorBox error={error} />}

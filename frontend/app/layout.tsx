@@ -15,7 +15,7 @@ const mono = JetBrains_Mono({ subsets: ["latin"], display: "swap", variable: "--
 // The display face. A bitmap monospace drawn at 11px, which is why it is used
 // at exactly two scales: title sizes, where the staircase edges are the point,
 // and the 10.5px micro-label, which is its design size. Everything numeric
-// stays in JetBrains Mono — see app/fonts/README.md.
+// stays in JetBrains Mono - see app/fonts/README.md.
 const display = localFont({
   src: "./fonts/DepartureMono-Regular.woff2",
   display: "swap",
@@ -25,11 +25,11 @@ const display = localFont({
 
 export const metadata: Metadata = {
   title: {
-    default: "Verityne — Deepfake-aware KYC verification",
+    default: "Verityne - Deepfake-aware KYC verification",
     template: "%s · Verityne",
   },
   description:
-    "Six independent detectors, a calibrated fusion layer, an explanation behind every verdict — "
+    "Six independent detectors, a calibrated fusion layer, an explanation behind every verdict - "
     + "and a published record of every belief this project measured and lost.",
 };
 
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
  *
  * Not a banner for its own sake. This project's one claim about itself is that
  * it publishes what it got wrong, and that claim was living inside the landing
- * hero — which meant it was invisible from the six pages a reviewer actually
+ * hero - which meant it was invisible from the six pages a reviewer actually
  * spends their time on. It is a count read from `corrections.json` at build
  * time, so it cannot drift from the file behind it.
  */

@@ -108,7 +108,7 @@ export interface BehavioralReport {
 }
 
 /** One generator family scored against its real control. `auc` is null when a
- *  group came back empty — drawn as an absence, never as a zero. */
+ *  group came back empty - drawn as an absence, never as a zero. */
 export interface RealFacesFamily {
   n_real: number;
   n_fake: number;
@@ -265,7 +265,7 @@ export interface ThreatGraph {
   window_hours: number;
   /** Provenance for the edge threshold, shown on the page. A graph drawn at the
    *  verification point rather than the search point wires every genuine
-   *  applicant to a stranger — see linkage.SAME_PERSON. */
+   *  applicant to a stranger - see linkage.SAME_PERSON. */
   threshold: { same_person: number; fitted_on: string };
   nodes: ThreatNode[];
   edges: ThreatEdge[];
@@ -354,7 +354,7 @@ export const api = {
   ablation: () => request<Ablation>("/metrics/ablation"),
 
   /** Detector 6's evaluation report. 404s until the corpus has been built and
-   *  the model fitted — the page reports that absence rather than drawing zeros. */
+   *  the model fitted - the page reports that absence rather than drawing zeros. */
   behavioralMetrics: () => request<BehavioralReport>("/metrics/behavioral"),
 
   /** The audit trail. 404s until `make corrections` has assembled it. */
@@ -371,7 +371,7 @@ export const api = {
   },
 
   /** The fraud-ring graph, from `GET /threat/graph`. If the call fails the page
-   *  says so rather than drawing invented edges — a fabricated ring in a fraud
+   *  says so rather than drawing invented edges - a fabricated ring in a fraud
    *  tool is worse than an empty panel. */
   threatGraph: (hours = 168) => request<ThreatGraph>(`/threat/graph?hours=${hours}`),
 
@@ -407,7 +407,7 @@ export const verdictColor = (v: Verdict) =>
   v === "PASS" ? "pass" : v === "REVIEW" ? "review" : "reject";
 
 export const fmtPct = (x: number | null | undefined, digits = 1) =>
-  x === null || x === undefined || Number.isNaN(x) ? "—" : `${(x * 100).toFixed(digits)}%`;
+  x === null || x === undefined || Number.isNaN(x) ? "-" : `${(x * 100).toFixed(digits)}%`;
 
 export const fmtInr = (n: number) => {
   if (Math.abs(n) >= 1e7) return `₹${(n / 1e7).toFixed(2)}Cr`;

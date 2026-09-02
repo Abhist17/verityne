@@ -9,26 +9,26 @@ never seen a recorded video: no camera shake, no rolling shutter, no autofocus
 hunt, no compression from a real encoder, and no face-swap produced by anybody
 but us.
 
-This module does not download anything — FaceForensics++ and Celeb-DF are both
+This module does not download anything - FaceForensics++ and Celeb-DF are both
 gated behind a signed request form, and DFDC needs Kaggle credentials. It reads
 whichever of them is present on disk, so the evaluation path is ready before
 the data is.
 
 Layouts recognised
 ------------------
-**FaceForensics++** — the useful one, because it labels *which* manipulation
+**FaceForensics++** - the useful one, because it labels *which* manipulation
 produced each fake, and the methods differ enormously in difficulty::
 
     <root>/original_sequences/youtube/<c0|c23|c40>/videos/*.mp4
     <root>/manipulated_sequences/<method>/<c0|c23|c40>/videos/*.mp4
     <root>/splits/test.json                       (official split, used if present)
 
-**Celeb-DF v2** — harder fakes, no method labels::
+**Celeb-DF v2** - harder fakes, no method labels::
 
     <root>/Celeb-real/*.mp4  <root>/YouTube-real/*.mp4  <root>/Celeb-synthesis/*.mp4
     <root>/List_of_testing_videos.txt             (official test list, used if present)
 
-**DFDC preview** — available without a form::
+**DFDC preview** - available without a form::
 
     <root>/dataset.json  with {filename: {"label": "fake"|"real", ...}}
 
@@ -128,7 +128,7 @@ def load_faceforensics(root: Path, compression: str = "c23",
     clips: List[Clip] = []
     test_ids = _ffpp_test_ids(root) if test_split_only else None
     if test_split_only and test_ids is None:
-        log.warning("splits/test.json not found — scoring every sequence, which is NOT the "
+        log.warning("splits/test.json not found - scoring every sequence, which is NOT the "
                     "split published numbers are quoted on")
 
     def keep(p: Path) -> bool:
@@ -183,7 +183,7 @@ def load_celebdf(root: Path, test_split_only: bool = True) -> List[Clip]:
                  sum(1 for c in clips if c.label == 0), sum(1 for c in clips if c.label == 1))
         if clips:
             return clips
-        log.warning("test list present but no files resolved — falling back to directories")
+        log.warning("test list present but no files resolved - falling back to directories")
 
     clips = []
     for sub, label, method in (("Celeb-real", 0, "real"), ("YouTube-real", 0, "real"),

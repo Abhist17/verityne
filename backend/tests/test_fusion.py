@@ -1,4 +1,4 @@
-"""Fusion and policy behaviour — the logic that turns scores into decisions."""
+"""Fusion and policy behaviour - the logic that turns scores into decisions."""
 import pytest
 
 from verityne.config import MerchantPolicy
@@ -20,7 +20,7 @@ class TestHeuristicScore:
         assert heuristic_score(b) < 0.2
 
     def test_one_loud_detector_is_not_buried(self):
-        """Four quiet detectors must not average away one confident alarm —
+        """Four quiet detectors must not average away one confident alarm -
         that is precisely the shape a fraudster optimises for."""
         b = breakdown(selfie_deepfake=0.05, id_forensics=0.97, face_match=0.05, metadata_exif=0.05)
         assert heuristic_score(b) > 0.4

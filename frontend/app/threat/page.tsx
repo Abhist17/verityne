@@ -86,7 +86,7 @@ export default function ThreatIntelPage() {
   );
 
   /** Generator families over the window. One measure across nominal categories,
-   *  so it is a bar chart in a single colour — the category is the axis, and
+   *  so it is a bar chart in a single colour - the category is the axis, and
    *  spending hue on it would encode nothing the axis does not already say. */
   const generators = useMemo(() => {
     const counts = new Map<string, number>();
@@ -156,7 +156,7 @@ export default function ThreatIntelPage() {
         }
       >
         One fake merchant is an incident; forty sharing a face or a file is a ring, and only the linking makes
-        that visible. Everything here is derived from what the detectors already cached — no extra scoring pass.
+        that visible. Everything here is derived from what the detectors already cached - no extra scoring pass.
       </PageHeader>
 
       {error && <ErrorBox error={error} />}
@@ -170,14 +170,14 @@ export default function ThreatIntelPage() {
         />
         <StatTile
           label="Linked clusters"
-          value={graph ? graph.rings.length : "—"}
+          value={graph ? graph.rings.length : "-"}
           sub={graph ? `${provenRings} with byte-identical reuse` : "graph unavailable"}
           tone={provenRings > 0 ? "reject" : "default"}
         />
         <StatTile label="Merchants seen" value={merchants} sub="distinct in this window" />
         <StatTile
           label="Top generator"
-          value={generators.rows[0] ? generators.rows[0].n : "—"}
+          value={generators.rows[0] ? generators.rows[0].n : "-"}
           sub={generators.rows[0]?.label ?? "no generator attributed yet"}
         />
       </div>
@@ -202,7 +202,7 @@ export default function ThreatIntelPage() {
             <div>
               <Empty
                 title="No links in this window"
-                hint="Every submission here is isolated — nothing shares a face or a file with anything else. Widen the window, or run the Gauntlet to load fixtures that do."
+                hint="Every submission here is isolated - nothing shares a face or a file with anything else. Widen the window, or run the Gauntlet to load fixtures that do."
               />
             </div>
           ) : (
@@ -242,7 +242,7 @@ export default function ThreatIntelPage() {
                     </div>
                     {/* Thin and square, not a 6px rounded capsule. At the old
                         weight a full-width saturated bar read as a progress
-                        indicator — something in flight — rather than as a count,
+                        indicator - something in flight - rather than as a count,
                         and four of them stacked put more accent on the page than
                         every other surface combined. A hairline is enough to
                         compare four categories, which is all this is for. */}
@@ -325,21 +325,21 @@ export default function ThreatIntelPage() {
                     )}
                   >
                     <td className="num py-2 pr-4 text-2xs text-slate-500">{ago(r.created_at)}</td>
-                    <td className="py-2 pr-4 text-xs text-slate-300">{r.claimed_name ?? "—"}</td>
+                    <td className="py-2 pr-4 text-xs text-slate-300">{r.claimed_name ?? "-"}</td>
                     <td className="num py-2 pr-4 text-2xs text-slate-500">{r.merchant_id}</td>
                     <td className="py-2 pr-4">
-                      {r.verdict ? <VerdictBadge verdict={r.verdict} size="sm" /> : <span className="text-slate-600">—</span>}
+                      {r.verdict ? <VerdictBadge verdict={r.verdict} size="sm" /> : <span className="text-slate-600">-</span>}
                     </td>
                     <td className="num py-2 pr-4 text-right text-xs text-slate-300">
-                      {r.score !== null && r.score !== undefined ? r.score.toFixed(2) : "—"}
+                      {r.score !== null && r.score !== undefined ? r.score.toFixed(2) : "-"}
                     </td>
                     <td className="py-2 pr-4 text-2xs text-slate-500">
                       {r.attack_pattern && r.attack_pattern !== "clean"
                         ? r.attack_pattern.replace(/_/g, " ")
-                        : "—"}
+                        : "-"}
                     </td>
                     <td className="max-w-[220px] truncate py-2 text-2xs text-slate-500">
-                      {r.generator_guess ?? "—"}
+                      {r.generator_guess ?? "-"}
                     </td>
                   </tr>
                 ))}

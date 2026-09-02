@@ -3,7 +3,7 @@ import type { Config } from "tailwindcss";
 /**
  * The palette is deliberately narrow. This is a forensics console: colour is a
  * signal, not decoration, so the base is a single neutral ramp and hue is spent
- * only where it carries meaning — a verdict, a threshold, an interactive
+ * only where it carries meaning - a verdict, a threshold, an interactive
  * affordance. Anything that is merely structure is a value step, not a colour.
  */
 const config: Config = {
@@ -19,7 +19,7 @@ const config: Config = {
       colors: {
         // Surface ramp: true black, and even steps up from it.
         //
-        // The ground used to be #0a0a0c — a near-black with a little blue in it,
+        // The ground used to be #0a0a0c - a near-black with a little blue in it,
         // on the reasoning that a UI you read for an hour wants some lift under
         // the text. That is true of a *document*. It is not true of an
         // instrument: the moment the accent became a saturated orange, every
@@ -47,14 +47,14 @@ const config: Config = {
         },
         // Verdicts, and the one interactive hue.
         //
-        // The verdict triad is pigment rather than screen — verdigris, yellow
-        // ochre, red earth — held around 55-62% lightness and under 45%
+        // The verdict triad is pigment rather than screen - verdigris, yellow
+        // ochre, red earth - held around 55-62% lightness and under 45%
         // saturation. That is where print keeps its warning colours, and on a
         // near-black ground it is the difference between colours that *sit* and
         // colours that emit. It is unchanged, because the traffic-light set is
         // what a reviewer already reads without being taught.
         //
-        // The accent is not. It used to be warm bone — no hue at all — on the
+        // The accent is not. It used to be warm bone - no hue at all - on the
         // argument that the verdicts had taken green through red and every hue
         // left over read as a default template. The way out of that was never a
         // different hue; it was a different *axis*. This orange is at 100%
@@ -62,7 +62,7 @@ const config: Config = {
         // neighbourhood on the wheel and still never be confused: **saturation
         // means you can act on it, hue means a verdict.** A vivid orange next to
         // an ochre REVIEW does not read as a brighter REVIEW, it reads as a
-        // different kind of thing — which is exactly what it is.
+        // different kind of thing - which is exactly what it is.
         pass: { DEFAULT: "#5a9e79", dim: "#12241c" },
         review: { DEFAULT: "#c39a4e", dim: "#26200f" },
         reject: { DEFAULT: "#c15f66", dim: "#2a1417" },
@@ -73,7 +73,7 @@ const config: Config = {
         },
         // The text ramp, neutral to match the ground.
         //
-        // These override Tailwind's `slate`, which is a blue-grey — correct
+        // These override Tailwind's `slate`, which is a blue-grey - correct
         // against the old blue-black ground, and visibly cold against a true
         // black one with an orange accent. Same names, same steps, no hue, so
         // every `text-slate-500` in the app moved without being touched.
@@ -94,7 +94,7 @@ const config: Config = {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
         // The display face: a bitmap monospace, used at title sizes and at the
-        // 10-11px micro-label size it was actually drawn for. Never in a table —
+        // 10-11px micro-label size it was actually drawn for. Never in a table -
         // it has no tabular figures worth the name, and a column of numbers is a
         // job for JetBrains Mono.
         display: ["var(--font-display)", "var(--font-mono)", "ui-monospace", "monospace"],
@@ -102,10 +102,10 @@ const config: Config = {
       fontSize: {
         // Editorial scale: a wide gap between the labels and the numbers, because
         // in this design the number IS the interface. Nothing sits in the middle
-        // of the ramp — text is either quiet chrome or the thing you came to read.
+        // of the ramp - text is either quiet chrome or the thing you came to read.
         // No tracking on the size itself. This step is used for two different
-        // things — uppercase micro-labels and the explanatory sentence under a
-        // chart — and 0.11em is correct for the first and actively unreadable
+        // things - uppercase micro-labels and the explanatory sentence under a
+        // chart - and 0.11em is correct for the first and actively unreadable
         // for the second. `.label` carries its own tracking, so letter-spacing
         // now belongs to the *role* rather than to the size, and prose at this
         // step reads as prose.

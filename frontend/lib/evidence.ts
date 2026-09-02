@@ -6,7 +6,7 @@ import { join } from "node:path";
  *
  * The landing page states numbers, and this project's whole argument is that a
  * stated number has a committed file behind it. A hard-coded "0.753" in a hero
- * would be the one figure on the site nothing checks — and the README already
+ * would be the one figure on the site nothing checks - and the README already
  * has a page about what happens when a number drifts away from its evidence.
  *
  * Read on the server at build time rather than fetched: the landing page must
@@ -20,7 +20,7 @@ function read<T>(name: string): T | null {
   try {
     return JSON.parse(readFileSync(join(EVAL, name), "utf8")) as T;
   } catch {
-    // A missing report is survivable — the section that needs it renders its
+    // A missing report is survivable - the section that needs it renders its
     // absence. A wrong number is not, which is why nothing here has a default.
     return null;
   }
@@ -79,8 +79,8 @@ export interface PacketCell {
  *
  * 105 rows is small enough to draw individually, which is the point: an AUC is
  * one number standing in for a distribution, and the distribution is the thing
- * worth looking at. Sorted by score, the overlap between the two classes — the
- * band where a genuine merchant and a fraudulent one score the same — is the
+ * worth looking at. Sorted by score, the overlap between the two classes - the
+ * band where a genuine merchant and a fraudulent one score the same - is the
  * shape that makes 0.753 what it is, and no headline figure shows it.
  */
 export function packets(): PacketCell[] {

@@ -273,8 +273,8 @@ class TestPreserveBetterLowBound:
 class TestLinkageThresholdMatchesItsCalibration:
     """`linkage.SAME_PERSON` must be the threshold its own comment describes.
 
-    It used to be the FAR=0.1% point from `calibrate_face_match_lfw.py` — a
-    *verification* fit graded on 6,000 pairs — while `find_face_links` applies it
+    It used to be the FAR=0.1% point from `calibrate_face_match_lfw.py` - a
+    *verification* fit graded on 6,000 pairs - while `find_face_links` applies it
     as a search over up to `SCAN_LIMIT` records. That is a different question with
     a different operating point, so the constant is now fitted by
     `calibrate_linkage_lfw.py` and must agree with *that* report, not the pair one.
@@ -287,7 +287,7 @@ class TestLinkageThresholdMatchesItsCalibration:
 
         path = MODEL_ROOT / "linkage_threshold.json"
         if not path.exists():
-            pytest.skip("no fitted linkage threshold — run `make calibrate-linkage`")
+            pytest.skip("no fitted linkage threshold - run `make calibrate-linkage`")
         return json.loads(path.read_text())
 
     def _band(self):
@@ -298,10 +298,10 @@ class TestLinkageThresholdMatchesItsCalibration:
 
         path = MODEL_ROOT / "face_match_band.json"
         if not path.exists():
-            pytest.skip("no calibrated band on disk — run `make calibrate-face`")
+            pytest.skip("no calibrated band on disk - run `make calibrate-face`")
         band = json.loads(path.read_text())
         if "far_0.1pct_threshold" not in band:
-            pytest.skip("band was not fitted on LFW — run `make calibrate-face --apply`")
+            pytest.skip("band was not fitted on LFW - run `make calibrate-face --apply`")
         return band
 
     def test_same_person_equals_the_identification_point_it_documents(self):

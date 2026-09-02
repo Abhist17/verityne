@@ -126,7 +126,7 @@ class TestFaceLinkageIsASearchNotAPair:
     per-applicant false-link probability of 1-(1-p)^N, so the error compounds
     with the size of the database rather than staying where the pair fit put it.
 
-    The threshold shipped at 0.5198 — LFW's FAR=0.1% verification point, itself
+    The threshold shipped at 0.5198 - LFW's FAR=0.1% verification point, itself
     two impostor pairs out of 3,000. Driven live, a genuine corpus packet
     false-linked to five unrelated strangers and `max(fusion, linkage)` turned
     that into a REJECT at 0.95, overruling five detectors that read it clean.

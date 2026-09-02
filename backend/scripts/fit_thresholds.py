@@ -3,8 +3,8 @@
 
 The shipped 0.40 and 0.75 were inherited from the *leaked* model, whose scores
 separated the classes far more widely. On the corrected model they sit in the
-wrong places — REJECT catches 40.7% of fraud and REVIEW sends 43.1% of genuine
-merchants to a human — and the README has been carrying that as a stated defect.
+wrong places - REJECT catches 40.7% of fraud and REVIEW sends 43.1% of genuine
+merchants to a human - and the README has been carrying that as a stated defect.
 
 Re-tuning them on the held-out split would be the same error this project has
 spent its README documenting: a model graded on its own answer sheet. So the
@@ -21,8 +21,8 @@ out-of-fold predictions:
 no threshold that is correct in the abstract: rejecting more fraud always costs
 more genuine merchants, and which trade is right depends on what a fraud costs
 and what a merchant is worth. So it maximises expected net benefit under the
-merchant's own policy inputs — `avg_fraud_loss_inr`, `merchant_ltv_inr`,
-`false_reject_abandon_prob` and a base rate — which are the same assumptions the
+merchant's own policy inputs - `avg_fraud_loss_inr`, `merchant_ltv_inr`,
+`false_reject_abandon_prob` and a base rate - which are the same assumptions the
 cost curve on the metrics page exposes as sliders. Change the assumptions and the
 threshold moves, which is the honest behaviour.
 
@@ -65,8 +65,8 @@ def out_of_fold(X: np.ndarray, y: np.ndarray, folds: int, seed: int,
                 groups: np.ndarray | None = None) -> np.ndarray:
     """Score every training row with a model that never saw it.
 
-    Refitting the *whole* pipeline per fold — estimator and Platt calibrator
-    together — matters here. Calibrating on predictions the calibrator's own
+    Refitting the *whole* pipeline per fold - estimator and Platt calibrator
+    together - matters here. Calibrating on predictions the calibrator's own
     training rows produced would pull the score distribution toward the labels,
     and it is the distribution these thresholds are read off.
 
@@ -75,7 +75,7 @@ def out_of_fold(X: np.ndarray, y: np.ndarray, folds: int, seed: int,
     contributes several packets; fold on rows and a model scores an identity it
     has already been fitted on, which is memorisation reported as generalisation.
     The held-out split was built identity-disjoint precisely for that reason, and
-    a threshold chosen on row-wise folds does not survive the difference — see
+    a threshold chosen on row-wise folds does not survive the difference - see
     `naive_comparison` in the report this writes.
     """
     from sklearn.linear_model import LogisticRegression
@@ -157,7 +157,7 @@ def main() -> None:
     train = [r for r in rows if r.get("split") == "train"]
     test = [r for r in rows if r.get("split") == "test"]
     if not train:
-        raise SystemExit("no training rows in eval/scores.json — run `make score` first")
+        raise SystemExit("no training rows in eval/scores.json - run `make score` first")
 
     # Identity, joined from the corpus manifest. Several packets per identity, so
     # folding on rows would let a model score a face it was fitted on.
@@ -171,7 +171,7 @@ def main() -> None:
     groups = np.array([identities.get(r["id"], -1) for r in train])
     have_groups = (groups >= 0).all() and len(set(groups.tolist())) > args.folds
     if not have_groups:
-        log.warning("no usable identity grouping in the manifest — folds will be row-wise, "
+        log.warning("no usable identity grouping in the manifest - folds will be row-wise, "
                     "and the false-positive rate they report will be optimistic")
 
     Xtr, ytr, _ = build_matrix(train)
@@ -262,7 +262,7 @@ def main() -> None:
             "why": (
                 "The threshold was chosen to hold a false-positive rate of "
                 f"{oof_fpr:.1%} and produces {out_fpr:.1%} on a split it was not chosen on"
-                + (f" — {ratio}x optimistic. " if ratio else ". ")
+                + (f" - {ratio}x optimistic. " if ratio else ". ")
                 + "195 rows cannot resolve an operating point that transfers: "
                   "cross-validation re-uses the same small pool of genuine faces, and the "
                   "score distribution shifts the moment the faces are new. Fitting on the "
@@ -303,8 +303,8 @@ def main() -> None:
         "recommendation": (
             "Do not deploy these as fixed constants. The selection procedure is sound and the "
             "corpus is too small for it: the chosen point's false-positive rate does not "
-            "survive a split it was not chosen on. What ships instead is the cost curve — "
-            "GET /metrics/cost-curve and the sliders on the metrics page — where an operator "
+            "survive a split it was not chosen on. What ships instead is the cost curve - "
+            "GET /metrics/cost-curve and the sliders on the metrics page - where an operator "
             "sets the point from their own fraud loss, merchant value and abandonment. This "
             "file is the evidence for why that is a design decision rather than an omission."
         ),

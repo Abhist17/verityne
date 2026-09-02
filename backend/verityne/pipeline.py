@@ -46,7 +46,7 @@ _BACKGROUND_TASKS: set[asyncio.Task] = set()
 def linkage_review_ceiling(policy: MerchantPolicy) -> float:
     """The highest risk a probabilistic linkage hit may contribute on its own.
 
-    Now one instance of a general rule — see `fusion.uncorroborated_ceiling`,
+    Now one instance of a general rule - see `fusion.uncorroborated_ceiling`,
     which the behavioral channel shares. Kept as a name because the linkage
     reasoning that produced it is specific and worth being able to point at: a
     face match is a similarity search over every prior record, and its
@@ -157,7 +157,7 @@ async def run_pipeline(
     # A byte-identical asset is a fact: two files share a SHA-256 or they do not,
     # so it may carry a rejection by itself. A face match is a similarity search
     # over every prior record, and its false-accept rate compounds with database
-    # size — at the threshold this repo shipped, a genuine applicant false-linked
+    # size - at the threshold this repo shipped, a genuine applicant false-linked
     # to a stranger 97% of the time against a full 5,000-record scan. A claim with
     # that error profile must not be able to reject anyone on its own, so it is
     # capped below the reject threshold and lands in a human's queue instead.

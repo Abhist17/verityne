@@ -1,4 +1,4 @@
-"""Detector 6 — behavioral biometrics.
+"""Detector 6 - behavioral biometrics.
 
 The tests that matter here are the *asymmetric* ones. Missing this detector's
 signal on a fraud kit costs one caught fraud; firing it on a nervous human costs
@@ -327,7 +327,7 @@ class TestCollectorContract:
     """
 
     def collector_buffer(self, seed: int = 0) -> dict:
-        """Exactly what snapshot() produces — redacted keys, raw offset, {w,h}.
+        """Exactly what snapshot() produces - redacted keys, raw offset, {w,h}.
 
         Timings carry human variance rather than a fixed step: a metronomic
         fixture is one the detector is *supposed* to flag, so building the

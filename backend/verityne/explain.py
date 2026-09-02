@@ -198,7 +198,7 @@ def narrate(
             " Behavioral biometrics scored this fill "
             f"{behav.score:.0%} anomalous"
             + (f" over {seen} captured interaction events" if seen else "")
-            + " — that signal is about the person at the keyboard, not the files they uploaded."
+            + " - that signal is about the person at the keyboard, not the files they uploaded."
         )
     elif behav is not None and behav.status == "skipped":
         extra += (

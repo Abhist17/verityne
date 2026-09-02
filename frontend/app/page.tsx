@@ -14,11 +14,11 @@ import { ScoreField } from "@/components/ScoreField";
  * The order is deliberate. The detectors come second, not first, because a
  * detector list is the part every submission in this category has. What is rare
  * is the audit, so the audit is the middle of the page and the largest block on
- * it — including the three findings that are still open.
+ * it - including the three findings that are still open.
  */
 
 export const metadata = {
-  title: "Verityne — Deepfake-aware KYC verification",
+  title: "Verityne - Deepfake-aware KYC verification",
 };
 
 const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
@@ -44,20 +44,20 @@ export default function LandingPage() {
       {/* ---------------------------------------------------------------- hero
           Full-bleed, and closed by a full-bleed accent hairline.
 
-          The bleed used to be here to carry a darker ground than the app's — the
+          The bleed used to be here to carry a darker ground than the app's - the
           app sat at #0a0a0c and the hero dropped to black. The whole interface
           is black now, so there is no value step left to make; what the bleed
           still buys is the rule at the bottom, which has to run edge to edge or
           it reads as the underline of a column rather than the end of a band.
 
-          `-mx-6` would only cancel the container padding — the page is capped at
+          `-mx-6` would only cancel the container padding - the page is capped at
           1180px with auto margins, so the band would stop short and float. This
           breaks out to the viewport and re-centres its own content. */}
       <section className="relative left-1/2 w-screen -translate-x-1/2 border-b border-accent/60">
         <div className="mx-auto w-full max-w-[1180px] px-6 pb-16 pt-10 wide:pt-14">
         {/* The line above the headline. The corrections count that used to sit
             here is now the announcement strip at the top of every page, which is
-            where it belongs — it was the site's one standing claim and it was
+            where it belongs - it was the site's one standing claim and it was
             only visible on the home page. This says instead what is behind the
             headline, so a reader arrives at the claim already knowing there is a
             report under it. */}
@@ -73,7 +73,7 @@ export default function LandingPage() {
         </Link>
 
         {/* 19ch, not 17. The measure is in `ch`, which is the advance of "0" in
-            the *current* font — and the current font is now a monospace with a
+            the *current* font - and the current font is now a monospace with a
             wider advance than the one this was set against, so "Every vendor
             shows" no longer fit the line the explicit <br /> promises it. The
             break is authored, so the box has to be wide enough to honour it. */}
@@ -86,7 +86,7 @@ export default function LandingPage() {
 
         <p className="mt-8 max-w-[54ch] text-sm leading-relaxed text-slate-400">
           Six independent detectors, a calibrated fusion layer, and a human-readable explanation
-          behind every verdict — built on the assumption that the attacker has Stable Diffusion and
+          behind every verdict - built on the assumption that the attacker has Stable Diffusion and
           DeepFaceLab on their laptop.
         </p>
 
@@ -118,7 +118,7 @@ export default function LandingPage() {
         <div className="mt-14 grid gap-10 wide:grid-cols-[minmax(0,1fr)_20rem] wide:items-end">
           <ScoreField cells={cells} />
           <p className="max-w-[34ch] text-xs leading-relaxed text-slate-500">
-            Every held-out packet this system has scored. The two classes are not two blocks — they
+            Every held-out packet this system has scored. The two classes are not two blocks - they
             interleave through the middle, and that band is every case where a genuine merchant and
             a fraudulent one look the same to the model.
             <span className="mt-3 block text-slate-600">
@@ -133,12 +133,12 @@ export default function LandingPage() {
           {[
             ["Held-out ROC-AUC", h.fusionAuc?.toFixed(3), "identity-disjoint split; was 0.913 before an ablation found the leak"],
             ["Detector 6", h.behavioral?.auc?.toFixed(3), "keystroke rhythm, fitted on 168,595 real people"],
-            ["Findings still open", h.corrections ? String(h.corrections.open) : null, "published, not buried — including one that is severe"],
-            ["Worst third-party fake", h.realFaces?.worstAuc?.toFixed(3), `${h.realFaces?.worstFamily ?? "—"} — below chance means inverted`],
+            ["Findings still open", h.corrections ? String(h.corrections.open) : null, "published, not buried - including one that is severe"],
+            ["Worst third-party fake", h.realFaces?.worstAuc?.toFixed(3), `${h.realFaces?.worstFamily ?? "-"} - below chance means inverted`],
           ].map(([label, value, sub]) => (
             <div key={label as string}>
               <dt className="label">{label}</dt>
-              <dd className="stat mt-2">{value ?? "—"}</dd>
+              <dd className="stat mt-2">{value ?? "-"}</dd>
               <dd className="mt-1.5 max-w-[30ch] text-2xs leading-relaxed text-slate-600">{sub}</dd>
             </div>
           ))}
@@ -160,7 +160,7 @@ export default function LandingPage() {
           <p className="max-w-[58ch] text-sm leading-relaxed text-slate-500">
             Every fake merchant that gets through becomes chargeback losses, laundering exposure,
             and a regulatory problem for the platform that onboarded them. The detector is the easy
-            half. Knowing what it is worth — and where it is blind — is the half nobody ships.
+            half. Knowing what it is worth - and where it is blind - is the half nobody ships.
           </p>
         </div>
       </section>
@@ -171,11 +171,11 @@ export default function LandingPage() {
         <div className="mt-6">
           {[
             ["Selfie deepfake", "A pretrained transformer and a fitted frequency head, voting. Grad-CAM shows which pixels drove the call."],
-            ["ID forensics", "OCR with confusion repair, then structural validation — a PAN's 4th character is a holder-type code, Aadhaar carries a Verhoeff digit."],
+            ["ID forensics", "OCR with confusion repair, then structural validation - a PAN's 4th character is a holder-type code, Aadhaar carries a Verhoeff digit."],
             ["Liveness video", "Identity drift between frames, head-pose jitter, and optical-flow discontinuity at splice boundaries."],
             ["Face match", "512-d FaceNet embeddings, selfie against the portrait on the card. The threshold is fitted on LFW's 6,000 real pairs."],
             ["Metadata / EXIF", "Generator tags, editor software, capture-to-submission age, and whether a file carries the detail its resolution claims."],
-            ["Behavioral biometrics", "Not an artifact at all — how the form was filled. Keystroke rhythm, pointer path, device coherence."],
+            ["Behavioral biometrics", "Not an artifact at all - how the form was filled. Keystroke rhythm, pointer path, device coherence."],
           ].map(([name, what], i) => (
             <div key={name} className="flex gap-5 border-t border-edge/60 py-3.5 wide:gap-8">
               <span className="num w-6 shrink-0 pt-0.5 text-2xs text-slate-700">
@@ -187,7 +187,7 @@ export default function LandingPage() {
           ))}
         </div>
         <p className="mt-5 max-w-[68ch] text-xs leading-relaxed text-slate-500">
-          The first five read the files. The sixth reads the person — and it is the only one whose
+          The first five read the files. The sixth reads the person - and it is the only one whose
           adversary is not on a release cycle. Detectors 1&ndash;5 degrade every time a better
           generator ships; defeating Detector 6 needs a rig that reproduces human motor timing.
         </p>
@@ -199,7 +199,7 @@ export default function LandingPage() {
         <p className="mt-6 max-w-[66ch] text-sm leading-relaxed text-slate-400">
           Any vendor can show you a curve. The question a fraud team actually needs answered is
           where it fails and how you would know. So this project keeps a published list, generated
-          from the evidence files each entry cites — a correction that claims a number no report
+          from the evidence files each entry cites - a correction that claims a number no report
           contains fails the build.
         </p>
 
@@ -224,10 +224,10 @@ export default function LandingPage() {
                   r.before !== undefined && r.after !== undefined
                     ? `${fmt(r.before)} → ${fmt(r.after)}`
                     : r.series?.length
-                    ? `${fmt(Math.min(...r.series.map((s) => s.value)))} – ${fmt(
+                    ? `${fmt(Math.min(...r.series.map((s) => s.value)))} - ${fmt(
                         Math.max(...r.series.map((s) => s.value))
                       )}`
-                    : "—";
+                    : "-";
                 return (
                   <tr key={r.order} className="border-t border-edge/60">
                     <td className="num px-4 py-3 text-slate-700">
@@ -297,7 +297,7 @@ export default function LandingPage() {
         <div className="mt-6 grid gap-x-10 gap-y-7 sm:grid-cols-2 wide:grid-cols-3">
           {[
             ["/verify", "Verify", "Drag in a packet. Verdict, three reasons, heatmaps, and the per-detector breakdown."],
-            ["/gauntlet", "Gauntlet", "Twenty fixtures scored live through the full API path — the only place linkage runs end to end."],
+            ["/gauntlet", "Gauntlet", "Twenty fixtures scored live through the full API path - the only place linkage runs end to end."],
             ["/metrics", "Metrics", "The held-out report: ROC, per-attack recall, the ablation, and a cost curve you can drag."],
             ["/corrections", "Corrections", "The audit trail, with the evidence file and path behind every number."],
             ["/threat", "Threat Intelligence", "Fraud rings as a graph. Proven clusters and inferred ones are drawn differently."],

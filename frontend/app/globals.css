@@ -20,7 +20,7 @@ body {
 
      It used to be vertical rules only, which drew columns. Adding the
      horizontal pitch turns those columns into cells, and a cell is what makes
-     the ground read as graph paper — a surface something was plotted on — which
+     the ground read as graph paper - a surface something was plotted on - which
      is the register the whole interface is in.
 
      Painted on `body` with two repeating gradients rather than as elements, so
@@ -70,7 +70,7 @@ body {
      real work: a big heading on a black page has no baseline to sit on, so it
      floats, and a single hairline underneath anchors the whole column that
      follows. The rule carries the accent at full strength on the left and
-     decays into the page grid on the right — an underline that starts as a
+     decays into the page grid on the right - an underline that starts as a
      statement and ends as structure. */
   .page-title {
     @apply font-display text-3xl font-normal tracking-tight text-slate-50;
@@ -100,7 +100,7 @@ body {
   .rule {
     @apply border-t border-edge;
   }
-  /* A hairline that fades out at both ends — a rule that stops shouting at the
+  /* A hairline that fades out at both ends - a rule that stops shouting at the
      margins. Used to open a section without drawing a full-width line. */
   .rule-soft {
     height: 1px;
@@ -112,7 +112,7 @@ body {
   }
 
   /* --- the card, reintroduced deliberately -------------------------------
-     "There is no card" was right for a *list* — boxing every row is what made
+     "There is no card" was right for a *list* - boxing every row is what made
      the old dashboard read as dense. It was wrong for a *set*: six detectors
      described in six hairline rows have no edges, so the eye finds no unit to
      land on and the whole column greys out. A set of peers gets a box; a
@@ -133,7 +133,7 @@ body {
 
   /* --- the ordinal ---------------------------------------------------------
      A set that runs in a fixed order should say so. The numeral is set in the
-     ink ramp rather than the text ramp — it is structure, not content, and it
+     ink ramp rather than the text ramp - it is structure, not content, and it
      must never out-shout the thing it is numbering. It brightens with its card
      on hover, which is the whole of the interaction. */
   .ordinal {
@@ -152,7 +152,7 @@ body {
 
   /* --- type ----------------------------------------------------------------
      The micro-label is set in the display face, not the text face. At 10.5px a
-     bitmap monospace is on its design size — the glyphs land on whole pixels,
+     bitmap monospace is on its design size - the glyphs land on whole pixels,
      which is why these read as *stamped* on the page rather than typeset on it,
      and it is the single cheapest thing that makes the whole interface look of
      a piece with the titles. */
@@ -160,7 +160,7 @@ body {
     @apply font-display text-2xs font-normal uppercase tracking-[0.14em] text-slate-500;
   }
   /* The hero numeral. Light weight at large size reads as precision rather than
-     as shouting — a bold 58px number looks like an advert, not an instrument. */
+     as shouting - a bold 58px number looks like an advert, not an instrument. */
   .hero {
     @apply font-mono text-display font-light tabular-nums text-slate-100;
   }
@@ -182,12 +182,12 @@ body {
            focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent
            disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-transparent disabled:hover:bg-transparent;
   }
-  /* The quiet solid: white on black. HydraDB's "Talk to us" role — the second
+  /* The quiet solid: white on black. HydraDB's "Talk to us" role - the second
      action, which must still read as a button and must not read as the first. */
   .btn-primary {
     @apply btn border-edge-strong bg-ink-850 text-slate-100 hover:bg-ink-800;
   }
-  /* The one action on a page that is *the* action. Accent fill, black label —
+  /* The one action on a page that is *the* action. Accent fill, black label -
      the only place a saturated colour is allowed to be a background, which is
      what keeps it meaning "do this" everywhere it appears. */
   .btn-accent {
@@ -217,7 +217,7 @@ body {
     @apply inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium;
   }
   /* The announcement tag and the eyebrow badge: a hard accent rectangle with
-     black type in it, at micro-label size. Sharp, filled, tiny — the one piece
+     black type in it, at micro-label size. Sharp, filled, tiny - the one piece
      of chrome in the interface that is allowed to be loud, because it is one
      word long. */
   .tag {
@@ -227,7 +227,7 @@ body {
   .scroll-x {
     /* `min-w-0` is what actually makes this scroll. `overflow-x: auto` only
        clips once the box is allowed to be narrower than its content, and a grid
-       or flex child defaults to `min-width: auto` — so without this the wrapper
+       or flex child defaults to `min-width: auto` - so without this the wrapper
        grew to its table's width and pushed the document sideways instead. */
     @apply min-w-0 overflow-x-auto;
     scrollbar-width: thin;

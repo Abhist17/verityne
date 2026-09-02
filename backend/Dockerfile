@@ -16,7 +16,7 @@ COPY backend/requirements.txt backend/requirements-nodeps.txt /app/backend/
 #
 # requirements.txt pins torch with a +cu124 local tag that exists only on the
 # CUDA index, so those two lines are dropped here and the same versions come
-# from the CPU index — the same trick CI uses, for the same reason.
+# from the CPU index - the same trick CI uses, for the same reason.
 # facenet-pytorch goes last and without deps; see requirements-nodeps.txt.
 RUN pip install --no-cache-dir torch==2.6.0 torchvision==0.21.0 \
       --index-url https://download.pytorch.org/whl/cpu \

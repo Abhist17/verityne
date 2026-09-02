@@ -27,7 +27,7 @@ const POLICIES = [
 
 /** What the six detectors read, shown while the right column is otherwise empty.
  *
- *  The idle state used to be one sentence in slate-700 on a near-black ground —
+ *  The idle state used to be one sentence in slate-700 on a near-black ground -
  *  invisible in practice, and it left two thirds of the page blank at exactly
  *  the moment someone is deciding whether this thing is serious. The detectors
  *  are the answer to that, and listing what each one actually looks at is more
@@ -236,7 +236,7 @@ export default function LiveVerifyPage() {
               "w-full py-2.5 text-sm font-medium transition-colors duration-150",
               // Accent when it is armed. This used to go white-on-black when
               // ready, which was the brightest thing on the page and therefore
-              // read as the primary action — correct — but by a different rule
+              // read as the primary action - correct - but by a different rule
               // than every other primary action in the app. One rule: the thing
               // you are here to do is the accent, and nothing else is.
               hasInput && !running
@@ -272,7 +272,7 @@ export default function LiveVerifyPage() {
             </div>
           )}
 
-          {/* Camera is opt-in and collapsed by default — it was a permanently
+          {/* Camera is opt-in and collapsed by default - it was a permanently
               open panel for a check most sessions never run. */}
           <div>
             <button
@@ -347,7 +347,7 @@ export default function LiveVerifyPage() {
                     right={
                       linkage.asset_links?.some((l: any) => l.match === "exact")
                         ? undefined
-                        : "similarity only — capped at review"
+                        : "similarity only - capped at review"
                     }
                   >
                     Linkage

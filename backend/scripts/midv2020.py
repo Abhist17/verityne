@@ -4,14 +4,14 @@ What this dataset is, stated precisely
 --------------------------------------
 MIDV-2020 is 1,000 identity documents across ten types (Albanian, Azeri,
 Spanish, Estonian, Finnish, Greek, Latvian, Russian, Serbian and Slovak ID
-cards and passports). The *identities* are artificial — the names, numbers and
+cards and passports). The *identities* are artificial - the names, numbers and
 portraits were generated so the dataset could be published without exposing
 anybody's real documents. The *documents* are not: each one was physically
 printed and then photographed with a phone and scanned on a flatbed.
 
 That distinction is the whole reason this is worth ingesting. The signal our ID
-forensics detector reads — JPEG error levels, print halftone, sensor noise,
-perspective, lighting, the compression history of a region — is a property of
+forensics detector reads - JPEG error levels, print halftone, sensor noise,
+perspective, lighting, the compression history of a region - is a property of
 capture, not of whose name is on the card. Those artefacts here are genuine,
 whereas in ``scripts/idcards.py`` they are drawn by us. A detector that has only
 ever seen cards we rendered has never been asked the real question.
@@ -19,7 +19,7 @@ ever seen cards we rendered has never been asked the real question.
 What it therefore lets us measure that the synthetic corpus cannot:
 
   * the **false-positive rate of tamper detection on real, untampered
-    documents** — how often ELA flags an honest card that merely went through a
+    documents** - how often ELA flags an honest card that merely went through a
     printer, a phone camera and a JPEG encoder;
   * **tamper AUC under real capture noise**, split by photo vs scan, which is
     where the corpus is weakest (0.526 overall, and the README's honest
@@ -34,7 +34,7 @@ Annotations
 -----------
 Each document type ships a VIA-format JSON with two regions per image:
 
-  ``doc_quad``  four corners of the card within the frame — used to rectify the
+  ``doc_quad``  four corners of the card within the frame - used to rectify the
                 document out of the photo, the way an upload pipeline would;
   ``face``      the portrait's bounding box on the card.
 
@@ -62,16 +62,16 @@ DOC_TYPES = [
 
 #: Human-readable names, for report tables.
 DOC_LABELS = {
-    "alb_id": "Albania — ID card",
-    "aze_passport": "Azerbaijan — passport",
-    "esp_id": "Spain — ID card",
-    "est_id": "Estonia — ID card",
-    "fin_id": "Finland — ID card",
-    "grc_passport": "Greece — passport",
-    "lva_passport": "Latvia — passport",
-    "rus_internalpassport": "Russia — internal passport",
-    "srb_passport": "Serbia — passport",
-    "svk_id": "Slovakia — ID card",
+    "alb_id": "Albania - ID card",
+    "aze_passport": "Azerbaijan - passport",
+    "esp_id": "Spain - ID card",
+    "est_id": "Estonia - ID card",
+    "fin_id": "Finland - ID card",
+    "grc_passport": "Greece - passport",
+    "lva_passport": "Latvia - passport",
+    "rus_internalpassport": "Russia - internal passport",
+    "srb_passport": "Serbia - passport",
+    "svk_id": "Slovakia - ID card",
 }
 
 CAPTURES = ("scan", "photo")
@@ -128,7 +128,7 @@ def load_documents(root: Path, capture: str, doc_types: Sequence[str] = DOC_TYPE
         ann_path = base / "annotations" / f"{doc_type}.json"
         img_dir = base / "images" / doc_type
         if not ann_path.exists() or not img_dir.is_dir():
-            log.warning("skipping %s/%s — annotation or images missing", capture, doc_type)
+            log.warning("skipping %s/%s - annotation or images missing", capture, doc_type)
             continue
         meta = json.loads(ann_path.read_text()).get("_via_img_metadata", {})
         for entry in meta.values():
@@ -204,7 +204,7 @@ def rectify(doc: Document, rgb: np.ndarray, long_side: int = 1024) -> Tuple[np.n
 def read_rgb(path: Path, max_side: int = 2600) -> Tuple[np.ndarray, float]:
     """Read a source capture as RGB uint8, bounded so a 4032px photo stays workable.
 
-    Returns (rgb, scale) — the caller needs the scale to move the annotations,
+    Returns (rgb, scale) - the caller needs the scale to move the annotations,
     which are recorded in original-image pixels.
     """
     img = Image.open(path).convert("RGB")

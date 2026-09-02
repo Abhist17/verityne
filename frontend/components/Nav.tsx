@@ -39,11 +39,11 @@ export function Nav() {
         {/* The active tab is marked by an accent underline flush with the
             header's own border, so the panel below reads as belonging to that
             tab. The rule is drawn on the header and the marker on the link, and
-            the link's `-bottom-3` is the `py-3` on the row — the two have to
+            the link's `-bottom-3` is the `py-3` on the row - the two have to
             stay in step or the marker floats above the border it sits in. */}
         {/* Scrolls rather than overflows. Seven tabs do not fit a 390px
             viewport, and a flex row that cannot shrink pushed the document
-            233px wide — which put a horizontal scrollbar under every page on a
+            233px wide - which put a horizontal scrollbar under every page on a
             phone, not just this one. */}
         <nav className="scroll-x -mx-1 flex min-w-0 flex-1 items-center gap-5 px-1">
           {LINKS.map((l) => {
@@ -80,7 +80,7 @@ export function Nav() {
           />
           {/* The dot alone carries the status visually, which was the point. It
               carries nothing at all to a screen reader, and `title` is not an
-              accessible name — so the state is also announced in text. */}
+              accessible name - so the state is also announced in text. */}
           <span role="status" className="sr-only">
             {up ? `API online${device ? `, running on ${device}` : ""}` : "API offline"}
           </span>

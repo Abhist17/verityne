@@ -7,7 +7,7 @@
 # pip fail with ResolutionImpossible, so it is installed here without its
 # declared dependency set.
 #
-# Its actual runtime imports — numpy, Pillow, requests, torch, torchvision,
-# tqdm — are all satisfied by requirements.txt (requests via diffusers, tqdm via
+# Its actual runtime imports - numpy, Pillow, requests, torch, torchvision,
+# tqdm - are all satisfied by requirements.txt (requests via diffusers, tqdm via
 # huggingface-hub). If a future version fixes the pins, move this line back.
 facenet-pytorch==2.6.0

@@ -45,7 +45,7 @@ class FaceMatchResult(BaseModel):
     selfie_face_found: bool
     reference_face_found: bool
     margin: Optional[float] = Field(None, description="similarity - threshold. Negative means below the line.")
-    confidence: str = Field(description="strong | borderline | weak — how far the score sits from the threshold.")
+    confidence: str = Field(description="strong | borderline | weak - how far the score sits from the threshold.")
     detail: str
     latency_ms: float
 
@@ -116,7 +116,7 @@ async def face_match_live(
 
     if sim >= high:
         detail = (
-            f"Similarity {sim:.3f} is above {high:.3f} — too close for two separate photographs. "
+            f"Similarity {sim:.3f} is above {high:.3f} - too close for two separate photographs. "
             "This is what a selfie copied from the ID portrait looks like, not a live capture."
         )
     elif sim >= low:

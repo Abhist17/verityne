@@ -9,7 +9,7 @@ import type { Verdict } from "@/lib/api";
  *
  *  The title is set at 34px rather than the 19px it used to be. At 19px an <h1>
  *  is the same size as the row labels under it, so a page opened with no visible
- *  hierarchy at all — every page looked like the middle of a page. The scale
+ *  hierarchy at all - every page looked like the middle of a page. The scale
  *  already carried a `3xl` step with -0.025em on it and nothing was using it.
  *
  *  `eyebrow` is the small caps line above the title: it names the section a page
@@ -49,13 +49,13 @@ export function PageHeader({
  * One member of a numbered set: an ordinal, a name, and a line about it.
  *
  * The set this exists for is the six detectors, which were a column of hairline
- * rows — correct as data, wrong as an introduction, because a reader meeting
+ * rows - correct as data, wrong as an introduction, because a reader meeting
  * this system for the first time needs to see that there are *six separate
  * things* before reading what any one of them does. Six boxes say that at a
  * glance; six rules do not.
  *
  * Colour stays out of it. The ordinal is ink, the name is slate, the sentence is
- * slate — the palette's rule is that hue means a verdict, and a detector that
+ * slate - the palette's rule is that hue means a verdict, and a detector that
  * has not run yet has no verdict to report.
  */
 export function NumberedCard({
@@ -77,7 +77,7 @@ export function NumberedCard({
 }
 
 /** Section heading: a tiny label over a fading hairline. This is what replaced
- *  the card border — it opens a section without boxing it. */
+ *  the card border - it opens a section without boxing it. */
 export function SectionLabel({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
   return (
     <div className="mb-3 flex items-baseline gap-3">
@@ -98,7 +98,7 @@ export function SectionLabel({ children, right }: { children: React.ReactNode; r
  *  same rhythm, different type role. */
 /** The one sentence on a page that *is* the argument.
  *
- *  Used sparingly and never for a detail — if every paragraph is a callout then
+ *  Used sparingly and never for a detail - if every paragraph is a callout then
  *  none of them is. The label is what makes it work: it says what kind of claim
  *  is about to be made before the claim arrives. */
 export function Callout({
@@ -130,7 +130,7 @@ export function Section({
   return (
     // `min-w-0` is load-bearing, not tidiness. A grid or flex item defaults to
     // `min-width: auto`, so a section refuses to shrink below the intrinsic
-    // width of its widest child — and a Recharts container or an SVG graph has a
+    // width of its widest child - and a Recharts container or an SVG graph has a
     // large intrinsic width. On a phone that pushed the whole document 394px
     // wider than the viewport and put a horizontal scrollbar under every chart
     // page. The charts already scale once the box is allowed to.
@@ -138,7 +138,7 @@ export function Section({
       <div className="flex min-w-0 items-baseline gap-3">
         {/* Not `shrink-0`. Monospace runs materially wider than the sans it
             replaced, so a title like "What the headline number is made of" is
-            422px — wider than a phone — and a heading that cannot shrink took
+            422px - wider than a phone - and a heading that cannot shrink took
             the document with it. It wraps; the rule takes whatever is left. */}
         <h2 className="num min-w-0 text-sm font-normal tracking-tight text-slate-200">{title}</h2>
         <span className="rule-soft min-w-0 flex-1" />
@@ -156,7 +156,7 @@ const VERDICT_TEXT: Record<Verdict, string> = {
   REJECT: "text-reject",
 };
 
-/** No pill, no ring — just the word, in its colour, at weight. At this size the
+/** No pill, no ring - just the word, in its colour, at weight. At this size the
  *  word is the badge; a chip around it only added a rectangle to the page. */
 export function VerdictBadge({ verdict, size = "md" }: { verdict: Verdict; size?: "sm" | "md" | "lg" }) {
   const sizing =
@@ -184,7 +184,7 @@ const HEX = { pass: PASS, review: REVIEW, reject: REJECT } as const;
  * This replaced a radial dial. The dial looked like a gauge and read like an
  * ornament: an arc cannot show you *where the thresholds are* without a legend,
  * and the thresholds are the entire reason a 0.61 means something. A straight
- * line can — the bands are laid out along it, labelled, in the merchant's own
+ * line can - the bands are laid out along it, labelled, in the merchant's own
  * policy positions, so a strict policy and a lenient one visibly differ.
  */
 export function ScoreMeter({
@@ -239,7 +239,7 @@ export function ScoreMeter({
   );
 }
 
-/** A number and its name. No border, no background — the scale does the work. */
+/** A number and its name. No border, no background - the scale does the work. */
 export function StatTile({
   label,
   value,

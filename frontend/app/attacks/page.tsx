@@ -61,7 +61,7 @@ export default function AttackGalleryPage() {
           </>
         }
       >
-        Flagged submissions grouped by attack pattern. Fraud arrives in waves — one tampered PAN is noise,
+        Flagged submissions grouped by attack pattern. Fraud arrives in waves - one tampered PAN is noise,
         forty in an afternoon is a campaign, and only the grouping makes that visible.
       </PageHeader>
 
@@ -72,7 +72,7 @@ export default function AttackGalleryPage() {
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <div className="label text-accent">Live red-team result</div>
             <div className="text-xs text-slate-500">
-              generated after the model was frozen — never seen in training or evaluation
+              generated after the model was frozen - never seen in training or evaluation
             </div>
           </div>
           <div className="mt-4 grid gap-x-8 gap-y-5 md:grid-cols-3">
@@ -126,7 +126,7 @@ export default function AttackGalleryPage() {
                   </div>
                 </div>
 
-                {/* The thumbnail is the evidence, so it keeps its frame — this is
+                {/* The thumbnail is the evidence, so it keeps its frame - this is
                     the image itself, not a box drawn around a group of text. */}
                 <div className="mt-4 grid gap-x-5 gap-y-6 sm:grid-cols-2 wide:grid-cols-3 xl:grid-cols-4">
                   {g.samples.map((s: any) => (

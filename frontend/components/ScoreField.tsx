@@ -9,7 +9,7 @@ import type { PacketCell } from "@/lib/evidence";
  * gave them, coloured by what they really were. Brightness is the score.
  *
  * It is on the landing page because it makes the honest argument faster than a
- * paragraph can. The two classes are not two blocks — they interleave through
+ * paragraph can. The two classes are not two blocks - they interleave through
  * the middle, and that band is every packet where a genuine merchant and a
  * fraudulent one look the same to the model. That overlap *is* 0.753. A vendor
  * showing you a single AUC is showing you a summary of this picture and hoping

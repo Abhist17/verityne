@@ -47,7 +47,7 @@ export default function ReviewQueuePage() {
           <div className="flex gap-5">
             <div className="text-right">
               <div className="label">Pending</div>
-              <div className="stat mt-0.5 text-xl">{queue?.pending ?? "—"}</div>
+              <div className="stat mt-0.5 text-xl">{queue?.pending ?? "-"}</div>
             </div>
             {agreement?.decisions > 0 && (
               <div className="text-right">
@@ -58,8 +58,8 @@ export default function ReviewQueuePage() {
           </div>
         }
       >
-        Cases Verityne declined to decide. The evidence is already surfaced — heatmaps, reasons, detector
-        scores — so a reviewer confirms a judgement rather than starting an investigation.
+        Cases Verityne declined to decide. The evidence is already surfaced - heatmaps, reasons, detector
+        scores - so a reviewer confirms a judgement rather than starting an investigation.
       </PageHeader>
 
       {error && <ErrorBox error={error} />}
@@ -183,7 +183,7 @@ export default function ReviewQueuePage() {
                     {busy === current.submission_id && <Spinner />}
                   </div>
                   <p className="mt-2.5 text-xs leading-relaxed text-slate-600">
-                    Decisions are written to the audit log with the model&apos;s score attached — that pairing is the
+                    Decisions are written to the audit log with the model&apos;s score attached - that pairing is the
                     label source for the next retrain, and it is how analyst-vs-model agreement is measured.
                   </p>
                 </Section>

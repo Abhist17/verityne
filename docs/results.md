@@ -1,6 +1,6 @@
 [← Verityne](../README.md)
 
-> The held-out evaluation in full — including the ablation that found half the headline was a leak.
+> The held-out evaluation in full - including the ablation that found half the headline was a leak.
 
 # Results
 
@@ -26,7 +26,7 @@ At the two shipped thresholds:
 ### The thresholds, and where they came from
 
 They are **0.45** and **0.8**, and until recently they were 0.40 and
-0.75 — inherited from the leaked model, whose scores separated the classes far
+0.75 - inherited from the leaked model, whose scores separated the classes far
 more widely, and carried through the corpus fix unchanged.
 
 The reject line is not a judgement call. `GET /metrics/cost-curve`, at the same
@@ -37,7 +37,7 @@ default for a system that ships the cost model saying so. Moving takes the
 false-reject rate from 9.8% to **2.0%** and
 precision from 0.815 to **0.952**, for three points of recall.
 
-The review line the cost curve does not model — it is a capacity decision — so it
+The review line the cost curve does not model - it is a capacity decision - so it
 comes from the genuine distribution instead. 0.40 sat barely above the genuine
 median (0.357) and sent 43% of honest merchants to a human;
 0.45 sends 39% and still puts
@@ -46,11 +46,11 @@ median (0.357) and sent 43% of honest merchants to a human;
 **The caveat, because this project states them.** Both numbers are read off the
 held-out split, so they report themselves: an operating point, not a
 generalisation claim. The training split cannot supply one either, and that has
-its own measurement — `make thresholds` re-fits properly, out-of-fold,
+its own measurement - `make thresholds` re-fits properly, out-of-fold,
 identity-disjoint, never touching held-out, and the point it picks holds a
 2.0% false-positive rate in
 cross-validation and **17.6%** on data it
-was not chosen on — 8.7× optimistic. It is not fold leakage;
+was not chosen on - 8.7× optimistic. It is not fold leakage;
 every training packet carries a distinct identity. 195 genuine faces simply
 cannot resolve a threshold that survives new faces.
 
@@ -61,12 +61,12 @@ and return the whole curve; `policy.yaml` carries a different point per merchant
 because a crypto exchange and a gig marketplace do not have the same answer. The
 defaults above are a sane place to start, not a recommendation.
 
-The ranking is what the detectors earn — 0.753 — and that is the number to argue
+The ranking is what the detectors earn - 0.753 - and that is the number to argue
 with. Reports: `eval/thresholds.json`, `eval/metrics.json`.
 
 ### Per detector
 
-`auc_on_target_attacks` is the number that matters — a detector is not supposed
+`auc_on_target_attacks` is the number that matters - a detector is not supposed
 to catch attacks aimed at a different part of the packet.
 
 | Detector | AUC (all) | AUC (target attacks) | Coverage | Errors |
@@ -88,7 +88,7 @@ on the corrected corpus.
 
 | Detector muted | Held-out AUC | Change | Share of the model's above-chance AUC |
 | --- | --- | --- | --- |
-| *(none — full model)* | 0.913 | | |
+| *(none - full model)* | 0.913 | | |
 | Metadata / EXIF | **0.709** | **−0.204** | **49.5%** |
 | Face match | 0.858 | −0.055 | 13.3% |
 | ID forensics | 0.903 | −0.010 | 2.5% |
@@ -97,7 +97,7 @@ on the corrected corpus.
 
 Two things fall out of that table, and neither is comfortable.
 
-**Half of the headline rests on one detector — and that detector was reading a
+**Half of the headline rests on one detector - and that detector was reading a
 label this project wrote into the file.** `build_dataset.py` chose an EXIF mode
 per packet, and the choice was conditioned on the label in a way that left three
 modes appearing on fraudulent packets and never on genuine ones:
@@ -111,7 +111,7 @@ modes appearing on fraudulent packets and never on genuine ones:
 | `edited` | **0** | 16 | **1.00** |
 | `generated` | **0** | 10 | **1.00** |
 
-52 of 150 fraudulent packets — 17.3% of the corpus — carried a mode that is
+52 of 150 fraudulent packets - 17.3% of the corpus - carried a mode that is
 a fraud label in disguise. A detector reading `Software: GIMP 2.10` out of those
 files is not detecting fraud; it is reading an answer key, at 100% precision, for
 free. That is why `metadata_exif` scores `auc_on_target_attacks` of exactly
@@ -120,14 +120,14 @@ free. That is why `metadata_exif` scores `auc_on_target_attacks` of exactly
 The irony is on the record. `pick_exif_mode` carries a docstring explaining that
 EXIF is mixed across classes on purpose, "if the corpus made EXIF a perfect class
 signal the metadata detector would look superhuman and the fusion model would
-learn nothing real" — and the function immediately below it does exactly that.
+learn nothing real" - and the function immediately below it does exactly that.
 The guard was written for EXIF *presence*, which is genuinely well mixed
 (`none`: 20% of genuine, 24% of fraud). The leak is in EXIF *content*, which
 nobody checked.
 
 **Second: the two neural detectors are worth less than nothing.** Muting the
 selfie deepfake CNN *raises* held-out AUC by 0.016, and muting the liveness
-analyser raises it by 0.013. Fusion had already noticed — the fitted weight on
+analyser raises it by 0.013. Fusion had already noticed - the fitted weight on
 `selfie_deepfake_score` is −0.044, effectively zero, against +1.671 on
 `metadata_exif_score`. The system marketed on deepfake detection was, on this
 corpus, a metadata reader with a CNN bolted to the side as ballast.
@@ -161,7 +161,7 @@ approximating it.
 
 | Detector muted | Leaked corpus | Corrected corpus |
 | --- | --- | --- |
-| *(none — full model)* | 0.913 | **0.753** |
+| *(none - full model)* | 0.913 | **0.753** |
 | Metadata / EXIF | 0.709 (+49.5%) | 0.603 (+59.2%) |
 | Face match | 0.858 (+13.3%) | 0.639 (+45.0%) |
 | Selfie deepfake | 0.929 (-3.8%) | 0.726 (+10.6%) |
@@ -180,25 +180,25 @@ detectors matter**, which no aggregate could have shown:
   held-out AUC by 0.016; it now costs 0.027, 10.6% of the model's
   above-chance performance. The signal was there the whole time, drowned out by
   a feature that was cheating. Fusion's coefficient on `selfie_deepfake_score`
-  moved from -0.044 — a model actively discounting it — to +0.133, while the
+  moved from -0.044 - a model actively discounting it - to +0.133, while the
   weight on `metadata_exif_score` fell from +1.671 to +0.445 and
   `face_match_score` became the largest at +1.147.
 - **ID forensics went the other way.** It was worth +2.5% before and now
   costs **0.074 AUC** (-29.3%): the model is measurably better with it
   muted. On the real-document track it also scores at chance and its tamper
-  check never fires ([§2](real-data.md#2-tamper-detection-on-real-documents--the-check-does-not-fire-at-all)).
+  check never fires ([§2](real-data.md#2-tamper-detection-on-real-documents---the-check-does-not-fire-at-all)).
   Two independent measurements now say the same thing about it.
 - **Liveness video remains worth nothing** (+0.1%, three ten-thousandths of
-  AUC — the closest to exactly zero any of the five gets), which is expected and
+  AUC - the closest to exactly zero any of the five gets), which is expected and
   stated elsewhere: the corpus animates its clips from stills, so there is no
   genuine camera motion for a temporal detector to read.
 - **Metadata / EXIF is still the largest single contributor**, and its share of
-  above-chance AUC actually *rose*, from 49.5% to 59.2% — because the
+  above-chance AUC actually *rose*, from 49.5% to 59.2% - because the
   model it is a share of got much smaller. In absolute terms its contribution
   fell from 0.204 to 0.150 AUC. It did not collapse to chance, and it
   should not have: stripped EXIF and forged timestamps are real signals, and the
-  detector also carries the image-provenance check — whether a file's actual
-  detail matches the resolution it claims — which never depended on the leak.
+  detector also carries the image-provenance check - whether a file's actual
+  detail matches the resolution it claims - which never depended on the leak.
 
 Those two detectors are reported, not deleted. "We removed the detectors that
 did not work" and "we ship six detectors" cannot both be on the same slide, and
@@ -223,7 +223,7 @@ as such on the Metrics page rather than suppressed.
 | `impersonation` | 7 | 86% | 86% | 0.919 |
 | `generated_selfie` | 6 | 100% | 100% | 0.997 |
 
-Diffusion-generated selfies remain solved (0.997) — a frequency-domain
+Diffusion-generated selfies remain solved (0.997) - a frequency-domain
 head reads upsampling artefacts reliably, and that result survived the corpus
 fix intact. Almost nothing else did.
 
@@ -236,18 +236,18 @@ measurements, one cause, and it is the largest untested surface in the project.
 
 `tampered_document` sits at 0.599 here, on documents we drew ourselves. The
 next section stops doing that and measures the same check on documents somebody
-else printed, photographed and scanned — where it turns out not to fire at all.
+else printed, photographed and scanned - where it turns out not to fire at all.
 
 > **On these numbers being different from a previous run.** They are. The whole
-> pipeline was rebuilt after the EXIF leak was found — new corpus, refitted
-> heads, the LFW threshold re-applied, everything rescored — so every figure in
+> pipeline was rebuilt after the EXIF leak was found - new corpus, refitted
+> heads, the LFW threshold re-applied, everything rescored - so every figure in
 > this section moved, and the ones that moved most are the ones the leak had
 > been propping up. The earlier run is not preserved as a comparison because it
 > was measuring a corpus that gave the answer away; the one figure worth keeping
 > from it is in [The corrected corpus](#the-corrected-corpus).
 >
 > An earlier discrepancy-chase, before any of this, turned up a real
-> thread-safety bug, which is fixed — see
+> thread-safety bug, which is fixed - see
 > [Concurrency](#a-thread-safety-bug-the-real-data-work-uncovered) below.
 
 ### Split by capture mode
@@ -287,7 +287,7 @@ Re-running the pipeline to regenerate these numbers exposed a defect that had
 been there the whole time and that no test would have caught.
 
 `scripts/score_corpus.py` scores several packets at once, and `pipeline.py` runs
-stage one concurrently for every live `POST /verify` — both by design, because
+stage one concurrently for every live `POST /verify` - both by design, because
 torch and OpenCV release the GIL. But the models underneath are **`lru_cache`
 singletons**: one `DeepfakeClassifier`, one `FaceEmbedder`, one EasyOCR
 `Reader`, one MTCNN. The existing lock guarded only their *construction*. Every
@@ -298,40 +298,40 @@ It failed three different ways, which is why it went unnoticed:
 
 | Symptom | Frequency observed |
 | --- | --- |
-| Process aborts — `double free or corruption`, `corrupted size vs. prev_size` | 2 of 4 full corpus runs, at both 2 and 4 workers |
+| Process aborts - `double free or corruption`, `corrupted size vs. prev_size` | 2 of 4 full corpus runs, at both 2 and 4 workers |
 | A detector throws, degrades to `status="error"`, and contributes score 0.0 / confidence 0.0 | 1 packet per run |
 | Slightly different numeric output for the same input | 3 packets per run |
 
 The silent one is the worst. `Detector.run` catches everything so a broken
-detector cannot take down a verdict — correct behaviour in production, but here
+detector cannot take down a verdict - correct behaviour in production, but here
 it meant a packet quietly entered the fusion *training set* with a zeroed
 liveness feature. That is what made `liveness_video_conf` swing between −0.18
 and −0.64 across runs whose held-out detector AUCs were identical to the last
 digit. A crash announces itself; this corrupted a coefficient and said nothing.
 
-The fix is a lock per model object, held across each forward pass — in
+The fix is a lock per model object, held across each forward pass - in
 `detectors/models.py`, `utils/ocr.py` and `utils/images.py`. Per model rather
 than one global lock on purpose: serialising a single model's forward passes is
 what fixes the crash, while OCR, face embedding and the deepfake head still
-overlap, which is where the concurrency actually pays. It is not a slowdown — the two
+overlap, which is where the concurrency actually pays. It is not a slowdown - the two
 locked 4-worker runs scored the corpus in 811 s and 754 s, against 896 s for the
 unlocked 2-worker run that managed to finish. Threads thrashing one CUDA context
 were never buying throughput.
 
 Verified afterwards: two full 4-worker runs, no aborts, no error rows, and
-**1,500 of 1,500 detector outputs identical** between them — which is also the
+**1,500 of 1,500 detector outputs identical** between them - which is also the
 first time this pipeline has been shown to be reproducible rather than assumed
 to be.
 
 The lesson generalises past this repo. The bug lived in the gap between "the
-tests pass" and "the numbers reproduce" — the suite is deterministic and
+tests pass" and "the numbers reproduce" - the suite is deterministic and
 single-threaded, so it was green throughout. What caught it was regenerating a
 result and asking why a coefficient had moved.
 
 ### Bias audit
 
 Bucketed by ITA° computed from selfie pixels. **This is a harness, not a
-conclusion** — see the limitations below.
+conclusion** - see the limitations below.
 
 | Bucket | n | AUC | False reject | False accept |
 | --- | --- | --- | --- | --- |
@@ -340,11 +340,11 @@ conclusion** — see the limitations below.
 | intermediate | 11 | 0.700 | 0.0% | 60.0% |
 | light | 11 | 0.750 | 0.0% | 85.7% |
 | tan | 23 | 0.804 | 16.7% | 58.8% |
-| unknown | 1 | — | — | — |
+| unknown | 1 | - | - | - |
 | very_light | 7 | 0.300 | 20.0% | 100.0% |
 
 ---
 
 ---
 
-[← Verityne](../README.md) — [Architecture](architecture.md) · [Corrections](corrections.md) · **Results** · [Measured on real data](real-data.md) · [Detector 6](behavioral.md) · [Fusion & policy](fusion.md) · [What it proves](evaluation.md) · [API & config](api.md)
+[← Verityne](../README.md) - [Architecture](architecture.md) · [Corrections](corrections.md) · **Results** · [Measured on real data](real-data.md) · [Detector 6](behavioral.md) · [Fusion & policy](fusion.md) · [What it proves](evaluation.md) · [API & config](api.md)

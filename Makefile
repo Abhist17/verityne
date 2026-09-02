@@ -1,4 +1,4 @@
-# Verityne — one-command workflows.
+# Verityne - one-command workflows.
 #
 #   make setup      install everything (backend venv + frontend deps)
 #   make pipeline   build the corpus, calibrate, score, train, evaluate
@@ -57,7 +57,7 @@ ablate: ## what each detector is worth, and whether the corpus leaks its labels
 	$(PY) backend/scripts/ablate_fusion.py
 
 pipeline: dataset benchmark calibrate score train evaluate ablate ## the whole data + model pipeline
-	@echo "pipeline complete — see eval/metrics.json and eval/ablation.json"
+	@echo "pipeline complete - see eval/metrics.json and eval/ablation.json"
 
 # ---------------------------------------------------------------- real data
 # The synthetic corpus measures separability on data we generated. These targets
@@ -71,7 +71,7 @@ data-real: ## download the public real datasets (LFW ~233 MB; MIDV-2020 must be 
 	@echo
 	@echo "The Indian-faces shard (~430 MB) is fetched on demand by \`make indian-faces\`."
 	@echo
-	@echo "MIDV-2020 is not scriptable — it has no stable direct link. Fetch scan_upright.tar"
+	@echo "MIDV-2020 is not scriptable - it has no stable direct link. Fetch scan_upright.tar"
 	@echo "and photo.tar from ftp://smartengines.com/midv-2020/ into datasets/midv2020/, then:"
 	@echo "  mkdir -p datasets/midv2020/scan datasets/midv2020/photo"
 	@echo "  tar -xf datasets/midv2020/scan_upright.tar -C datasets/midv2020/scan"
@@ -107,7 +107,7 @@ indian-faces: ## is the selfie detector reading demography? real Indian faces vs
 	$(PY) backend/scripts/evaluate_indian_faces.py --n $(or $(N),300) --shards $(or $(SHARDS),1)
 
 real: calibrate-face calibrate-linkage real-docs eval-real-docs eval-real-faces indian-faces ## the real-data track that needs no gated access
-	@echo "real-data track complete — see eval/face_match_lfw.json, eval/real_docs.json"
+	@echo "real-data track complete - see eval/face_match_lfw.json, eval/real_docs.json"
 	@echo "and eval/indian_faces.json, eval/linkage_lfw.json"
 
 # ---------------------------------------------------------------- detector 6

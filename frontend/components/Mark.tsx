@@ -3,7 +3,7 @@
  *
  * It replaced a shield-with-a-tick, which was the stock icon for anything
  * security-adjacent and said nothing this product does. This is a bitmap letter
- * on the same lattice as the display face and the page grid — at 18px the
+ * on the same lattice as the display face and the page grid - at 18px the
  * blocks land on device pixels, so it stays sharp where a stroked path goes
  * soft, and it is the one mark that could not have come from an icon set.
  *
@@ -11,7 +11,7 @@
  * resolves the shape as a V rather than as six loose squares.
  */
 export function Mark({ className = "h-[18px] w-[18px]" }: { className?: string }) {
-  // column, row — a 6x5 lattice, drawn bottom-heavy so the point reads.
+  // column, row - a 6x5 lattice, drawn bottom-heavy so the point reads.
   const arms: [number, number][] = [
     [0, 0], [5, 0],
     [0, 1], [5, 1],

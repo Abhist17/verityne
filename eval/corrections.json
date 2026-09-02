@@ -126,7 +126,7 @@
           "path": "operating_points.far_1pct.tar"
         }
       ],
-      "readme": "docs/real-data.md#1-face-identity-on-lfw--and-two-thresholds-that-were-badly-wrong",
+      "readme": "docs/real-data.md#1-face-identity-on-lfw---and-two-thresholds-that-were-badly-wrong",
       "order": 4
     },
     {

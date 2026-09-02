@@ -7,7 +7,7 @@ import { api, FaceMatchResult } from "@/lib/api";
  * Webcam capture, matched live against a document portrait.
  *
  * The camera stream never leaves the browser. Each poll grabs one frame from a
- * hidden <canvas>, posts it as a JPEG, and drops it — the endpoint holds nothing
+ * hidden <canvas>, posts it as a JPEG, and drops it - the endpoint holds nothing
  * on disk either. What the user sees is the similarity score moving in real time
  * against a threshold that was fitted on LFW rather than picked by hand.
  */
@@ -202,7 +202,7 @@ export function LiveFaceMatch({ reference }: { reference: File | null }) {
       {result?.detail && <p className="text-xs leading-relaxed text-slate-400">{result.detail}</p>}
       {band && (
         <p className="text-2xs leading-relaxed text-slate-600">
-          Identity threshold {band.low.toFixed(3)} — {band.fitted_on}
+          Identity threshold {band.low.toFixed(3)} - {band.fitted_on}
         </p>
       )}
       {error && (

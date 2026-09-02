@@ -11,8 +11,8 @@ once the data lands.
 
 What this measures that ``eval/metrics.json`` does not
 -----------------------------------------------------
-The liveness row in the held-out report — 0.604 AUC overall, 0.560 on the
-attacks it targets — was measured on clips animated from a still photograph by
+The liveness row in the held-out report - 0.604 AUC overall, 0.560 on the
+attacks it targets - was measured on clips animated from a still photograph by
 ``scripts/videos.py``. Its own README entry says so, and calls replacing them the
 highest-value upgrade available. Those clips have no camera motion, no encoder
 artefacts and no face-swap that anybody outside this repository produced. This
@@ -22,7 +22,7 @@ recorded video from face-swaps made by other people's tooling?
 The temporal signals are the ones with the most to gain and the most to lose.
 Identity drift, pose jitter and optical-flow discontinuity are all *motion*
 signals, and there is no genuine camera motion anywhere in the synthetic corpus.
-They may work far better here — or turn out to have been reading the animation
+They may work far better here - or turn out to have been reading the animation
 procedure. Both outcomes are worth knowing, and both are reported: each temporal
 signal is scored on its own alongside the detector's combined score, so a
 detector that is right for the wrong reason is visible.
@@ -30,7 +30,7 @@ detector that is right for the wrong reason is visible.
 Per-method reporting
 --------------------
 FaceForensics++ labels which manipulation produced each fake, and they are not
-equally hard — NeuralTextures and FaceShifter are consistently harder than
+equally hard - NeuralTextures and FaceShifter are consistently harder than
 Deepfakes and FaceSwap. Each method is scored against the full pristine pool and
 reported separately, worst first, the same way ``eval/metrics.json`` reports per
 attack type. An aggregate over five methods of differing difficulty describes
@@ -110,7 +110,7 @@ def main() -> None:
     if args.per_class:
         clips = balance(clips, args.per_class, seed=args.seed)
     if not clips:
-        raise SystemExit("no clips resolved — check --data")
+        raise SystemExit("no clips resolved - check --data")
 
     n_real = sum(1 for c in clips if c.label == 0)
     log.info("scoring %d clips (%d pristine, %d manipulated)", len(clips), n_real, len(clips) - n_real)
@@ -146,7 +146,7 @@ def main() -> None:
 
     ok = [r for r in rows if r["status"] == "ok"]
     if not ok:
-        raise SystemExit("every clip errored — check that OpenCV can decode this dataset")
+        raise SystemExit("every clip errored - check that OpenCV can decode this dataset")
     y = np.asarray([r["y"] for r in ok])
     score = np.asarray([r["score"] for r in ok])
 
@@ -194,7 +194,7 @@ def main() -> None:
                        "(identity_drift, pose_jitter, flow_spike_ratio, frame_mean, frame_p90) "
                        "should sit above 0.5. Signals that rise on a genuine clip "
                        "(face_detection_rate, min_consecutive_identity_similarity) should sit "
-                       "below it — for those, 0.5 is the failure, not the floor.",
+                       "below it - for those, 0.5 is the failure, not the floor.",
         },
         "by_method": by_method,
         "comparison": {
@@ -218,7 +218,7 @@ def main() -> None:
     out_path.write_text(json.dumps(report, indent=2))
     log.info("wrote %s", out_path)
 
-    print(f"\n{report['dataset']} — {report['n_scored']} clips "
+    print(f"\n{report['dataset']} - {report['n_scored']} clips "
           f"({report['n_pristine']} pristine, {report['n_manipulated']} manipulated)")
     print(f"  liveness AUC {report['headline']['detector_auc']}   "
           f"(synthetic corpus reported {report['comparison']['synthetic_corpus_liveness_auc']})")

@@ -31,19 +31,19 @@ from .utils.hashing import hamming
 #: ``N`` times gives a per-applicant false-link probability of ``1-(1-p)^N``.
 #:
 #: This constant used to be 0.5198, taken from the FAR=0.1% operating point of
-#: LFW's official 10-fold protocol — a *verification* fit, graded on 6,000 pairs.
+#: LFW's official 10-fold protocol - a *verification* fit, graded on 6,000 pairs.
 #: Deployed as a search it meant a genuine applicant false-linking to a stranger
 #: with probability 6.8% against 100 prior records and 97.0% against 5,000. That
 #: 0.1% was itself two impostor pairs out of the official 3,000, the resolution
 #: floor of that set.
 #:
 #: It is now fitted by ``scripts/calibrate_linkage_lfw.py``, which scores every
-#: pair among LFW's distinct identities — millions of impostor pairs rather than
-#: 3,000 — and picks the point holding a stated per-applicant false-link rate
+#: pair among LFW's distinct identities - millions of impostor pairs rather than
+#: 3,000 - and picks the point holding a stated per-applicant false-link rate
 #: over ``SCAN_LIMIT`` records. Report: ``eval/linkage_lfw.json``.
 #:
 #: Before either fit it was 0.75, hard-coded, which linked only 63.3% of true
-#: same-person pairs. The corpus could not have revealed that — its genuine pairs
+#: same-person pairs. The corpus could not have revealed that - its genuine pairs
 #: derive from one source photograph each, so their similarity runs far above
 #: what two real photographs of one person score (LFW same-person mean 0.758).
 #: The fitted value, duplicated here so a checkout with no calibration file still

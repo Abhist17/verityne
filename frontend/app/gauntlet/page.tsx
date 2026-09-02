@@ -12,11 +12,11 @@ type Running = Omit<GauntletSummary, "results">;
  *
  *  Deliberately not zeros: a zero is a measurement and there has not been one.
  *  An em dash says "not yet", and the sub-line says what the number has to be
- *  for the run to have gone well — which is the part a reader cannot infer and
+ *  for the run to have gone well - which is the part a reader cannot infer and
  *  the part that makes watching it fill in worth doing. */
 function ScoreboardAtRest({ total }: { total: number }) {
   const tiles: [string, string][] = [
-    ["Detection rate", "share of fraudulent fixtures that reach a human — REVIEW counts"],
+    ["Detection rate", "share of fraudulent fixtures that reach a human - REVIEW counts"],
     ["False accepts", "fraud that would have been approved outright"],
     ["Genuine not passed", "rejected and reviewed are counted apart; they are not the same failure"],
     ["Wrongly rejected", "genuine applicants turned away with no human in the loop"],
@@ -27,7 +27,7 @@ function ScoreboardAtRest({ total }: { total: number }) {
       {tiles.map(([label, sub]) => (
         <div key={label}>
           <div className="label">{label}</div>
-          <div className="stat mt-2 text-slate-700">—</div>
+          <div className="stat mt-2 text-slate-700">-</div>
           <p className="mt-1.5 max-w-[26ch] text-2xs leading-relaxed text-slate-600">{sub}</p>
         </div>
       ))}
@@ -92,7 +92,7 @@ export default function GauntletPage() {
       load();
     });
     es.onerror = () => {
-      if (!done) setError("Stream disconnected — is the API running?");
+      if (!done) setError("Stream disconnected - is the API running?");
       setLive(false);
       clearInterval(timerRef.current);
       es.close();
@@ -123,7 +123,7 @@ export default function GauntletPage() {
           </>
         }
       >
-        Every loaded fixture — genuine and fraudulent — scored end to end in one pass. A fake counts as caught
+        Every loaded fixture - genuine and fraudulent - scored end to end in one pass. A fake counts as caught
         if it lands in <span className="text-review">REVIEW</span> or <span className="text-reject">REJECT</span>:
         both put a human in the loop before money moves.
       </PageHeader>
@@ -226,7 +226,7 @@ export default function GauntletPage() {
           />
           {/* Not accuracy. This page's own copy says a fake in REVIEW counts as
               caught, and then an accuracy figure counted every genuine merchant
-              in REVIEW as a miss — so the tile contradicted the paragraph above
+              in REVIEW as a miss - so the tile contradicted the paragraph above
               it and read ~50% on a run where nothing had gone wrong. What a
               merchant actually cares about is whether an honest applicant was
               turned away with no human involved, and that number is zero or it
@@ -234,7 +234,7 @@ export default function GauntletPage() {
           <StatTile
             label="Wrongly rejected"
             value={summary.reals_rejected}
-            sub={`of ${summary.reals_total} genuine — auto-rejected with no human in the loop`}
+            sub={`of ${summary.reals_total} genuine - auto-rejected with no human in the loop`}
             tone={summary.reals_rejected === 0 ? "pass" : "reject"}
           />
           <StatTile
@@ -293,13 +293,13 @@ export default function GauntletPage() {
                           {r.truth}
                         </span>
                       </td>
-                      <td className="py-2 pr-4 text-xs text-slate-500">{r.attack_type?.replace(/_/g, " ") ?? "—"}</td>
+                      <td className="py-2 pr-4 text-xs text-slate-500">{r.attack_type?.replace(/_/g, " ") ?? "-"}</td>
                       <td className="py-2 pr-4">
                         <VerdictBadge verdict={r.verdict} size="sm" />
                       </td>
                       <td className="num py-2 pr-4 text-right text-slate-300">{r.score.toFixed(3)}</td>
                       <td className="max-w-md py-2 pr-4 text-xs leading-relaxed text-slate-400">
-                        <span className="line-clamp-2">{r.top_reasons?.[0] ?? "—"}</span>
+                        <span className="line-clamp-2">{r.top_reasons?.[0] ?? "-"}</span>
                       </td>
                       <td className="num py-2 pr-4 text-right text-xs text-slate-500">{r.latency_ms.toFixed(0)}</td>
                       <td className="py-2 text-center">
@@ -317,7 +317,7 @@ export default function GauntletPage() {
       {done && (
         <Section title="What this number is and is not">
           <p className="max-w-[90ch] text-xs leading-relaxed text-slate-400">
-            {done.total} packets is a demonstration, not a measurement — the confidence interval on a rate
+            {done.total} packets is a demonstration, not a measurement - the confidence interval on a rate
             estimated from {done.fakes_total} fakes is very wide. The statistically meaningful numbers live on
             the{" "}
             <a href="/metrics" className="text-accent hover:underline">

@@ -148,7 +148,7 @@ def main() -> None:
 
     embedder = face_embedder()
     if embedder is None:
-        raise SystemExit("face embedder unavailable — cannot calibrate")
+        raise SystemExit("face embedder unavailable - cannot calibrate")
     embed = EmbeddingCache(embedder)
 
     # ---- the impostor tail: every pair among distinct people -------------------

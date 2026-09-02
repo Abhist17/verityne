@@ -9,7 +9,7 @@ import type { Metadata } from "next";
  */
 export const metadata: Metadata = {
   title: "Corrections",
-  description: "Every belief this project held, measured, and lost — generated from the evidence files each entry cites.",
+  description: "Every belief this project held, measured, and lost - generated from the evidence files each entry cites.",
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

@@ -21,7 +21,7 @@ import { ACCENT, EDGE, TEXT, VERDICT_HEX } from "@/lib/palette";
  * proven ones in and out and ran a lit particle down each proven edge. Each of
  * those was defensible on its own and together they were a screensaver: the
  * blur put a soft ramp around every hard fact, the halos made cluster
- * *boundaries* — the one thing a linkage graph has to state precisely — into
+ * *boundaries* - the one thing a linkage graph has to state precisely - into
  * gradients with no edge at all, and the four simultaneous animations meant the
  * eye never settled anywhere long enough to read a label. A forensic claim
  * should be drawn the way a plan is drawn: hard edges, one weight of line, and
@@ -31,7 +31,7 @@ import { ACCENT, EDGE, TEXT, VERDICT_HEX } from "@/lib/palette";
  * `crispEdges` on it, every edge is a straight 1px line, and the canvas carries
  * a faint dot lattice underneath so the snapping reads as *registration* rather
  * than as a rounding error. There is no animation at all, which also retires
- * the reduced-motion special case this file used to need — SMIL cannot see a
+ * the reduced-motion special case this file used to need - SMIL cannot see a
  * media query, so the preference had to be read in JS and the elements simply
  * not rendered.
  *
@@ -44,7 +44,7 @@ import { ACCENT, EDGE, TEXT, VERDICT_HEX } from "@/lib/palette";
  * resting on at least one exact match gets accent corner brackets; an inferred
  * one gets grey.
  *
- * Verdict is carried on the node fill — a *status* encoding, which is a reserved
+ * Verdict is carried on the node fill - a *status* encoding, which is a reserved
  * role, so it never doubles as a series colour, and it is never colour-alone:
  * every node names its verdict on hover and the legend spells the states out.
  * The accent cannot be confused with any of the three despite sitting between
@@ -136,8 +136,8 @@ export function RingGraph({
    * so the biggest cluster gets the most room.
    *
    * It runs inline rather than across `requestAnimationFrame`: rAF does not fire
-   * in an unpainted tab, so a page opened in the background — or screenshotted
-   * by a test — used to render an empty graph and stay empty. It is also
+   * in an unpainted tab, so a page opened in the background - or screenshotted
+   * by a test - used to render an empty graph and stay empty. It is also
    * deterministic, seeded from ring index and node order rather than
    * `Math.random`, because a graph that rearranges itself between reloads is
    * useless for walking a reviewer through a case.
@@ -148,7 +148,7 @@ export function RingGraph({
 
     const anchors = new Map<number, { x: number; y: number }>();
     // Anchors start at angle 0, not -90 degrees. Panels are wider than they are
-    // tall, and two rings placed at -90/+90 stack vertically — which wasted the
+    // tall, and two rings placed at -90/+90 stack vertically - which wasted the
     // whole horizontal axis and shrank both clusters to fit the height.
     // Spread scales with how many clusters there are. A fixed large value threw
     // two small rings to opposite edges with an empty middle, because the fit
@@ -258,8 +258,8 @@ export function RingGraph({
     return { tx: width / 2 - ((minX + maxX) / 2) * k, ty: graphH / 2 - ((minY + maxY) / 2) * k, k };
   }, [nodes, width, graphH]);
 
-  /** Layout space → screen, then onto the lattice. Everything downstream — node
-   *  corners, edge endpoints, bracket boxes — derives from this, so one snap
+  /** Layout space → screen, then onto the lattice. Everything downstream - node
+   *  corners, edge endpoints, bracket boxes - derives from this, so one snap
    *  here is what keeps the whole drawing registered. */
   const pos = useCallback(
     (n: Sim) => ({ x: snap(n.x * view.k + view.tx), y: snap(n.y * view.k + view.ty) }),
@@ -276,7 +276,7 @@ export function RingGraph({
    * One box per ring: an axis-aligned bounding rectangle over its members.
    *
    * A rectangle rather than the circular hull this used to draw. A circle around
-   * a cluster of four is mostly empty canvas — it claims a lot of area to
+   * a cluster of four is mostly empty canvas - it claims a lot of area to
    * enclose very little, and two neighbouring rings' circles overlap long before
    * their members do. A bounding box claims exactly what the ring occupies, it
    * sits square on the lattice, and its corners are the natural place to hang a
@@ -295,7 +295,7 @@ export function RingGraph({
       const y0 = snap(Math.min(...px.map((p) => p.y - p.half)) - BOX_PAD);
       const y1 = snap(Math.max(...px.map((p) => p.y + p.half)) + BOX_PAD);
       const meta = graph.rings.find((x) => x.id === r);
-      // The label is monospace, so its width is arithmetic — 10px at Departure
+      // The label is monospace, so its width is arithmetic - 10px at Departure
       // Mono's advance plus 0.1em of tracking is a shade under 8px a character.
       // The estimate is deliberately generous: it is only used to decide whether
       // the label still fits left-aligned to its box, and over-estimating flips
@@ -334,7 +334,7 @@ export function RingGraph({
   return (
     // `w-full min-w-0` is load-bearing. The SVG takes a pixel width measured
     // from this element, and a grid or flex child defaults to min-content width
-    // — so on a narrow viewport the box never shrank, the observer kept
+    // - so on a narrow viewport the box never shrank, the observer kept
     // reporting the 760px seed, and the graph pushed the whole page 394px wide.
     <div ref={wrapRef} className="relative w-full min-w-0">
       <svg
@@ -351,7 +351,7 @@ export function RingGraph({
       >
         {/* The plotting surface: one pixel every 8, in the same hairline colour
             as the page grid behind it. It is barely visible and it is the reason
-            the snapping reads as deliberate — without it, squares that happen to
+            the snapping reads as deliberate - without it, squares that happen to
             align look like a coincidence rather than a register. */}
         <defs>
           <pattern id="rg-lattice" width="8" height="8" patternUnits="userSpaceOnUse">
@@ -372,7 +372,7 @@ export function RingGraph({
             const tone = proven ? ACCENT : TEXT[600];
             const overflows = b.x0 + b.labelW > width - 2;
             const corners: [number, number, number, number][] = [
-              // x, y, dx, dy — the direction each arm runs from the corner.
+              // x, y, dx, dy - the direction each arm runs from the corner.
               [b.x0, b.y0, 1, 1],
               [b.x1, b.y0, -1, 1],
               [b.x0, b.y1, 1, -1],
@@ -400,14 +400,14 @@ export function RingGraph({
                   />
                 ))}
                 {/* The label sits on the top rule, left-aligned to the box, the
-                    way a callout sits on a drawing — until it would not fit,
+                    way a callout sits on a drawing - until it would not fit,
                     at which point it anchors to the right-hand edge of the
                     canvas instead of being slid leftward by a guess.
 
                     Sliding is what the first attempt did, against a constant
                     190px inset. That was right for "RING 5 / 2" and wrong for
                     "RING 1 / 3 / 3 MERCHANTS / PROVEN" at 33 characters, so the
-                    longest label — on the ring carrying the most evidence — was
+                    longest label - on the ring carrying the most evidence - was
                     the one that ran off the edge. Switching the anchor cannot
                     clip whatever the estimate says, because the end anchor is
                     measured by the renderer rather than by us. */}
@@ -436,7 +436,7 @@ export function RingGraph({
 
         {/* ---- edges ----------------------------------------------------
              Straight, one pixel, no arc. The bowed chords the previous version
-             drew were there to separate parallel edges between the same pair —
+             drew were there to separate parallel edges between the same pair -
              a real problem, solved by a curve that made every link look like a
              flight path. Parallel edges are rare enough here that the honest
              fix is to draw them straight and let the pair overlap; what matters
@@ -521,8 +521,8 @@ export function RingGraph({
 
         {/* ---- the unlinked band ----------------------------------------
              Deliberately small, dim and on one line. These submissions are the
-             absence of a finding; they belong on screen for honesty — the window
-             is not all rings — but they must not out-weigh the rings. */}
+             absence of a finding; they belong on screen for honesty - the window
+             is not all rings - but they must not out-weigh the rings. */}
         {isolated.length > 0 && (
           <g>
             <line
@@ -573,7 +573,7 @@ export function RingGraph({
             style={{ fontSize: 12 }}
             shapeRendering="auto"
           >
-            No linked submissions in this window — nothing shares a face or a file.
+            No linked submissions in this window - nothing shares a face or a file.
           </text>
         )}
       </svg>
@@ -624,13 +624,13 @@ export function RingGraphLegend({ threshold }: { threshold: ThreatGraph["thresho
         <svg width="18" height="6" aria-hidden>
           <line x1="0" y1="3" x2="18" y2="3" stroke={ACCENT} strokeWidth="1" />
         </svg>
-        byte-identical file — a fact
+        byte-identical file - a fact
       </span>
       <span className="flex items-center gap-1.5">
         <svg width="18" height="6" aria-hidden>
           <line x1="0" y1="3" x2="18" y2="3" stroke={TEXT[600]} strokeWidth="1" strokeDasharray="1 3" />
         </svg>
-        similarity — an inference
+        similarity - an inference
       </span>
       <span className="flex items-center gap-1.5">
         <svg width="12" height="12" aria-hidden shapeRendering="crispEdges">

@@ -69,7 +69,7 @@ async def verify(
     submission.video_path = str(await save_upload(liveness_video, d, "liveness", "video") or "") or None
 
     # `save_upload` returns None for a zero-byte part, so a request carrying only
-    # empty files clears the guard above and would otherwise be scored — producing
+    # empty files clears the guard above and would otherwise be scored - producing
     # a verdict, an explanation and an audit row from no evidence at all. The
     # session is closed without committing, so the row flushed above is rolled back.
     if not (submission.selfie_path or submission.id_doc_path or submission.video_path):

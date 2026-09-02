@@ -2,7 +2,7 @@
  * Detector 6's client half: how the form was filled, not what was uploaded.
  *
  * The buffer this produces is posted to `POST /api/behavioral` before the files
- * go up, and `/verify` binds it by token afterwards — see routes_behavioral.py
+ * go up, and `/verify` binds it by token afterwards - see routes_behavioral.py
  * for why the ordering is that way round.
  *
  * Two things here are easy to get wrong, and both are load-bearing.
@@ -30,7 +30,7 @@ const MAX_MOUSE = 400;
 const MAX_FOCUS = 120;
 const MAX_PASTE = 40;
 /** Pointer sampling floor, ms. Raw mousemove fires far denser than the path
- *  statistics need, and the extractor reads interval *variance* — so this
+ *  statistics need, and the extractor reads interval *variance* - so this
  *  throttles on elapsed time without regularising it into a constant tick,
  *  which would itself look synthetic. */
 const MOUSE_MIN_DT = 25;
@@ -86,7 +86,7 @@ export class TelemetryCollector {
     this.token = TelemetryCollector.mintToken();
   }
 
-  /** 32 hex chars — comfortably inside the envelope's 8..64 length bound. */
+  /** 32 hex chars - comfortably inside the envelope's 8..64 length bound. */
   private static mintToken(): string {
     const c = typeof crypto !== "undefined" ? crypto : undefined;
     if (c?.randomUUID) return c.randomUUID().replace(/-/g, "");

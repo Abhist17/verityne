@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fit the face-identity threshold on LFW — real photos of real people.
+"""Fit the face-identity threshold on LFW - real photos of real people.
 
     python backend/scripts/calibrate_face_match_lfw.py
 
@@ -7,8 +7,8 @@ Why this script exists
 ----------------------
 Two numbers in this system decide whether two faces are the same person:
 
-  * ``linkage.SAME_PERSON`` — used to link one face across submissions;
-  * the ``low`` end of the face-match band — below it, the selfie is not the
+  * ``linkage.SAME_PERSON`` - used to link one face across submissions;
+  * the ``low`` end of the face-match band - below it, the selfie is not the
     person on the document.
 
 Both were hard-coded. Worse, the corpus could not fit them honestly: its
@@ -17,7 +17,7 @@ re-captured, so their similarity runs far above what two real photos of one
 person score. A threshold fitted on that would be tuned to an artefact.
 
 LFW is the standard answer: 13,233 photographs of 5,749 real people, with a
-published 10-fold protocol of 6,000 pairs — 3,000 same-person, 3,000 different.
+published 10-fold protocol of 6,000 pairs - 3,000 same-person, 3,000 different.
 Every pair is two genuinely different photographs, which is exactly the question
 being asked. It also makes the result comparable to published work instead of
 self-reported.
@@ -28,18 +28,18 @@ Protocol
 re-deriving one: ten folds of 300 matched and 300 mismatched pairs. For each
 fold the threshold is chosen on the other nine and evaluated on the held-out
 one, so no fold's threshold is scored on the data that chose it. The reported
-accuracy is the mean across folds, with its standard deviation — the form LFW
+accuracy is the mean across folds, with its standard deviation - the form LFW
 results are published in.
 
 Images are read at full funneled resolution and go through ``largest_face`` and
-``FaceEmbedder`` — the same MTCNN crop and the same FaceNet weights the API
-uses — so the fitted number transfers to the running system rather than
+``FaceEmbedder`` - the same MTCNN crop and the same FaceNet weights the API
+uses - so the fitted number transfers to the running system rather than
 describing a parallel pipeline. Embeddings are cached per image because the
 6,000 pairs reference far fewer than 12,000 distinct photographs.
 
 What this does and does not fit
 -------------------------------
-Fits the *identity* question — are these two faces the same person — on
+Fits the *identity* question - are these two faces the same person - on
 photo-vs-photo pairs. That is precisely the linkage question, and a defensible
 lower bound for face match.
 
@@ -147,7 +147,7 @@ def parse_pairs(pairs_path: Path, images: Path) -> Tuple[List[Tuple[Path, Path]]
 # ---------------------------------------------------------------------------------
 
 class EmbeddingCache:
-    """Embed each photograph once — the 6,000 pairs reuse images heavily."""
+    """Embed each photograph once - the 6,000 pairs reuse images heavily."""
 
     def __init__(self, embedder):
         self.embedder = embedder
@@ -306,7 +306,7 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=0,
                     help="debug: score an evenly spaced subsample of N pairs. Spaced, not a "
                          "prefix, because pairs.txt is ordered same-then-different within each "
-                         "fold — a prefix would be one class from one fold.")
+                         "fold - a prefix would be one class from one fold.")
     ap.add_argument("--apply", action="store_true",
                     help="write the fitted threshold into the band the API loads")
     args = ap.parse_args()
@@ -325,7 +325,7 @@ def main() -> None:
 
     embedder = face_embedder()
     if embedder is None:
-        raise SystemExit("face embedder unavailable — cannot calibrate")
+        raise SystemExit("face embedder unavailable - cannot calibrate")
     embed = EmbeddingCache(embedder)
 
     sims = np.zeros(n, dtype=np.float32)
@@ -367,7 +367,7 @@ def main() -> None:
     report = {
         "dataset": "LFW (deep-funneled), official 10-fold pair protocol from pairs.txt",
         "source": "13,233 photographs of 5,749 real people; every pair is two distinct photographs",
-        "embedder": "facenet-pytorch InceptionResnetV1 (vggface2) — the same model and MTCNN crop the API uses",
+        "embedder": "facenet-pytorch InceptionResnetV1 (vggface2) - the same model and MTCNN crop the API uses",
         "n_pairs_scored": int(len(sims)),
         "n_pairs_total": int(n),
         "n_photos_embedded": int(embed.total),
@@ -391,8 +391,8 @@ def main() -> None:
             "different_person": _dist(sims[labels == 0]),
         },
         "fits": [
-            "linkage.SAME_PERSON — is this the same person as an earlier submission",
-            "the low end of the face-match band — is the selfie the person on the document",
+            "linkage.SAME_PERSON - is this the same person as an earlier submission",
+            "the low end of the face-match band - is the selfie the person on the document",
         ],
         "does_not_fit": (
             "The high end of the band, which catches a selfie copied from the printed ID "
@@ -422,14 +422,14 @@ def main() -> None:
         band["far_0.1pct_threshold"] = far01["threshold"]
         band.setdefault("high", 0.9878)
         # `fitted_on` is the one string the API surfaces in its signals, so it has
-        # to describe both bounds — they now come from different data, and a
+        # to describe both bounds - they now come from different data, and a
         # provenance line that mentions only the better one would be misleading.
         band["fitted_on"] = (
             f"low: LFW 10-fold, {len(sims)} real pairs, accuracy {mean_acc:.4f}±{std_acc:.4f}; "
             f"high: corpus calibration (see high_fitted_on)"
         )
         band.setdefault("high_fitted_on", band.get("corpus_fitted_on")
-                        or "corpus train split; not re-fitted on real data — LFW has no documents")
+                        or "corpus train split; not re-fitted on real data - LFW has no documents")
         band["low_previously"] = previous_low
         band["lfw"] = {"accuracy": round(mean_acc, 4), "std": round(std_acc, 4),
                        "roc_auc": round(auc, 4), "n_pairs": int(len(sims)),

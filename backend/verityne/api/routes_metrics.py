@@ -31,14 +31,14 @@ ABLATION_PATH = EVAL_ROOT / "ablation.json"
 #: reports which are present rather than pretending a missing one is a zero.
 REAL_DATA_REPORTS = {
     "face_match": (EVAL_ROOT / "face_match_lfw.json",
-                   "LFW — 6,000 pairs of real photographs of real people"),
+                   "LFW - 6,000 pairs of real photographs of real people"),
     "id_documents": (EVAL_ROOT / "real_docs.json",
-                     "MIDV-2020 — identity documents physically printed, photographed and scanned"),
+                     "MIDV-2020 - identity documents physically printed, photographed and scanned"),
     "behavioral": (EVAL_ROOT / "behavioral.json",
                    "Aalto 136M keystrokes + CMU Killourhy-Maxion, against real browser automation"),
     "selfie_faces": (EVAL_ROOT / "real_faces.json",
                      "DeepFakeFace (SD text2img, SD inpainting, InsightFace swap) and "
-                     "140k Real-and-Fake (StyleGAN) — fakes this project did not generate"),
+                     "140k Real-and-Fake (StyleGAN) - fakes this project did not generate"),
     "liveness_video": (EVAL_ROOT / "real_video.json",
                        "recorded deepfake video (FaceForensics++ / Celeb-DF / DFDC)"),
 }
@@ -123,14 +123,14 @@ def metrics_ablation():
     It also carries the corpus leak audit, because an ablation is only
     meaningful if the features are measuring the packet rather than reading a
     label the generator wrote into it. That check is the reason this endpoint
-    exists — it found `metadata_exif` reading an answer key worth half the
+    exists - it found `metadata_exif` reading an answer key worth half the
     model's above-chance AUC.
     """
     data = _load_json(ABLATION_PATH)
     if data is None:
         raise HTTPException(
             status_code=404,
-            detail=f"{ABLATION_PATH.name} not found — run `make ablate` (or `make pipeline`)",
+            detail=f"{ABLATION_PATH.name} not found - run `make ablate` (or `make pipeline`)",
         )
     one_sided = [
         {"field": field, **entry}
@@ -157,7 +157,7 @@ def metrics_ablation():
             "auc_drop is how much held-out AUC the fused model loses when that detector is "
             "muted. A negative drop means the detector was making the model worse. "
             "leaks lists corpus values that appear on one class only without a physical "
-            "reason to — where any is present, every number downstream of it is inflated by "
+            "reason to - where any is present, every number downstream of it is inflated by "
             "an unknown amount. one_sided_but_expected lists the ones that are one-sided "
             "because reality is, each with its justification."
         ),
@@ -173,7 +173,7 @@ def metrics_real(full: bool = Query(False, description="include the per-item row
     measures separability, and it is a lower bound on the work of deploying
     this, not a substitute for it.
 
-    This endpoint reports the same detectors on data from elsewhere — real
+    This endpoint reports the same detectors on data from elsewhere - real
     photographs of real people, and identity documents that somebody else
     printed, photographed and scanned. Each report is independent and any of
     them may be absent, so `available` says which actually ran rather than
@@ -190,7 +190,7 @@ def metrics_real(full: bool = Query(False, description="include the per-item row
         out["available"].append(name)
         out["reports"][name] = {"source": source, **data}
     out["note"] = (
-        "Absence here means the dataset was not on disk when the evaluation last ran — "
+        "Absence here means the dataset was not on disk when the evaluation last ran - "
         "not that the detector scored zero. See the README section 'Measured on real data'."
     )
     return out

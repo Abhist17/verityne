@@ -46,7 +46,7 @@ function BehavioralSection({ r }: { r: BehavioralReport }) {
 
   return (
     <Section
-      title="Detector 6 — keystroke rhythm, measured on real data"
+      title="Detector 6 - keystroke rhythm, measured on real data"
       hint={
         <>
           Genuine sessions from {r.corpus.human_aalto_sessions.toLocaleString()} Aalto and{" "}
@@ -59,7 +59,7 @@ function BehavioralSection({ r }: { r: BehavioralReport }) {
       <div className="grid gap-4 wide:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-3">
-            <StatTile label="Held-out AUC" value={r.headline.held_out_auc?.toFixed(3) ?? "—"} />
+            <StatTile label="Held-out AUC" value={r.headline.held_out_auc?.toFixed(3) ?? "-"} />
             <StatTile label="Recall" value={fmtPct(r.headline.held_out_recall, 0)} />
             <StatTile label="Human FPR" value={fmtPct(r.headline.human_false_positive_rate, 1)} />
           </div>
@@ -72,7 +72,7 @@ function BehavioralSection({ r }: { r: BehavioralReport }) {
           {r.sweep?.ran && (
             <p className="text-2xs leading-relaxed text-slate-500">
               {r.sweep.configurations} configurations searched, ranked by transfer to an unseen
-              human population rather than by held-out AUC — every configuration reaches 1.000 there,
+              human population rather than by held-out AUC - every configuration reaches 1.000 there,
               so ranking on it would have picked one at random and called it tuned.
             </p>
           )}
@@ -92,7 +92,7 @@ function BehavioralSection({ r }: { r: BehavioralReport }) {
                   <span
                     className={clsx("num w-14 text-right text-xs", beaten ? "text-reject" : "text-slate-300")}
                   >
-                    {v.auc?.toFixed(3) ?? "—"}
+                    {v.auc?.toFixed(3) ?? "-"}
                   </span>
                 </div>
               );
@@ -112,7 +112,7 @@ function BehavioralSection({ r }: { r: BehavioralReport }) {
             <span className="num text-slate-200">{r.headline.worst_unseen_strategy}</span> replays a
             real person&apos;s dwell and flight timings through the devtools protocol, rollover
             included, and scores{" "}
-            <span className="num text-reject">{worstAuc.toFixed(3)}</span> — chance. It is not a bug
+            <span className="num text-reject">{worstAuc.toFixed(3)}</span> - chance. It is not a bug
             in the model: the rhythm genuinely is human, so no rhythm model can separate it. What
             still catches it is that a replayed recording is a <em>reused</em> one, which is a
             linkage problem rather than a timing one.
@@ -129,7 +129,7 @@ function BehavioralSection({ r }: { r: BehavioralReport }) {
  * Same rule as the panel above: worst number first. The extra job here is to
  * show the *frame* column beside the *face* one, because the gap between them
  * is how much of a naive evaluation was reading JPEG history rather than
- * synthesis — and a reviewer who cannot see that gap has no reason to believe
+ * synthesis - and a reviewer who cannot see that gap has no reason to believe
  * the controlled number either.
  */
 function RealFacesSection({ r }: { r: RealFacesReport }) {
@@ -167,13 +167,13 @@ function RealFacesSection({ r }: { r: RealFacesReport }) {
 
   return (
     <Section
-      title="Selfie detector — measured on fakes we did not generate"
+      title="Selfie detector - measured on fakes we did not generate"
       hint={
         <>
           The corpus behind the panels above is ours, and{" "}
           <span className="num">benchmark_models.py</span> picked this checkpoint on it, so that
           number carries a selection effect. These are third-party fakes, scored per generator
-          family and never pooled — an attacker chooses the generator, so the worst column is the
+          family and never pooled - an attacker chooses the generator, so the worst column is the
           one that describes deployment.
         </>
       }
@@ -181,11 +181,11 @@ function RealFacesSection({ r }: { r: RealFacesReport }) {
       {head && (
         <div className="grid grid-cols-3 gap-3">
           <StatTile
-            label={`Worst family — ${head.worst_family}`}
+            label={`Worst family - ${head.worst_family}`}
             value={head.worst_family_auc.toFixed(3)}
           />
           <StatTile
-            label={`Best family — ${head.best_family}`}
+            label={`Best family - ${head.best_family}`}
             value={head.best_family_auc.toFixed(3)}
           />
           <StatTile label="Spread a pooled average would hide" value={head.spread.toFixed(3)} />
@@ -208,7 +208,7 @@ function RealFacesSection({ r }: { r: RealFacesReport }) {
                   {row.family}
                 </span>
                 <span className="num w-16 text-right text-xs text-slate-600">
-                  {row.frame?.toFixed(3) ?? "—"}
+                  {row.frame?.toFixed(3) ?? "-"}
                 </span>
                 <span
                   className={clsx(
@@ -216,10 +216,10 @@ function RealFacesSection({ r }: { r: RealFacesReport }) {
                     blind ? "text-reject" : "text-slate-300",
                   )}
                 >
-                  {row.face?.toFixed(3) ?? "—"}
+                  {row.face?.toFixed(3) ?? "-"}
                 </span>
                 <span className="num w-20 text-right text-xs text-slate-500">
-                  {row.recall === null ? "—" : fmtPct(row.recall, 0)}
+                  {row.recall === null ? "-" : fmtPct(row.recall, 0)}
                 </span>
               </div>
               {row.label && (
@@ -234,7 +234,7 @@ function RealFacesSection({ r }: { r: RealFacesReport }) {
           <span className="text-slate-400">frame</span> is the whole image;{" "}
           <span className="text-slate-400">face</span> crops and resizes both classes alike before
           an identical capture simulation. Where frame runs far above face, the difference was
-          resampling history, not synthesis — the DeepFakeFace fakes ship at a uniform 512&times;512
+          resampling history, not synthesis - the DeepFakeFace fakes ship at a uniform 512&times;512
           while their genuine originals do not.
         </p>
       </div>
@@ -250,8 +250,8 @@ function RealFacesSection({ r }: { r: RealFacesReport }) {
         <div className="mt-4 border-t border-edge pt-3.5">
           <div className="label">What an honest applicant pays</div>
           <p className="mt-1.5 max-w-[78ch] text-xs leading-relaxed text-slate-400">
-            On LFW — web-scraped news photography, a genuine population resembling neither FFHQ nor
-            IMDB-WIKI — <span className="num text-slate-200">{fmtPct(lfw["0.4"], 1)}</span> of real
+            On LFW - web-scraped news photography, a genuine population resembling neither FFHQ nor
+            IMDB-WIKI - <span className="num text-slate-200">{fmtPct(lfw["0.4"], 1)}</span> of real
             faces score above the review threshold and{" "}
             <span className="num text-slate-200">{fmtPct(lfw["0.75"], 1)}</span> above reject.
           </p>
@@ -335,7 +335,7 @@ export default function MetricsPage() {
   /** ROC series, ranked, with the ones that never ran taken out.
    *
    *  `coverage` is the share of packets a detector actually scored. A detector
-   *  at zero produced no curve — Recharts would still draw it as a straight line
+   *  at zero produced no curve - Recharts would still draw it as a straight line
    *  from corner to corner, which reads as a real result at chance rather than
    *  as an absence. */
   /** The threshold range where the system pays for itself, under the current
@@ -402,14 +402,14 @@ export default function MetricsPage() {
     <div className="space-y-14">
       <PageHeader title="Metrics" eyebrow="Held-out evaluation">
         Everything below is computed on an{" "}
-        <strong className="font-medium text-slate-200">identity-disjoint held-out split</strong> — no face that
+        <strong className="font-medium text-slate-200">identity-disjoint held-out split</strong> - no face that
         trained the fusion layer appears in these numbers. The uncomfortable numbers are here too.
       </PageHeader>
 
       {/* auto-fit rather than a fixed column count: five tiles into a 2- or
           4-column grid leaves a hole, and the hole reads as a missing metric. */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(178px,1fr))] gap-x-8 gap-y-8">
-        <StatTile label="Fusion ROC-AUC" value={ev.fusion?.roc_auc?.toFixed(3) ?? "—"}
+        <StatTile label="Fusion ROC-AUC" value={ev.fusion?.roc_auc?.toFixed(3) ?? "-"}
           sub={`${ev.n_packets} held-out packets · ${ev.fusion_model}`} tone="pass" />
         <StatTile label="Recall @ reject" value={fmtPct(cm.recall, 0)}
           sub={`threshold ${cm.threshold} · precision ${fmtPct(cm.precision, 0)}`} />
@@ -420,9 +420,9 @@ export default function MetricsPage() {
         <StatTile label="Latency p50 / p99"
           value={
             <span className="whitespace-nowrap">
-              {data.live?.latency_ms?.p50?.toFixed(0) ?? "—"}
+              {data.live?.latency_ms?.p50?.toFixed(0) ?? "-"}
               <span className="text-slate-600"> / </span>
-              {data.live?.latency_ms?.p99?.toFixed(0) ?? "—"}
+              {data.live?.latency_ms?.p99?.toFixed(0) ?? "-"}
             </span>
           }
           sub="ms, live API traffic on this instance" />
@@ -430,11 +430,11 @@ export default function MetricsPage() {
 
       <div className="grid gap-x-12 gap-y-14 wide:grid-cols-2">
         <Section
-          title="ROC — fusion vs each detector"
+          title="ROC - fusion vs each detector"
           hint="The fusion curve should dominate. Where a single detector beats it, the fusion weights are wrong."
         >
           {/* Fusion is the figure; the detectors are the ground.
-              Seven curves at equal weight is spaghetti — the eye cannot hold
+              Seven curves at equal weight is spaghetti - the eye cannot hold
               which line is which, and the legend makes you look away from the
               chart to find out. So fusion is drawn thick in the accent (the only
               achromatic, brightest value) and every detector is thin and
@@ -504,14 +504,14 @@ export default function MetricsPage() {
           </ul>
           {rocSeries.excluded.length > 0 && (
             <p className="mt-2.5 text-2xs leading-relaxed text-slate-600">
-              {rocSeries.excluded.join(", ")} not drawn — no coverage on this corpus, so the curve
+              {rocSeries.excluded.join(", ")} not drawn - no coverage on this corpus, so the curve
               would be the chance diagonal rather than a measurement.
             </p>
           )}
         </Section>
 
         <Section title="Per-detector performance"
-          hint="“On target attacks” grades each detector only against the fraud it is designed to catch — the all-rows AUC is diluted by attacks it cannot see.">
+          hint="“On target attacks” grades each detector only against the fraud it is designed to catch - the all-rows AUC is diluted by attacks it cannot see.">
           <div className="scroll-x">
             <table className="w-full min-w-[440px] text-left text-xs">
               <thead className="text-2xs uppercase tracking-wider text-slate-500">
@@ -530,9 +530,9 @@ export default function MetricsPage() {
                    *
                    * A detector at zero coverage scored nothing on this corpus,
                    * so its 0.500 is the absence of a measurement, not a
-                   * measurement of chance. Printing it as a number — in reject
+                   * measurement of chance. Printing it as a number - in reject
                    * red, in a column beside detectors that genuinely
-                   * underperform — is the table asserting "measured, and bad"
+                   * underperform - is the table asserting "measured, and bad"
                    * about a detector that never ran.
                    *
                    * Behavioral is the case that matters: this corpus carries no
@@ -545,14 +545,14 @@ export default function MetricsPage() {
                     <td className="py-2 pr-3 font-sans text-slate-300">{d.label}</td>
                     <td className={clsx("py-2 text-right ", !ran ? "text-slate-600"
                       : d.auc_all_rows >= 0.7 ? "text-pass" : d.auc_all_rows >= 0.55 ? "text-review" : "text-reject")}>
-                      {ran ? (d.auc_all_rows?.toFixed(3) ?? "—") : "—"}
+                      {ran ? (d.auc_all_rows?.toFixed(3) ?? "-") : "-"}
                     </td>
                     <td className={clsx("py-2 text-right ", !ran ? "text-slate-600"
                       : d.auc_on_target_attacks >= 0.7 ? "text-pass" : d.auc_on_target_attacks >= 0.55 ? "text-review" : "text-slate-500")}>
-                      {ran ? (d.auc_on_target_attacks?.toFixed(3) ?? "—") : "—"}
+                      {ran ? (d.auc_on_target_attacks?.toFixed(3) ?? "-") : "-"}
                     </td>
-                    <td className="py-2 text-right text-slate-400">{ran ? (d.mean_genuine?.toFixed(2) ?? "—") : "—"}</td>
-                    <td className="py-2 text-right text-slate-400">{ran ? (d.mean_fraud?.toFixed(2) ?? "—") : "—"}</td>
+                    <td className="py-2 text-right text-slate-400">{ran ? (d.mean_genuine?.toFixed(2) ?? "-") : "-"}</td>
+                    <td className="py-2 text-right text-slate-400">{ran ? (d.mean_fraud?.toFixed(2) ?? "-") : "-"}</td>
                     <td className={clsx("py-2 text-right", ran ? "text-slate-500" : "text-slate-600")}>{fmtPct(d.coverage, 0)}</td>
                   </tr>
                   );
@@ -562,7 +562,7 @@ export default function MetricsPage() {
           </div>
           {Object.values(ev.per_detector).some((d: any) => (d.coverage ?? 1) <= 0) && (
             <p className="mt-2.5 text-2xs leading-relaxed text-slate-600">
-              A dash means the detector never ran on this corpus, so there is nothing to score —
+              A dash means the detector never ran on this corpus, so there is nothing to score -
               not that it scored at chance. Behavioral abstains on all 105 packets because none
               carry form-fill telemetry; it is measured instead on 17,040 real keystroke sessions,
               where it holds out at 1.000.
@@ -604,9 +604,9 @@ export default function MetricsPage() {
               </thead>
               <tbody className="font-mono">
                 <tr className="border-t border-edge/60">
-                  <td className="py-2 pr-3 font-sans text-slate-400">— none (full model)</td>
+                  <td className="py-2 pr-3 font-sans text-slate-400">- none (full model)</td>
                   <td className="py-2 text-right text-slate-200">{ablation.full_model.roc_auc.toFixed(3)}</td>
-                  <td className="py-2 text-right text-slate-600">—</td>
+                  <td className="py-2 text-right text-slate-600">-</td>
                   <td className="pl-6" />
                 </tr>
                 {ablation.ranked.map((r) => {
@@ -641,7 +641,7 @@ export default function MetricsPage() {
 
           <p className="mt-3 text-xs leading-relaxed text-slate-500">
             <span className="text-accent">The bar</span> is the share of the above-chance AUC that detector
-            carries. <span className="text-reject">Red</span> is a negative share — muting it made the model{" "}
+            carries. <span className="text-reject">Red</span> is a negative share - muting it made the model{" "}
             <em>better</em>, so it was contributing noise rather than signal.
           </p>
 
@@ -698,7 +698,7 @@ export default function MetricsPage() {
           hint="Sorted worst-first on purpose. A single headline AUC hides which attack we are actually bad at.">
           {/* The value is printed on every bar, with the sample size beside it.
               A bar chart asks the eye to measure length against a distant axis,
-              which is the wrong tool when the numbers are the point — and a
+              which is the wrong tool when the numbers are the point - and a
               recall of 100% on n=6 is a different claim from 100% on n=60, so
               the two are never shown apart. Fills sit at 45% with a full-strength
               stroke: the shape stays readable without nine saturated blocks
@@ -745,7 +745,7 @@ export default function MetricsPage() {
                 key={c.k}
                 className={clsx("py-3", i % 2 === 0 ? "pr-4" : "border-l border-edge pl-4", i > 1 && "border-t")}
               >
-                <div className={clsx("num text-2xl font-light", c.tone)}>{c.v ?? "—"}</div>
+                <div className={clsx("num text-2xl font-light", c.tone)}>{c.v ?? "-"}</div>
                 <div className="label mt-1">{c.label}</div>
                 <div className="mt-0.5 text-2xs text-slate-600">{c.note}</div>
               </div>
@@ -763,7 +763,7 @@ export default function MetricsPage() {
 
       {/* ---------------- cost of friction ---------------- */}
       <Section
-        title="Cost of friction — fraud prevented vs merchants lost"
+        title="Cost of friction - fraud prevented vs merchants lost"
         hint="Four of these inputs are business assumptions, not measurements. They are sliders precisely so you can move them: a single ₹ figure would be unfalsifiable."
       >
         {costError && <div className="mb-3 text-xs text-review">{costError}</div>}
@@ -772,7 +772,7 @@ export default function MetricsPage() {
               The whole question this panel answers is "which thresholds make
               money", and on three bare lines that reduces to noticing where one
               of them crosses an unlabelled gridline. Filled against a zero rule,
-              the profitable band is a shape you can see from across a room —
+              the profitable band is a shape you can see from across a room -
               which for this project is most of the argument, because it is
               narrow and it starts late. */}
           <ResponsiveContainer width="100%" height={320}>
@@ -783,7 +783,7 @@ export default function MetricsPage() {
                   fills to the axis floor rather than to zero, so it washed the
                   entire loss region in light grey and drew the eye to the part
                   that does not matter. Shading the *x-range* that pays instead
-                  states the answer exactly — and on this system that band is
+                  states the answer exactly - and on this system that band is
                   narrow and starts late, which is the honest shape of it. */}
               {profitable && (
                 <ReferenceArea
@@ -827,9 +827,9 @@ export default function MetricsPage() {
           {profitable && (
             <p className="mt-2 text-2xs leading-relaxed text-slate-500">
               <span className="text-pass">Shaded</span>: the only thresholds where this pays for
-              itself under the assumptions on the right —{" "}
+              itself under the assumptions on the right -{" "}
               <span className="num text-slate-300">
-                {profitable.from.toFixed(2)}–{profitable.to.toFixed(2)}
+                {profitable.from.toFixed(2)}-{profitable.to.toFixed(2)}
               </span>
               . Narrow, and it starts late. Move a slider and the band moves with it, which is the
               point of showing a curve rather than a single ₹ figure.
@@ -869,7 +869,7 @@ export default function MetricsPage() {
       </Section>
 
       <div className="grid gap-x-12 gap-y-14 wide:grid-cols-2">
-        <Section title="Bias audit — accuracy by skin-tone proxy"
+        <Section title="Bias audit - accuracy by skin-tone proxy"
           hint="Deepfake detectors are known to degrade on darker skin. Measuring it is the minimum bar.">
           <div className="scroll-x">
             <table className="w-full min-w-[420px] text-left text-xs">
@@ -887,9 +887,9 @@ export default function MetricsPage() {
                   <tr key={k} className="border-t border-edge/60">
                     <td className="py-2 font-sans text-slate-300">{k.replace(/_/g, " ")}</td>
                     <td className="py-2 text-right text-slate-400">{b.n}</td>
-                    <td className="py-2 text-right text-slate-300">{b.auc?.toFixed(3) ?? "—"}</td>
-                    <td className="py-2 text-right text-slate-400">{b.false_reject_rate !== undefined ? fmtPct(b.false_reject_rate, 1) : "—"}</td>
-                    <td className="py-2 text-right text-slate-400">{b.false_accept_rate !== undefined ? fmtPct(b.false_accept_rate, 1) : "—"}</td>
+                    <td className="py-2 text-right text-slate-300">{b.auc?.toFixed(3) ?? "-"}</td>
+                    <td className="py-2 text-right text-slate-400">{b.false_reject_rate !== undefined ? fmtPct(b.false_reject_rate, 1) : "-"}</td>
+                    <td className="py-2 text-right text-slate-400">{b.false_accept_rate !== undefined ? fmtPct(b.false_accept_rate, 1) : "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -913,7 +913,7 @@ export default function MetricsPage() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="py-8 text-center text-xs text-slate-500">No live traffic yet — run the gauntlet.</div>
+            <div className="py-8 text-center text-xs text-slate-500">No live traffic yet - run the gauntlet.</div>
           )}
           {ev.per_capture_mode && Object.keys(ev.per_capture_mode).length > 0 && (
             <div className="mt-4 border-t border-edge pt-3">
@@ -922,7 +922,7 @@ export default function MetricsPage() {
                 {Object.entries(ev.per_capture_mode).map(([mode, m]: any) => (
                   <div key={mode} className="flex justify-between gap-3">
                     <span className="text-slate-500">{mode === "scan" ? "digital scan / direct upload" : "phone photo of card"} (n={m.n})</span>
-                    <span className="text-slate-300">ID-forensics AUC {m.id_forensics_auc?.toFixed(3) ?? "—"}</span>
+                    <span className="text-slate-300">ID-forensics AUC {m.id_forensics_auc?.toFixed(3) ?? "-"}</span>
                   </div>
                 ))}
               </div>

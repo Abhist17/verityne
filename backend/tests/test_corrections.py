@@ -111,9 +111,9 @@ class TestShape:
 
         `readme` is a repo-relative `path.md#anchor` because the prose lives in
         `docs/` now. Both halves are checked: the file has to exist and the
-        heading has to be in *that* file. One of these was dead for real —
+        heading has to be in *that* file. One of these was dead for real -
         `#the-thresholds-and-where-they-came-from` names a heading this project
-        has never had — and the previous version of this test could not see it,
+        has never had - and the previous version of this test could not see it,
         because it resolved every anchor against one document.
         """
         import re
@@ -152,7 +152,7 @@ class TestHonesty:
     def test_the_third_party_finding_is_reported_as_open(self):
         """The selfie detector is at or below chance on fakes we did not generate.
         If a refit ever fixes that, this failing is the signal to rewrite the
-        entry — not to quietly flip a status."""
+        entry - not to quietly flip a status."""
         c = next((x for x in corrections() if x["id"] == "third-party-fakes"), None)
         assert c is not None, "the third-party generator finding is missing"
         assert c["status"] == "open"

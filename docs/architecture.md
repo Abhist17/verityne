@@ -12,7 +12,7 @@
                        └──────────────────┬───────────────────┘
                                           │
                        ┌──────────────────▼───────────────────┐
-                       │  stage one — run concurrently        │
+                       │  stage one - run concurrently        │
                        │  ┌────────────┐ ┌─────────────────┐  │
                        │  │ selfie     │ │ id forensics    │  │
                        │  │ deepfake   │ │ (OCR + ELA +    │  │
@@ -30,7 +30,7 @@
                        └──────────────────┬───────────────────┘
                                           │
                        ┌──────────────────▼───────────────────┐
-                       │  stage two — needs both face crops   │
+                       │  stage two - needs both face crops   │
                        │  face match (selfie vs ID portrait)  │
                        └──────────────────┬───────────────────┘
                                           │
@@ -70,7 +70,7 @@ Next.js 14 App Router, seven pages:
 | --- | --- |
 | **Live Verify** (`/`) | Drag in a selfie, ID and liveness clip; get the verdict, the three reasons, the heatmaps and the per-detector breakdown. Also collects the form-fill telemetry Detector 6 reads, and says on screen that it is doing so. |
 | **Gauntlet** (`/gauntlet`) | Runs 10 genuine + 10 fraudulent fixtures over server-sent events, scoring live. |
-| **Metrics** (`/metrics`) | The held-out report rendered — ROC, per-attack recall, bias audit, Detector 6's evaluation, and the cost-of-friction curve with operator-tunable ₹ sliders. |
+| **Metrics** (`/metrics`) | The held-out report rendered - ROC, per-attack recall, bias audit, Detector 6's evaluation, and the cost-of-friction curve with operator-tunable ₹ sliders. |
 | **Corrections** (`/corrections`) | The audit trail: every belief measured and lost, what it cost, and which are still open. Each entry renders the evidence file and path its numbers came from. |
 | **Attack Gallery** (`/attacks`) | Rejected submissions grouped by attack pattern, with the evidence that flagged each. |
 | **Threat Intelligence** (`/threat`) | Fraud rings as a node-link graph, generator-fingerprint mix, attack-pattern counts and a live feed. Clicking a node filters the feed to that cluster. |
@@ -87,7 +87,7 @@ backend/
       behavioral.py     detector 6: keystroke, pointer and locale features + rules
     utils/            ELA, spectral, OCR, Verhoeff, Grad-CAM, hashing, provenance
     api/              route modules: verify, behavioral, gauntlet, metrics, ops
-    pipeline.py       orchestration (ThreadPool — torch and OpenCV release the GIL,
+    pipeline.py       orchestration (ThreadPool - torch and OpenCV release the GIL,
                       asyncio.gather over CPU-bound work would buy nothing)
     fusion.py         logistic regression + calibration + policy decisions
     explain.py        attack classification and natural-language narration
@@ -123,16 +123,16 @@ frontend/
                       reloads.
   lib/api.ts          typed API client
   lib/telemetry.ts    detector 6's client half: keystroke, pointer and focus
-                      timing. Redacts key identity at source — printable keys
+                      timing. Redacts key identity at source - printable keys
                       are reported as one placeholder character, so the
                       extractor can still count them without the applicant's
                       PAN ever leaving the browser as a keystroke log.
 eval/                 metrics.json, model_benchmark.json, calibration.json,
                       fusion_training.json, face_match_lfw.json, real_docs.json,
                       ablation.json, ablation_leaked_corpus.json
-                      — committed; these are the evidence
+                      - committed; these are the evidence
 datasets/             generated corpus (git-ignored, rebuild with `make dataset`);
-                      lfw/, midv2020/, real_docs/ also git-ignored — research
+                      lfw/, midv2020/, real_docs/ also git-ignored - research
                       datasets are fetched, not vendored (`make data-real`)
 storage/              uploads, heatmaps, model cache, SQLite (git-ignored)
 .github/workflows/    CI: backend tests + dashboard typecheck and build
@@ -143,4 +143,4 @@ storage/              uploads, heatmaps, model cache, SQLite (git-ignored)
 
 ---
 
-[← Verityne](../README.md) — **Architecture** · [Corrections](corrections.md) · [Results](results.md) · [Measured on real data](real-data.md) · [Detector 6](behavioral.md) · [Fusion & policy](fusion.md) · [What it proves](evaluation.md) · [API & config](api.md)
+[← Verityne](../README.md) - **Architecture** · [Corrections](corrections.md) · [Results](results.md) · [Measured on real data](real-data.md) · [Detector 6](behavioral.md) · [Fusion & policy](fusion.md) · [What it proves](evaluation.md) · [API & config](api.md)

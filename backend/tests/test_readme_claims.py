@@ -41,7 +41,7 @@ ALL = "\n\n".join(PROSE[k] for k in sorted(PROSE))
 def load(name: str):
     p = EVAL / name
     if not p.exists():
-        pytest.skip(f"{name} not present — run `make pipeline`")
+        pytest.skip(f"{name} not present - run `make pipeline`")
     return json.loads(p.read_text())
 
 
@@ -55,8 +55,8 @@ def stated_number(pattern: str, text: str = ALL) -> float:
     """The single number the prose states at `pattern`.
 
     Requires exactly one *value*: a claim stated twice in two different forms is
-    itself the failure mode this file exists to catch. The same value repeated —
-    a summary in the README and the canonical table in `docs/` — is fine.
+    itself the failure mode this file exists to catch. The same value repeated -
+    a summary in the README and the canonical table in `docs/` - is fine.
     """
     found = re.findall(pattern, text)
     assert found, f"the docs no longer state this claim (pattern: {pattern})"
@@ -80,14 +80,14 @@ CLAIMS = [
     # This row sits in the section reporting the *finding*, so it is quoted from
     # the run that found it - the leaked corpus - not from the current one.
     ("ablation: full model AUC as the leak was found",
-     r"\| \*\(none — full model\)\* \| ([\d.]+) \|", "ablation_leaked_corpus.json", "full_model.roc_auc"),
+     r"\| \*\(none - full model\)\* \| ([\d.]+) \|", "ablation_leaked_corpus.json", "full_model.roc_auc"),
     ("linkage: true-accept rate at the fitted search threshold",
      r"true-accept rate from 95.1% to \*\*([\d.]+)%\*\*", "linkage_lfw.json", "fitted.tar", 100),
     ("demography: shortcut AUC of the frequency head, controlled",
-     r"\| — the frequency head, fitted here \| [\d.]+ \| \*\*([\d.]+)\*\* \|",
+     r"\| - the frequency head, fitted here \| [\d.]+ \| \*\*([\d.]+)\*\* \|",
      "indian_faces.json", "face.shortcut_auc.spectral_p_fake"),
     ("demography: shortcut AUC of the pretrained CNN, controlled",
-     r"\| — the pretrained CNN alone \| [\d.]+ \| \*\*([\d.]+)\*\* \|",
+     r"\| - the pretrained CNN alone \| [\d.]+ \| \*\*([\d.]+)\*\* \|",
      "indian_faces.json", "face.shortcut_auc.cnn_p_fake"),
     ("detector 6: held-out AUC",
      r"\| Held-out ROC-AUC, subject-disjoint \| \*\*([\d.]+)\*\* \|",
@@ -215,7 +215,7 @@ def test_every_doc_is_reachable_from_the_readme():
 #: Anything else cited has to be on disk, or a number is resting on nothing.
 EXPECTED_ABSENT = {
     "real_video.json": (
-        "liveness on recorded deepfakes — FF++ and Celeb-DF are gated behind a signed "
+        "liveness on recorded deepfakes - FF++ and Celeb-DF are gated behind a signed "
         "request form, and the docs claim no number for it precisely because of that"
     ),
 }
@@ -273,8 +273,8 @@ def test_the_demographic_shortcut_table_matches_its_evidence():
     section = PROSE["docs/real-data.md"]
     pairs = [
         (r"\| Shipped selfie score \| ([\d.]+) \| \*\*([\d.]+)\*\* \|", "score"),
-        (r"\| — the pretrained CNN alone \| ([\d.]+) \| \*\*([\d.]+)\*\* \|", "cnn_p_fake"),
-        (r"\| — the frequency head, fitted here \| ([\d.]+) \| \*\*([\d.]+)\*\* \|", "spectral_p_fake"),
+        (r"\| - the pretrained CNN alone \| ([\d.]+) \| \*\*([\d.]+)\*\* \|", "cnn_p_fake"),
+        (r"\| - the frequency head, fitted here \| ([\d.]+) \| \*\*([\d.]+)\*\* \|", "spectral_p_fake"),
     ]
     for pattern, key in pairs:
         m = re.search(pattern, section)

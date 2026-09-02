@@ -6,8 +6,8 @@ import type { DetectorOutput } from "@/lib/api";
 /**
  * Detector 6's evidence, as an instrument rather than a JSON dump.
  *
- * Every other detector's evidence is an image — a Grad-CAM overlay, an ELA
- * residual — and a reviewer can look at it and see what the model saw. This one
+ * Every other detector's evidence is an image - a Grad-CAM overlay, an ELA
+ * residual - and a reviewer can look at it and see what the model saw. This one
  * has no image, because what it measured was time. So the rendering has to do
  * the work the heatmap does elsewhere: show the measurement *and* the range it
  * was judged against, in one glance, without the reviewer having to remember
@@ -168,7 +168,7 @@ export function BehavioralEvidence({ detector }: { detector: DetectorOutput }) {
             </>
           )}
           <dt className="text-slate-600">events</dt>
-          <dd className="text-slate-400">{evidence.events_seen ?? "—"}</dd>
+          <dd className="text-slate-400">{evidence.events_seen ?? "-"}</dd>
           {flags.length > 0 && (
             <>
               <dt className="text-slate-600">automation</dt>

@@ -8,14 +8,14 @@
  * tokens moved. They import from here now; `tailwind.config.ts` is the only
  * other definition, and the two are meant to be read side by side.
  *
- * The verdict hues are pigment rather than screen — verdigris, yellow ochre,
- * red earth — held around 55-62% lightness and under 45% saturation. That is
+ * The verdict hues are pigment rather than screen - verdigris, yellow ochre,
+ * red earth - held around 55-62% lightness and under 45% saturation. That is
  * where print keeps warning colours, and it is what leaves a genuine alarm
  * somewhere brighter to go.
  *
  * The accent is the opposite: fully saturated orange, on a ground with no
- * saturation at all. That is the whole separation rule — **saturation means you
- * can act on it, hue means a verdict** — and it is why a vivid orange edge in
+ * saturation at all. That is the whole separation rule - **saturation means you
+ * can act on it, hue means a verdict** - and it is why a vivid orange edge in
  * the ring graph is never mistaken for a muted red-earth REJECT node sitting
  * next to it, despite the two being neighbours on the wheel.
  */
@@ -43,14 +43,14 @@ export const VERDICT_HEX = { PASS, REVIEW, REJECT } as const;
  * Categorical series, for the ROC panel where each line is one detector.
  *
  * Six nominal categories with no order between them, so the ramp is hue-varied
- * at near-constant lightness — no series reads as "more" than another, which a
+ * at near-constant lightness - no series reads as "more" than another, which a
  * light-to-dark ramp would have implied. It deliberately excludes violet and
  * magenta: at this lightness they are the two that look synthetic next to earth
  * pigments, and they are also the pair most likely to be read as a state rather
  * than a category.
  *
  * The accent leads it, which makes the fused curve the figure and the
- * per-detector curves the ground — what the panel is actually asking you to
+ * per-detector curves the ground - what the panel is actually asking you to
  * compare. Every other member is desaturated, so the lead never has a rival.
  */
 export const SERIES = [ACCENT, PASS, REVIEW, "#b0725a", "#8b8b8b", "#6f8f8a"] as const;

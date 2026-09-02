@@ -5,7 +5,7 @@ const nextConfig = {
   reactStrictMode: true,
   // The Gauntlet's live results arrive over Server-Sent Events. Next compresses
   // proxied responses by default, and gzip holds a stream in its buffer until it
-  // has enough bytes to emit a block — so every `result` event sat in that buffer
+  // has enough bytes to emit a block - so every `result` event sat in that buffer
   // and the whole run landed at once, after ~75s of an apparently frozen page.
   // The backend already sends `X-Accel-Buffering: no`; that instructs nginx, not
   // this proxy. `curl` without `Accept-Encoding` streamed correctly the whole

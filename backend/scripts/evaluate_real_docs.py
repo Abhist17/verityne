@@ -20,8 +20,8 @@ Four things get reported that the synthetic run cannot produce:
 2. **Tamper AUC under real capture noise**, split by photo vs scan, directly
    comparable to the ``Tamper-only AUC`` column already in the README.
 
-3. **Per-attack breakdown.** ``copy_move`` is expected to be much the hardest —
-   its pasted pixels share the host document's compression history — and
+3. **Per-attack breakdown.** ``copy_move`` is expected to be much the hardest -
+   its pasted pixels share the host document's compression history - and
    reporting the three separately keeps that from hiding inside an average.
 
 4. **Localisation.** We know exactly which rectangle was edited, so we can ask
@@ -116,7 +116,7 @@ def ela_region_diagnostic(root: Path, records: Sequence[Dict], limit: int = 0) -
     against the mean outside it, on the same edge-normalised ELA map
     ``tamper_score`` thresholds.
 
-    Cheap enough to always run — it needs the ELA map only, not OCR — and it is
+    Cheap enough to always run - it needs the ELA map only, not OCR - and it is
     what turns "the check scores at chance" into a statement about why.
     """
     from verityne.utils.ela import edge_normalised_ela
@@ -194,7 +194,7 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--diagnostic-only", action="store_true",
                     help="recompute only the ELA region diagnostic and merge it into an "
-                         "existing report — needs no OCR, so it takes minutes not an hour")
+                         "existing report - needs no OCR, so it takes minutes not an hour")
     args = ap.parse_args()
 
     root = Path(args.data)
@@ -347,7 +347,7 @@ def main() -> None:
         },
         "ela_region_diagnostic": ela_region_diagnostic(root, records),
         "excluded_subscores": {
-            "fields": "PAN/Aadhaar structural validation — MIDV-2020 contains neither, so the "
+            "fields": "PAN/Aadhaar structural validation - MIDV-2020 contains neither, so the "
                       "field check is not exercised and is excluded rather than scored against "
                       "documents it was not built to read.",
         },
