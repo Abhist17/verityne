@@ -1,0 +1,316 @@
+VERITYNE - DEMO SCRIPT (problem -> solution -> architecture -> live demo)
+=========================================================================
+
+Three parts. Part 3 is the bulk of it and the reason anyone is watching.
+
+  PART 1  Problem and solution        ~1:00
+  PART 2  Architecture                ~1:00
+  PART 3  Live demo                   ~3:00
+                                      -----
+                                      ~5:00
+
+
+#########################################################################
+BEFORE YOU RECORD - READ THIS, IT DECIDES WHETHER THE DEMO WORKS
+#########################################################################
+
+RECORD AGAINST http://localhost:3000 - NOT the Render link.
+
+  The Render deployment ships without the detector models (that is what lets
+  it fit a free tier). It opens STORED verdicts and says so on screen. That is
+  correct behaviour, but it is not a live demo - nothing computes while you
+  watch. localhost has the models on your GPU and scores for real.
+
+Check these three things first. All three were green when this was written:
+
+  curl -s localhost:8000/health | grep -o '"scoring_available":[a-z]*'
+      -> must say true
+
+  curl -s -o /dev/null -w "%{http_code}\n" localhost:3000
+      -> must say 200
+
+  If either is down:
+      Terminal 1:  make backend
+      Terminal 2:  make frontend
+
+TIMING YOU CAN RELY ON (measured on this machine, CUDA):
+
+  One packet scores in 3 to 5 seconds. Packets with a liveness video are at
+  the slower end. Do not promise "instant" on camera.
+
+TABS TO OPEN, IN THIS ORDER, BEFORE HITTING RECORD:
+
+  1. the architecture diagram
+  2. localhost:3000/verify
+  3. localhost:3000/threat
+  4. localhost:3000/attacks
+  5. localhost:3000/metrics
+  6. localhost:3000/corrections
+
+Also: full screen, notifications off, sleep disabled, browser zoom at 100%.
+
+TWO THINGS NOT TO DO ON CAMERA:
+
+  - Do not run the full Gauntlet. It scores 20 fixtures serially, which is
+    about 108 seconds of watching a progress list. It is a great feature and a
+    terrible thing to film. Mention it, do not run it.
+
+  - Do not switch the merchant policy and re-click a fixture expecting the
+    verdict to change. Re-scoring a stored fixture uses the merchant that
+    submission was filed under, not the toggle. The toggle applies to new
+    uploads. Part 3 shows the policy a way that actually works.
+
+
+#########################################################################
+PART 1 - THE PROBLEM AND THE SOLUTION          (~1:00, ~150 words)
+#########################################################################
+
+[On camera, or on the landing page at localhost:3000.]
+
+  Every KYC vendor will show you a ROC curve and a number that sounds good.
+
+  Here is the problem with that. Anyone onboarding a fake merchant today has
+  Stable Diffusion and DeepFaceLab on a consumer laptop. They can generate a
+  face that has never existed, put it on a document that scans clean, and
+  record a liveness video of a person who does not exist. The single-model
+  detectors most systems ship were trained before those tools were free.
+
+  So the question is not "what is your AUC". It is "where does your system
+  fail, and do you know?"
+
+  This is Verityne. Six independent detectors, a calibrated fusion layer, and
+  a human-readable explanation behind every verdict.
+
+  And one thing you will not see from a vendor: a page listing every belief
+  this project held, measured, and turned out to be wrong about. Nine of them.
+  I will show you that at the end, because it is the part I would judge us on.
+
+[Beat. Switch to the architecture diagram.]
+
+
+#########################################################################
+PART 2 - ARCHITECTURE                          (~1:00, ~155 words)
+#########################################################################
+
+[The architecture diagram, full screen.]
+
+  A packet is four things: a selfie, an ID document, a liveness clip, and the
+  timing of how the form was filled.
+
+  Five detectors run concurrently. Selfie deepfake - a pretrained transformer
+  plus a frequency head we fitted ourselves. ID forensics - OCR, check digits,
+  compression analysis. Liveness - identity drift across video frames.
+  Metadata - EXIF and generator tags. And behavioral - keystroke rhythm.
+
+  Face match runs second. Not because it matters less, but because it reuses
+  the face crops the first stage already decoded, instead of decoding the same
+  images twice.
+
+  Then the path splits.
+
+  Fusion is a calibrated logistic regression: six scores become one.
+
+  Linkage is the other half. We hash every asset and embed every face, and
+  check both against every submission we have ever seen. That is how you catch
+  a ring instead of an incident.
+
+  And here is the design decision I would point at. Linkage can only ever
+  RAISE risk, never lower it. And a face match cannot reject anybody on its
+  own - it is capped below the reject line and sent to a human instead,
+  because a similarity search over a growing database will eventually
+  false-link a real person. A byte-identical file has no such problem, so that
+  one is allowed to reject.
+
+[Switch to localhost:3000/verify.]
+
+
+#########################################################################
+PART 3 - LIVE DEMO                             (~3:00)
+#########################################################################
+
+--- 3A. A genuine applicant passes ------------------------------ (~35s)
+
+[/verify. Click fixture REAL-01. It scores live - 3 to 5 seconds.]
+
+  Let me score a real one first, because a fraud detector that flags everybody
+  is not a detector.
+
+  [While it runs:] This is going through the actual API - all six detectors,
+  on the GPU, right now.
+
+  [Verdict lands: PASS, low score.]
+
+  Passed. And look at the reasoning - it is not just a number. Natural sensor
+  noise, no generative artefacts, the ID's check digit validates, the selfie
+  matches the portrait at a similarity that is plausible for a live capture.
+
+  That last one matters. A PERFECT match would be suspicious - it would mean
+  the selfie is a copy of the ID photo rather than a fresh capture.
+
+
+--- 3B. A fraudulent packet, and why ---------------------------- (~55s)
+
+[Click fixture FAKE-02. Let it score live.]
+
+  Now a fraudulent one.
+
+  [Verdict lands: 0.46, REVIEW.]
+
+  Risk 0.46 - REVIEW. Not rejected, not passed. The system declined to decide
+  and pushed it to a human, and it says exactly why.
+
+  Three reasons. One: a near-identical image appeared in eleven earlier
+  submissions - so this is either a reused asset or a shared template. Two:
+  the selfie is softer than its stated resolution implies. It claims 960
+  pixels but only carries real detail to about 570, which means it was
+  upscaled. Three: natural sensor noise, no generative artefacts.
+
+  Notice the third reason argues AGAINST fraud. We surface the evidence that
+  points both ways, because a reviewer who only sees the prosecution case is
+  not reviewing anything - they are rubber-stamping.
+
+[Scroll down to the heatmaps and detector list.]
+
+  Below that: where each model actually looked, and all six detector scores
+  individually. If you disagree with the verdict, you can see which detector
+  drove it.
+
+
+--- 3C. The same score, a different answer ---------------------- (~30s)
+
+[Hover "Strict" in the MERCHANT POLICY control, top right. A tooltip appears.]
+
+  One more thing on this page. The same evidence does not mean the same
+  decision for every business.
+
+  [Tooltip reads: reject 0.60, review 0.25, fraud loss Rs 2.5L]
+
+  This is a crypto exchange - high value, high risk. It rejects at 0.60 where
+  the default rejects at 0.80.
+
+  [Hover "Lenient".]
+
+  And this is a gig marketplace - low value, high volume, where friction costs
+  more than the fraud does. It rejects at 0.88, and does not even require a
+  liveness video.
+
+  Same detectors, same score, different thresholds. That is a config file, not
+  a retrain.
+
+
+--- 3D. Rings, not incidents ------------------------------------ (~35s)
+
+[/threat]
+
+  One fake merchant is an incident. Forty sharing a face is organised, and you
+  only see it if you link them.
+
+  These are fraud rings - submissions connected by a shared face or a shared
+  file. Five clusters, four of them with byte-identical file reuse.
+
+[/attacks - scroll to a group with REVIEW cards.]
+
+  Same data grouped by attack pattern. And these cards are live - click one
+  that is in review...
+
+[Click a REVIEW card. It jumps to /review and scrolls to that exact case.]
+
+  ...and it takes you straight into that case in the reviewer's queue, with
+  the evidence already loaded.
+
+
+--- 3E. The reviewer's queue ------------------------------------ (~25s)
+
+[/review - already here from the click.]
+
+  Twenty-seven cases waiting on a human.
+
+  Look at these three - Farah Sheikh, Nazia Rahman, Sadia Iqbal. Different
+  names. Same photograph. Eleven of the twenty-seven carry that badge.
+
+  This is why a face match cannot auto-reject. It is a similarity search, and
+  we measured what that costs: at the threshold we originally shipped, a
+  genuine applicant false-linked to a stranger ninety-seven percent of the
+  time against a five thousand record scan. So it goes to a person.
+
+
+--- 3F. The numbers ---------------------------------------------- (~35s)
+
+[/metrics]
+
+  Held-out ROC-AUC: 0.753, on an identity-disjoint split - no face that
+  trained the fusion layer appears in these numbers.
+
+  That is not a great score, and I want to be precise about why it is the
+  honest one. It used to be 0.913. Then an ablation showed our own corpus
+  generator had written the label into the EXIF metadata. Seventeen percent of
+  the corpus was carrying a fraud label in disguise. We fixed the corpus and
+  the number dropped sixteen points.
+
+[Point at the ROC chart.]
+
+  This is the fused curve against each detector alone. The fusion should
+  dominate. Where a single detector beats it, our weights are wrong - so we
+  draw it rather than crop it.
+
+[Scroll to the cost curve and drag a slider.]
+
+  And this is live: change the assumed fraud loss, and the optimal threshold
+  moves. We picked 0.80 from this curve, not by taste.
+
+
+--- 3G. Close on what we got wrong ------------------------------- (~25s)
+
+[/corrections]
+
+  Last page, and the one I would judge us on.
+
+  Nine things this project believed, measured, and turned out to be wrong
+  about. Four fixed. Three still open. Every one linked to the evidence file
+  that disproved it.
+
+  Our selfie detector scored 0.997 on diffusion fakes - the one attack class
+  we thought we had solved. Tested on four generator families we did not
+  create, it is at or below chance on all four. The worst is 0.123, which is
+  below fifty percent, which means inverted.
+
+  And our keystroke detector is a perfect 1.000 against every automation
+  strategy we had. So we built the attack that beats it - replay a real
+  person's recorded typing - and it drops to chance.
+
+  We published both, with the evidence.
+
+  Every vendor shows you a ROC curve. We show you where it fails.
+
+
+#########################################################################
+IF SOMETHING GOES WRONG ON CAMERA
+#########################################################################
+
+Verdict takes longer than ~8s
+    First score after the backend restarts pays model warm-up. Score one
+    fixture BEFORE you start recording to warm it.
+
+A page shows an error box
+    Backend died. Check terminal 1. Everything except the landing page reads
+    from the API.
+
+Heatmaps do not appear
+    They are generated during scoring. If you are on the Render link they do
+    not exist - switch to localhost.
+
+You clicked a REJECT card on /attacks and nothing happened
+    Correct behaviour. Only REVIEW cases are in the queue, so only those link.
+
+
+#########################################################################
+IF YOU NEED IT SHORTER
+#########################################################################
+
+Cut in this order:
+  1. 3D /threat entirely (~35s) - 3E makes the same point more concretely
+  2. 3A the genuine packet (~35s) - painful to lose, it proves specificity
+  3. The cost curve slider in 3F (~12s)
+
+Never cut: 3B (the fraud verdict with reasons) or 3G (corrections). Those are
+the demo. A run of good numbers with no failures reads as untested.

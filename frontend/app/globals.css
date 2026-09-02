@@ -223,7 +223,7 @@ body {
      of chrome in the interface that is allowed to be loud, because it is one
      word long. */
   .tag {
-    @apply font-display text-[9.5px] font-normal uppercase leading-none tracking-[0.14em]
+    @apply font-display text-[11px] font-normal uppercase leading-none tracking-[0.14em]
            bg-accent px-1.5 py-1 text-ink-1000;
   }
   .scroll-x {

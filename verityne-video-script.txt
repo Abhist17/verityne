@@ -1,0 +1,238 @@
+VERITYNE - 5 MINUTE VIDEO SCRIPT
+=================================
+
+Total: ~5:00. Word counts assume ~150 words/minute. Stage directions in
+[brackets]. Everything outside brackets is meant to be said aloud.
+
+Tip: record the screen separately and read this over it. Trying to talk and
+navigate at the same time is what makes demo videos drift over time.
+
+Before you hit record:
+  - Open https://verityne.onrender.com once to wake it (free tier sleeps,
+    first load is ~50s). Or use the GPU link if you want live scoring on
+    camera.
+  - Have these tabs ready, in this order:
+      1. The architecture diagram
+      2. /verify
+      3. /threat
+      4. /review
+      5. /metrics
+      6. /corrections
+  - Disable notifications and sleep.
+
+
+-------------------------------------------------------------------------
+0:00 - 0:35   THE PROBLEM                                      (~85 words)
+-------------------------------------------------------------------------
+
+[On camera, or on the landing page.]
+
+  Every KYC vendor will show you a ROC curve and a number that sounds good.
+
+  The problem is that anyone onboarding a fake merchant today has Stable
+  Diffusion and DeepFaceLab on their laptop. They can generate a face that
+  has never existed, put it on a document that looks real, and record a
+  liveness video of a person who isn't there.
+
+  So the question isn't "what's your AUC". It's "where does your system
+  fail, and do you know?"
+
+  This is Verityne. Six detectors, a fusion layer, and a published record of
+  everything we got wrong building it.
+
+
+-------------------------------------------------------------------------
+0:35 - 1:35   ARCHITECTURE                                    (~150 words)
+-------------------------------------------------------------------------
+
+[Switch to the architecture diagram. One minute, don't rush it.]
+
+  A packet comes in: a selfie, an ID document, a liveness clip, and the
+  timing of how the form was filled.
+
+  Five detectors run concurrently. Selfie deepfake - a pretrained transformer
+  plus a frequency head we fitted. ID forensics - OCR, check digits,
+  compression analysis. Liveness - identity drift across video frames.
+  Metadata - EXIF and generator tags. And behavioral - keystroke rhythm.
+
+  Face match runs second, not because it's less important, but because it
+  needs the face crops the first stage already decoded.
+
+  Then two things happen that matter.
+
+  First, linkage. We hash every asset and embed every face, and check them
+  against every prior submission. That's how you catch a ring.
+
+  Second, fusion. A calibrated logistic regression turns six scores into one,
+  and per-merchant policy turns that into PASS, REVIEW or REJECT.
+
+  Here's the part I'd point at: linkage can only ever RAISE risk, never lower
+  it. And a face match can't reject anyone on its own - it's capped, and sent
+  to a human instead. I'll explain why later.
+
+
+-------------------------------------------------------------------------
+1:35 - 2:25   LIVE DEMO: SCORE A PACKET                       (~120 words)
+-------------------------------------------------------------------------
+
+[/verify. Click fixture FAKE-02.]
+
+  Let's score one. This is a fraudulent packet.
+
+  [Wait for the verdict.]
+
+  Risk 0.46 - REVIEW. Not rejected, not passed. The system declined to
+  decide, and it says why in plain English.
+
+  Three reasons. One: a near-identical image appeared in eleven earlier
+  submissions. Two: the selfie is softer than its stated resolution implies -
+  real detail only to about 570 pixels, so this file has been upscaled. Three:
+  natural sensor noise, no generative artefacts.
+
+  And notice the third reason argues AGAINST fraud. We show the evidence that
+  points both ways, because a reviewer who only sees the prosecution case
+  isn't reviewing anything.
+
+  Below that: all six detector scores, and heatmaps showing where each model
+  actually looked.
+
+[If on the hosted link, add: "This deployment reads rather than scores - it
+runs without the models so it fits a free tier - so it's opening the stored
+verdict, and the page says so. The numbers are identical."]
+
+
+-------------------------------------------------------------------------
+2:25 - 3:10   RINGS: THREAT AND REVIEW                        (~110 words)
+-------------------------------------------------------------------------
+
+[/threat]
+
+  One fake merchant is an incident. Forty sharing a face is organised crime,
+  and you only see it if you link them.
+
+  These are fraud rings - submissions connected by a shared face or a shared
+  file. Five clusters here, four with byte-identical file reuse.
+
+[/review]
+
+  Same data, a reviewer's view. Twenty-seven cases waiting on a human.
+
+  Look at these three - Farah Sheikh, Nazia Rahman, Sadia Iqbal. Different
+  names. Same photograph. Eleven of the twenty-seven carry that badge.
+
+  Now, why can't a face match reject on its own? Because it's a similarity
+  search across every record you hold, and its false-accept rate compounds
+  with database size. We measured it: at the threshold we originally shipped,
+  a genuine applicant false-linked to a stranger ninety-seven percent of the
+  time against a five thousand record scan. A signal with that error profile
+  gets a human, not an automatic rejection.
+
+
+-------------------------------------------------------------------------
+3:10 - 4:05   THE NUMBERS                                     (~135 words)
+-------------------------------------------------------------------------
+
+[/metrics]
+
+  Here's where most demos get vague. We won't.
+
+  Held-out ROC-AUC: 0.753. On an identity-disjoint split - no face that
+  trained the fusion layer appears in these numbers.
+
+  That is not a great score, and I want to be precise about why it's the
+  honest one. It used to be 0.913. Then an ablation showed that our own
+  corpus generator had written the label into the EXIF metadata. Seventeen
+  percent of the corpus was carrying a fraud label in disguise. We fixed the
+  corpus, and the number went down by sixteen points.
+
+  This chart is the fused curve against each detector alone. The fusion
+  should dominate. Where a single detector beats it, our weights are wrong -
+  so we show it rather than crop it.
+
+  And the confusion matrix at the reject threshold: we catch thirty-seven
+  percent of fraud automatically, at a two percent false reject rate.
+  Seventy-six percent of fraud reaches a human. We chose that operating point
+  from a cost curve, not by taste.
+
+
+-------------------------------------------------------------------------
+4:05 - 4:50   WHAT WE GOT WRONG                               (~115 words)
+-------------------------------------------------------------------------
+
+[/corrections]
+
+  This is the page I actually care about.
+
+  Nine things this project believed, measured, and turned out to be wrong
+  about. Four fixed. Three still open. Every one linked to the evidence file
+  that disproved it.
+
+  Two examples.
+
+  Our selfie detector scored 0.997 on diffusion fakes - the one attack class
+  we thought we'd solved. Then we tested it on four generator families from
+  datasets we did not create. It's at or below chance on all four. The worst
+  is 0.123, which is below fifty percent, which means inverted - it scores
+  those fakes as MORE genuine than real faces.
+
+  And our keystroke detector hits a perfect 1.000 against every automation
+  strategy we had. So we built the attack that beats it: replay a real
+  person's recorded typing rhythm. It drops to 0.500. Chance.
+
+  We published both.
+
+
+-------------------------------------------------------------------------
+4:50 - 5:00   CLOSE                                            (~30 words)
+-------------------------------------------------------------------------
+
+[Landing page, or on camera.]
+
+  Every vendor shows you a ROC curve. We show you where it fails - because a
+  fraud system you can't audit is one you can't trust.
+
+  Thanks for watching.
+
+
+=========================================================================
+IF YOU RUN LONG - CUT THESE FIRST
+=========================================================================
+
+  1. The heatmaps mention at 2:25 (save ~8s)
+  2. The /threat section entirely (~25s) - /review makes the same point with
+     the same-face badges, and is more concrete
+  3. The confusion matrix numbers at 3:55 (~15s) - the 0.913 -> 0.753 story
+     is the one that matters
+
+DO NOT CUT: the 0.913 -> 0.753 correction, and the 1.000 -> 0.500 replay
+attack. Those two are the reason anyone believes the good numbers. A demo
+with only good numbers reads as a demo that hasn't been tested.
+
+
+=========================================================================
+LIKELY QUESTIONS
+=========================================================================
+
+Q: "0.753 is low. Why should we take this seriously?"
+   Because the alternative on offer is 0.913 that isn't real. We found the
+   leak in our own corpus and reported the drop. Ask any vendor showing you
+   0.95 how they built their negative set.
+
+Q: "Isn't the corpus synthetic?"
+   The packet corpus is, and it's small - 105 held-out. That's why the
+   detectors are also measured on data we did not generate: LFW for identity,
+   MIDV-2020 for documents, third-party deepfake datasets for the selfie
+   detector, and 168,595 real people for keystrokes. The third-party numbers
+   are the bad ones, and they're on the page.
+
+Q: "Why is it slow / why can't I upload?"
+   The hosted link runs without the models so it fits a free tier - it reads
+   verdicts rather than computing them, and labels them as stored. The GPU
+   link scores live in about 2.5 seconds.
+
+Q: "What would you do next?"
+   The three open findings, in order: decouple demography from the label in
+   the corpus and refit the frequency head; get the selfie detector to
+   generalise to unseen generators; and treat a replayed keystroke recording
+   as a reuse problem rather than a timing problem - which is the linkage
+   machinery we already have.

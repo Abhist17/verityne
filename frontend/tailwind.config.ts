@@ -109,12 +109,20 @@ const config: Config = {
         // for the second. `.label` carries its own tracking, so letter-spacing
         // now belongs to the *role* rather than to the size, and prose at this
         // step reads as prose.
-        "2xs": ["10.5px", { lineHeight: "15px" }],
-        xs: ["12px", { lineHeight: "18px" }],
-        sm: ["13px", { lineHeight: "20px" }],
-        base: ["14px", { lineHeight: "22px" }],
-        lg: ["16px", { lineHeight: "24px", letterSpacing: "-0.006em" }],
-        xl: ["19px", { lineHeight: "26px", letterSpacing: "-0.014em" }],
+        // Raised across the reading range after a reviewer said, plainly, that
+        // the text was too small to follow. The old ramp sat 1-2px under
+        // Tailwind's defaults at every step - sm was 13px where the default is
+        // 14 - and the 10.5px step, which was meant for uppercase micro-labels,
+        // had ended up carrying explanatory prose in 78 places. Small type is a
+        // legitimate choice for a dense instrument; it stops being one when a
+        // reader gives up. Line heights grew with the sizes so the ramp keeps
+        // its rhythm rather than just inflating.
+        "2xs": ["12px", { lineHeight: "17px" }],
+        xs: ["13.5px", { lineHeight: "20px" }],
+        sm: ["15px", { lineHeight: "23px" }],
+        base: ["16px", { lineHeight: "25px" }],
+        lg: ["18px", { lineHeight: "27px", letterSpacing: "-0.006em" }],
+        xl: ["21px", { lineHeight: "29px", letterSpacing: "-0.014em" }],
         "2xl": ["26px", { lineHeight: "32px", letterSpacing: "-0.02em" }],
         "3xl": ["34px", { lineHeight: "38px", letterSpacing: "-0.025em" }],
         // The heroes.
