@@ -159,7 +159,7 @@
     "definition": "a hit means one of the top-3 flagged ELA regions covers at least 25% of the rectangle we actually edited"
   },
   "excluded_subscores": {
-    "fields": "PAN/Aadhaar structural validation \u2014 MIDV-2020 contains neither, so the field check is not exercised and is excluded rather than scored against documents it was not built to read."
+    "fields": "PAN/Aadhaar structural validation - MIDV-2020 contains neither, so the field check is not exercised and is excluded rather than scored against documents it was not built to read."
   },
   "latency_ms": {
     "mean": 5448.6,

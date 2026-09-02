@@ -42,9 +42,9 @@
     "held_out_false_positive_rate": 0.1765,
     "optimism_factor": 8.7,
     "verdict": "NOT deployable from this corpus",
-    "why": "The threshold was chosen to hold a false-positive rate of 2.0% and produces 17.6% on a split it was not chosen on \u2014 8.7x optimistic. 195 rows cannot resolve an operating point that transfers: cross-validation re-uses the same small pool of genuine faces, and the score distribution shifts the moment the faces are new. Fitting on the held-out split instead would produce a number that reports itself."
+    "why": "The threshold was chosen to hold a false-positive rate of 2.0% and produces 17.6% on a split it was not chosen on - 8.7x optimistic. 195 rows cannot resolve an operating point that transfers: cross-validation re-uses the same small pool of genuine faces, and the score distribution shifts the moment the faces are new. Fitting on the held-out split instead would produce a number that reports itself."
   },
-  "recommendation": "Do not deploy these as fixed constants. The selection procedure is sound and the corpus is too small for it: the chosen point's false-positive rate does not survive a split it was not chosen on. What ships instead is the cost curve \u2014 GET /metrics/cost-curve and the sliders on the metrics page \u2014 where an operator sets the point from their own fraud loss, merchant value and abandonment. This file is the evidence for why that is a design decision rather than an omission.",
+  "recommendation": "Do not deploy these as fixed constants. The selection procedure is sound and the corpus is too small for it: the chosen point's false-positive rate does not survive a split it was not chosen on. What ships instead is the cost curve - GET /metrics/cost-curve and the sliders on the metrics page - where an operator sets the point from their own fraud loss, merchant value and abandonment. This file is the evidence for why that is a design decision rather than an omission.",
   "naive_comparison": {
     "chosen_reject": 0.67,
     "claimed_false_positive_rate": 0.0202,

@@ -1,7 +1,7 @@
 {
   "dataset": "LFW (deep-funneled), official 10-fold pair protocol from pairs.txt",
   "source": "13,233 photographs of 5,749 real people; every pair is two distinct photographs",
-  "embedder": "facenet-pytorch InceptionResnetV1 (vggface2) \u2014 the same model and MTCNN crop the API uses",
+  "embedder": "facenet-pytorch InceptionResnetV1 (vggface2) - the same model and MTCNN crop the API uses",
   "n_pairs_scored": 6000,
   "n_pairs_total": 6000,
   "n_photos_embedded": 7701,
@@ -98,8 +98,8 @@
     }
   },
   "fits": [
-    "linkage.SAME_PERSON \u2014 is this the same person as an earlier submission",
-    "the low end of the face-match band \u2014 is the selfie the person on the document"
+    "linkage.SAME_PERSON - is this the same person as an earlier submission",
+    "the low end of the face-match band - is the selfie the person on the document"
   ],
   "does_not_fit": "The high end of the band, which catches a selfie copied from the printed ID portrait. That needs selfie-vs-document pairs and LFW contains no documents, so that bound still comes from the corpus calibration.",
   "caveat": "LFW photographs are web images of public figures, not phone selfies against a printed card. The identity question is the same one; the capture conditions are not. Treat this as a lower bound that is at least measured on real pairs."

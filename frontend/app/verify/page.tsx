@@ -40,12 +40,12 @@ function WhatRuns() {
     ["Liveness video", "Identity drift, pose jitter and splice discontinuity across frames"],
     ["Face match", "512-d embeddings, selfie against the portrait on the card"],
     ["Metadata / EXIF", "Generator tags, capture age, and whether detail matches resolution"],
-    ["Behavioral", "How the form was filled \u2014 typing rhythm, pointer, device coherence"],
+    ["Behavioral", "How the form was filled - typing rhythm, pointer, device coherence"],
   ];
   return (
     <div>
       {/* The opening line carries the page, so it is set as a sentence rather
-          than as body copy \u2014 one step up the scale, and short enough to be read
+          than as body copy - one step up the scale, and short enough to be read
           before the eye moves to the cards. */}
       <p className="max-w-[46ch] text-lg leading-snug text-slate-200">
         Attach a packet, or score a fixture. Every verdict comes back with the
@@ -58,7 +58,7 @@ function WhatRuns() {
       </div>
 
       {/* Two columns, not six rows. The grid is what makes "six" legible as a
-          quantity \u2014 a list of six is something you count, a 3x2 block is
+          quantity - a list of six is something you count, a 3x2 block is
           something you see. It collapses to one column under `wide` because at
           300px per card the second column starts hyphenating. */}
       <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
@@ -70,7 +70,7 @@ function WhatRuns() {
       </div>
 
       <p className="mt-5 max-w-[62ch] text-xs leading-relaxed text-slate-500">
-        The first five read the files. The sixth reads the person &mdash; and it is the only one
+        The first five read the files. The sixth reads the person - and it is the only one
         whose adversary is not on a release cycle.
       </p>
     </div>

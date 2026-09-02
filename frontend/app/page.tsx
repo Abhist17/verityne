@@ -188,7 +188,7 @@ export default function LandingPage() {
         </div>
         <p className="mt-5 max-w-[68ch] text-xs leading-relaxed text-slate-500">
           The first five read the files. The sixth reads the person - and it is the only one whose
-          adversary is not on a release cycle. Detectors 1&ndash;5 degrade every time a better
+          adversary is not on a release cycle. Detectors 1-5 degrade every time a better
           generator ships; defeating Detector 6 needs a rig that reproduces human motor timing.
         </p>
       </section>

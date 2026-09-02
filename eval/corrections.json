@@ -20,7 +20,7 @@
       "id": "pretrained-baseline",
       "title": "The popular pretrained deepfake checkpoint is at chance on our data",
       "believed": "An off-the-shelf deepfake checkpoint with thousands of downloads is a reasonable baseline to build on.",
-      "measured": "Both candidates scored at or below chance on our own images. Their label mappings were verified first, so this is not an inverted-sign bug \u2014 it is what happens when a model trained on StyleGAN and face-swap video frames meets diffusion output.",
+      "measured": "Both candidates scored at or below chance on our own images. Their label mappings were verified first, so this is not an inverted-sign bug - it is what happens when a model trained on StyleGAN and face-swap video frames meets diffusion output.",
       "metric": "ROC-AUC on our images",
       "series": [
         {
@@ -52,7 +52,7 @@
       "id": "exif-leak",
       "title": "Half the headline AUC was a label we wrote into our own files",
       "believed": "The system scores 0.913 held out, and five detectors earned it.",
-      "measured": "Ablating one detector at a time showed metadata/EXIF carrying 49.5% of the above-chance AUC \u2014 because the corpus generator had conditioned EXIF mode on the label, leaving three modes that appeared on fraudulent packets and never on genuine ones. 17.3% of the corpus carried a fraud label in disguise. Two of the five detectors were making the model actively worse.",
+      "measured": "Ablating one detector at a time showed metadata/EXIF carrying 49.5% of the above-chance AUC - because the corpus generator had conditioned EXIF mode on the label, leaving three modes that appeared on fraudulent packets and never on genuine ones. 17.3% of the corpus carried a fraud label in disguise. Two of the five detectors were making the model actively worse.",
       "metric": "Held-out ROC-AUC",
       "before": 0.913,
       "after": 0.7527,
@@ -76,14 +76,14 @@
     {
       "id": "isotonic-calibrator",
       "title": "The calibrator was quietly costing 0.02 AUC",
-      "believed": "Calibrating the fused score is free \u2014 it changes the scale, not the ranking.",
+      "believed": "Calibrating the fused score is free - it changes the scale, not the ranking.",
       "measured": "Isotonic regression on 195 rows fitted a step function with so few levels that held-out scores collapsed to 14 distinct values. AUC measures ranking, and mass ties destroy ranking. It also made the score useless as a dial: a packet a hair above a step boundary jumped from 0.44 to 0.92, while policy.yaml cuts that score at fixed thresholds.",
       "metric": "Held-out ROC-AUC",
       "before": 0.732,
       "after": 0.7527,
       "direction": "up",
       "status": "fixed",
-      "outcome": "Replaced with Platt scaling \u2014 two parameters, strictly monotonic, so it preserves ranking exactly and returns a smooth score. Nothing was broken and no test failed; the number was simply lower than the model had earned.",
+      "outcome": "Replaced with Platt scaling - two parameters, strictly monotonic, so it preserves ranking exactly and returns a smooth score. Nothing was broken and no test failed; the number was simply lower than the model had earned.",
       "how_found": "reproduced",
       "evidence": [
         {
@@ -103,7 +103,7 @@
     {
       "id": "face-match-threshold",
       "title": "The identity threshold would have rejected two thirds of honest applicants",
-      "believed": "The face-match lower bound was calibrated \u2014 it was fitted, on our own pairs.",
+      "believed": "The face-match lower bound was calibrated - it was fitted, on our own pairs.",
       "measured": "Graded against LFW's 6,000 real pairs, the corpus-fitted bound accepts 32.23% of genuine pairs. The corpus could not have revealed this: its 'two photographs of one person' are one photograph re-captured twice, scoring 0.943, where two genuinely different photographs of the same person score 0.758.",
       "metric": "True-accept rate on real LFW pairs",
       "before": 0.3223,
@@ -133,13 +133,13 @@
       "id": "linkage-search-vs-pair",
       "title": "Every genuine applicant false-linked to a stranger",
       "believed": "Linkage catches onboarding rings, and its threshold was fitted on LFW at a strict false-accept budget.",
-      "measured": "The threshold was fitted for a *pair* and deployed as a *search*. Against the shipped 5,000-record scan limit, 99.99% of genuine applicants pick up a false link. A pairwise false-accept rate applied N times compounds; the pair fit stays where it was put. LFW's official protocol cannot resolve this \u2014 3,000 impostor pairs bottom out at 3.3e-4, and the shipped rate was two pairs.",
+      "measured": "The threshold was fitted for a *pair* and deployed as a *search*. Against the shipped 5,000-record scan limit, 99.99% of genuine applicants pick up a false link. A pairwise false-accept rate applied N times compounds; the pair fit stays where it was put. LFW's official protocol cannot resolve this - 3,000 impostor pairs bottom out at 3.3e-4, and the shipped rate was two pairs.",
       "metric": "Genuine applicants false-linking over a 5,000-record scan",
       "before": 0.999919,
       "after": 0.009637,
       "direction": "down",
       "status": "fixed",
-      "outcome": "Refitted over all 16,522,626 impostor pairs among LFW's distinct identities, from a stated 1% budget. A face link can also no longer reject anyone by itself \u2014 it is capped one abstention band below the reject threshold, and only a byte-identical file is exempt. The cost is stated: true-accept falls from 95.13% to 38.53%.",
+      "outcome": "Refitted over all 16,522,626 impostor pairs among LFW's distinct identities, from a stated 1% budget. A face link can also no longer reject anyone by itself - it is capped one abstention band below the reject threshold, and only a byte-identical file is exempt. The cost is stated: true-accept falls from 95.13% to 38.53%.",
       "how_found": "ran_the_product",
       "evidence": [
         {
@@ -157,8 +157,8 @@
     {
       "id": "demographic-shortcut",
       "title": "The frequency head separates real Indian faces from real FFHQ faces",
-      "believed": "The spectral head is this project's best detector \u2014 0.969 train AUC on detecting synthesis.",
-      "measured": "Scored on two groups that are *both genuine* \u2014 real photographs of Indian people against real FFHQ photographs, geometry-controlled \u2014 it separates them at 0.9155. It learned the prompt list: every synthetic face in our corpus was generated from a prompt naming the demographic, and FFHQ is predominantly not South Asian. The pretrained CNN scores 0.5007 on the same comparison \u2014 exactly chance, and the only component here with no demographic signal at all.",
+      "believed": "The spectral head is this project's best detector - 0.969 train AUC on detecting synthesis.",
+      "measured": "Scored on two groups that are *both genuine* - real photographs of Indian people against real FFHQ photographs, geometry-controlled - it separates them at 0.9155. It learned the prompt list: every synthetic face in our corpus was generated from a prompt naming the demographic, and FFHQ is predominantly not South Asian. The pretrained CNN scores 0.5007 on the same comparison - exactly chance, and the only component here with no demographic signal at all.",
       "metric": "Shortcut AUC, real vs real (0.5 is the only defensible value)",
       "series": [
         {
@@ -193,8 +193,8 @@
     {
       "id": "third-party-fakes",
       "title": "The selfie detector does not work on fakes we did not generate",
-      "believed": "The selfie detector catches diffusion output at 0.997 \u2014 the one attack class this project had solved.",
-      "measured": "Scored on four generator families from two third-party datasets, geometry-controlled and reported per family rather than pooled, it is at or below chance on every one of them. The worst, stylegan, is at 0.1234 \u2014 below 0.5 means inverted: it scores those fakes as more genuine than real faces. The 0.997 was the detector reading its own generator's settings.",
+      "believed": "The selfie detector catches diffusion output at 0.997 - the one attack class this project had solved.",
+      "measured": "Scored on four generator families from two third-party datasets, geometry-controlled and reported per family rather than pooled, it is at or below chance on every one of them. The worst, stylegan, is at 0.1234 - below 0.5 means inverted: it scores those fakes as more genuine than real faces. The 0.997 was the detector reading its own generator's settings.",
       "metric": "ROC-AUC per generator family, controlled face protocol",
       "series": [
         {
@@ -219,7 +219,7 @@
         "value": 0.5
       },
       "status": "open",
-      "outcome": "This is the most consequential finding in the project and it is unresolved. It does not sink the system \u2014 the fused verdict rests on provenance, structural document checks and behaviour, not on this detector, and the ablation already showed it carrying 10.6% of above-chance AUC rather than the headline. But a detector marketed on deepfake detection that is at chance on somebody else's deepfakes has to say so in its own README.",
+      "outcome": "This is the most consequential finding in the project and it is unresolved. It does not sink the system - the fused verdict rests on provenance, structural document checks and behaviour, not on this detector, and the ablation already showed it carrying 10.6% of above-chance AUC rather than the headline. But a detector marketed on deepfake detection that is at chance on somebody else's deepfakes has to say so in its own README.",
       "how_found": "third_party",
       "evidence": [
         {
@@ -237,14 +237,14 @@
     {
       "id": "replay-attack",
       "title": "We built the attack that defeats our own behavioral detector",
-      "believed": "Keystroke rhythm is the one signal a fraud kit cannot buy \u2014 1.000 held-out AUC against every automation strategy we had.",
-      "measured": "A replay attacker that dispatches a *real* person's recorded dwell and flight timings through the devtools protocol \u2014 rollover included, by laying presses and releases on a timeline rather than emitting them key by key \u2014 scores 0.4996. Chance. Nothing about its rhythm is synthetic.",
+      "believed": "Keystroke rhythm is the one signal a fraud kit cannot buy - 1.000 held-out AUC against every automation strategy we had.",
+      "measured": "A replay attacker that dispatches a *real* person's recorded dwell and flight timings through the devtools protocol - rollover included, by laying presses and releases on a timeline rather than emitting them key by key - scores 0.4996. Chance. Nothing about its rhythm is synthetic.",
       "metric": "ROC-AUC against the replay attacker",
       "before": 1.0,
       "after": 0.4996,
       "direction": "down",
       "status": "open",
-      "outcome": "Not fixable by a better rhythm model: the rhythm genuinely is human. What Detector 6 buys is raising the cost of automating a KYC form from free to 'you must first record a real human filling one'. The roadmap item is that a replayed recording is a *reused* one, which is the linkage problem this repo already solves for faces and files \u2014 not a timing problem.",
+      "outcome": "Not fixable by a better rhythm model: the rhythm genuinely is human. What Detector 6 buys is raising the cost of automating a KYC form from free to 'you must first record a real human filling one'. The roadmap item is that a replayed recording is a *reused* one, which is the linkage problem this repo already solves for faces and files - not a timing problem.",
       "how_found": "self_attack",
       "evidence": [
         {
@@ -262,8 +262,8 @@
     {
       "id": "thresholds-do-not-transfer",
       "title": "The stale thresholds could not be fixed by fitting them properly",
-      "believed": "The shipped 0.40 and 0.75 are stale because nobody re-fitted them. Refit them on the training split with cross-validation \u2014 never touching held-out \u2014 and the problem goes away.",
-      "measured": "The procedure works and the corpus cannot support it. The chosen reject point (0.66) holds a 2.02% false-positive rate out-of-fold and produces 17.65% on a split it was not chosen on \u2014 8.7x optimistic. Every training identity is distinct, so this is not fold leakage; 195 genuine faces simply cannot resolve an operating point that survives new faces.",
+      "believed": "The shipped 0.40 and 0.75 are stale because nobody re-fitted them. Refit them on the training split with cross-validation - never touching held-out - and the problem goes away.",
+      "measured": "The procedure works and the corpus cannot support it. The chosen reject point (0.66) holds a 2.02% false-positive rate out-of-fold and produces 17.65% on a split it was not chosen on - 8.7x optimistic. Every training identity is distinct, so this is not fold leakage; 195 genuine faces simply cannot resolve an operating point that survives new faces.",
       "metric": "False-positive rate at the chosen reject threshold",
       "series": [
         {
@@ -280,7 +280,7 @@
         "value": 0.0202
       },
       "status": "designed_around",
-      "outcome": "So the defaults do not come from cross-validation. They come from the system's own cost curve, which priced the shipped 0.75 reject line at negative expected net benefit and put its argmax at 0.80 \u2014 moving there took the false-reject rate from 9.8% to 2.0% and precision from 0.815 to 0.952. The review line, which the cost model does not cover, moved from 0.40 to 0.45 because 0.40 sat barely above the genuine median and sent 39% of honest merchants to a human. Both are read off held-out, so they report themselves: an operating point, not a generalisation claim. The mechanism that matters is still per-merchant policy plus the cost curve, and the defaults are only a sane place to start.",
+      "outcome": "So the defaults do not come from cross-validation. They come from the system's own cost curve, which priced the shipped 0.75 reject line at negative expected net benefit and put its argmax at 0.80 - moving there took the false-reject rate from 9.8% to 2.0% and precision from 0.815 to 0.952. The review line, which the cost model does not cover, moved from 0.40 to 0.45 because 0.40 sat barely above the genuine median and sent 39% of honest merchants to a human. Both are read off held-out, so they report themselves: an operating point, not a generalisation claim. The mechanism that matters is still per-merchant policy plus the cost curve, and the defaults are only a sane place to start.",
       "how_found": "reproduced",
       "evidence": [
         {
