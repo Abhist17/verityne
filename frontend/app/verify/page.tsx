@@ -9,6 +9,7 @@ import { LiveFaceMatch } from "@/components/LiveFaceMatch";
 import { DetectorPanel, PipelineRunning } from "@/components/DetectorPanel";
 import { ErrorBox, NumberedCard, PageHeader, ScoreMeter, SectionLabel, Spinner } from "@/components/ui";
 import { TelemetryCollector } from "@/lib/telemetry";
+import { Hint } from "@/components/Hint";
 
 const DETECTOR_ORDER = [
   "selfie_deepfake",
@@ -19,10 +20,38 @@ const DETECTOR_ORDER = [
   "behavioral",
 ];
 
+/**
+ * The three shipped merchant policies, and what choosing one actually changes.
+ *
+ * These were three bare lowercase words in a segmented control with no heading,
+ * which made them look like a debug toggle rather than the product's central
+ * claim: the same six detectors, the same scores, and a different verdict
+ * because a crypto exchange and a gig marketplace do not price fraud the same
+ * way. The thresholds below are read from `backend/verityne/policy.yaml`, so
+ * this list has to move when that file does.
+ */
 const POLICIES = [
-  { id: "default", label: "default" },
-  { id: "crypto_exchange_01", label: "strict" },
-  { id: "gig_marketplace_02", label: "lenient" },
+  {
+    id: "default",
+    label: "Default",
+    blurb:
+      "The balanced baseline, taken from this system's own cost curve rather than picked by hand. Everything on the Metrics page is reported at this setting.",
+    meta: "reject 0.80 · review 0.45",
+  },
+  {
+    id: "crypto_exchange_01",
+    label: "Strict",
+    blurb:
+      "A high-risk vertical, where one fraudulent account costs far more than turning away an honest applicant. Both thresholds tighten, so more packets are rejected and far more go to a human.",
+    meta: "reject 0.60 · review 0.25 · fraud loss ₹2.5L",
+  },
+  {
+    id: "gig_marketplace_02",
+    label: "Lenient",
+    blurb:
+      "A low-value, high-volume marketplace, where friction costs more than the fraud does. The reject line moves up and the liveness clip stops being required at all.",
+    meta: "reject 0.88 · review 0.45 · no liveness",
+  },
 ];
 
 /** What the six detectors read, shown while the right column is otherwise empty.
@@ -178,12 +207,25 @@ export default function LiveVerifyPage() {
         title="Verify"
         eyebrow="Live packet"
         actions={
-          <div className="segment" role="group" aria-label="Merchant policy">
-            {POLICIES.map((p) => (
-              <button key={p.id} data-active={merchantId === p.id} onClick={() => setMerchantId(p.id)}>
-                {p.label}
-              </button>
-            ))}
+          <div className="flex flex-col items-start gap-1.5 wide:items-end">
+            <Hint
+              align="right"
+              title="Merchant policy"
+              body="Who is asking. The detectors and the risk score do not change - the thresholds they are judged against do, so the same packet can pass for one merchant and go to review for another."
+            >
+              <span className="label cursor-help text-slate-500 underline decoration-edge-strong decoration-dotted underline-offset-4">
+                Merchant policy
+              </span>
+            </Hint>
+            <div className="segment" role="group" aria-label="Merchant policy">
+              {POLICIES.map((p) => (
+                <Hint key={p.id} align="right" title={p.label} body={p.blurb} meta={p.meta}>
+                  <button data-active={merchantId === p.id} onClick={() => setMerchantId(p.id)}>
+                    {p.label}
+                  </button>
+                </Hint>
+              ))}
+            </div>
           </div>
         }
       />

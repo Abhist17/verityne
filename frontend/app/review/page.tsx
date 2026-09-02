@@ -1,12 +1,36 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import clsx from "clsx";
 import { api, fmtPct } from "@/lib/api";
 import { Empty, ErrorBox, PageHeader, ScoreBar, Section, Spinner, VerdictBadge } from "@/components/ui";
 
+/**
+ * `/review?case=<submission_id>` opens straight onto that case.
+ *
+ * The Attacks page shows a flagged submission and its verdict, and until now
+ * the only way to act on one was to read its id, come here, and find it in a
+ * list of 27 - so the two pages described the same case and could not hand it
+ * over. A REVIEW card there is now a link to here, and this reads the id back.
+ *
+ * The parameter is a preference, not a command: if the case has since been
+ * decided it is no longer in the queue, and the queue's own first item is used
+ * rather than showing an empty panel.
+ */
 export default function ReviewQueuePage() {
+  return (
+    <Suspense fallback={<div className="py-24"><Spinner label="Loading queue…" /></div>}>
+      <ReviewQueue />
+    </Suspense>
+  );
+}
+
+function ReviewQueue() {
+  const requested = useSearchParams().get("case");
+  const panel = useRef<HTMLDivElement>(null);
+  const scrolled = useRef(false);
   const [queue, setQueue] = useState<any>(null);
   const [agreement, setAgreement] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -15,10 +39,13 @@ export default function ReviewQueuePage() {
   const [note, setNote] = useState("");
 
   const load = useCallback(() => {
-    api.reviewQueue().then((q) => { setQueue(q); setActive((a) => a ?? q.items?.[0]?.submission_id ?? null); })
-      .catch((e) => setError(e.message));
+    api.reviewQueue().then((q) => {
+      setQueue(q);
+      const ids: string[] = (q.items ?? []).map((i: any) => i.submission_id);
+      setActive((a) => a ?? (requested && ids.includes(requested) ? requested : ids[0] ?? null));
+    }).catch((e) => setError(e.message));
     api.reviewAgreement().then(setAgreement).catch(() => {});
-  }, []);
+  }, [requested]);
   useEffect(load, [load]);
 
   const decide = async (id: string, decision: string) => {
@@ -37,6 +64,17 @@ export default function ReviewQueuePage() {
 
   const items: any[] = queue?.items ?? [];
   const current = items.find((i) => i.submission_id === active) ?? items[0];
+
+  /* Arriving from an Attacks card, the case is selected but the detail panel
+     sits below a 27-row queue - over 2,000px down on a laptop. The link looked
+     like it had done nothing. Scroll to it once, and only when a case was asked
+     for by name: a normal visit to /review should still open at the top. */
+  useEffect(() => {
+    if (scrolled.current || !requested || !panel.current) return;
+    if (current?.submission_id !== requested) return;
+    scrolled.current = true;
+    panel.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [requested, current?.submission_id]);
 
   return (
     <div className="space-y-12">
@@ -102,6 +140,7 @@ export default function ReviewQueuePage() {
           <AnimatePresence mode="wait">
             {current && (
               <motion.div
+                ref={panel}
                 key={current.submission_id}
                 initial={{ opacity: 0, x: 8 }}
                 animate={{ opacity: 1, x: 0 }}

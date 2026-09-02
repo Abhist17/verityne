@@ -206,10 +206,12 @@ body {
   .segment {
     @apply inline-flex gap-px border border-edge bg-ink-900 p-px;
   }
-  .segment > button {
+  /* Descendant, not child: the options are wrapped in a Hint for their hover
+     description, so the button is a grandchild of `.segment` now. */
+  .segment button {
     @apply px-2.5 py-1 text-xs text-slate-500 transition-colors duration-150 hover:text-slate-300;
   }
-  .segment > button[data-active="true"] {
+  .segment button[data-active="true"] {
     @apply bg-ink-750 text-slate-100;
   }
 
@@ -231,6 +233,19 @@ body {
        grew to its table's width and pushed the document sideways instead. */
     @apply min-w-0 overflow-x-auto;
     scrollbar-width: thin;
+  }
+  /* Scrollable, but with no bar drawn.
+   *
+   * For a strip that only overflows on a narrow viewport - the nav's seven tabs
+   * - the bar is a rule that appears under the tabs at some window widths and
+   * not others, which reads as a rendering fault rather than as an affordance.
+   * The swipe and the keyboard scroll both still work; only the bar is gone. */
+  .no-bar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-bar::-webkit-scrollbar {
+    display: none;
   }
   /* A row in a borderless list: separated by a hairline, lit on hover. */
   .row {

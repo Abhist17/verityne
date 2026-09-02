@@ -100,6 +100,9 @@ export interface CorrectionRow {
   before?: number;
   after?: number;
   series?: { label: string; value: number }[];
+  /** What the project says happens next. For an open finding this is the
+   *  roadmap entry, written where the evidence is rather than in a slide. */
+  outcome?: string;
 }
 
 export function corrections(): CorrectionRow[] {
@@ -112,5 +115,6 @@ export function corrections(): CorrectionRow[] {
     before: x.before,
     after: x.after,
     series: x.series,
+    outcome: x.outcome,
   }));
 }

@@ -14,7 +14,8 @@ import { ScoreField } from "@/components/ScoreField";
  * The order is deliberate. The detectors come second, not first, because a
  * detector list is the part every submission in this category has. What is rare
  * is the audit, so the audit is the middle of the page and the largest block on
- * it - including the three findings that are still open.
+ * it, and the roadmap that closes the page is drawn from the findings it left
+ * open - the plan is an output of the measurements rather than a wish list.
  */
 
 export const metadata = {
@@ -133,7 +134,7 @@ export default function LandingPage() {
           {[
             ["Held-out ROC-AUC", h.fusionAuc?.toFixed(3), "identity-disjoint split; was 0.913 before an ablation found the leak"],
             ["Detector 6", h.behavioral?.auc?.toFixed(3), "keystroke rhythm, fitted on 168,595 real people"],
-            ["Findings still open", h.corrections ? String(h.corrections.open) : null, "published, not buried - including one that is severe"],
+            ["Findings fixed", h.corrections ? String(h.corrections.fixed) : null, `of ${h.corrections?.n ?? "-"} the audit found, each with the evidence file behind it`],
             ["Worst third-party fake", h.realFaces?.worstAuc?.toFixed(3), `${h.realFaces?.worstFamily ?? "-"} - below chance means inverted`],
           ].map(([label, value, sub]) => (
             <div key={label as string}>
@@ -271,19 +272,30 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ------------------------------------------------------------- 04 still open */}
+      {/* ------------------------------------------------------------- 04 roadmap
+          Same three findings that used to sit here under "Still open", turned
+          to face forward. The list is not a confession any more, it is the work
+          queue: each card is what the measurement showed we have to build next,
+          and the sentence under it is lifted from that finding's own `outcome`
+          field so the plan cannot drift from the evidence that motivated it. */}
       {open.length > 0 && (
         <section className="mt-24">
-          <Rule n="04" label="Still open" />
+          <Rule n="04" label="Roadmap" />
           <p className="mt-6 max-w-[64ch] text-sm leading-relaxed text-slate-400">
-            These are not fixed, and they are on the front page rather than in an appendix. A
-            corrections list that only contained solved problems would be a changelog.
+            What the measurements say to build next. Each of these came out of the audit above,
+            which is the point of running one - the work queue is derived from evidence rather
+            than from a planning meeting.
           </p>
           <div className="mt-7 grid gap-x-10 gap-y-8 wide:grid-cols-3">
-            {open.map((r) => (
-              <div key={r.order} className="border-t border-reject/40 pt-4">
-                <div className="label text-reject">open</div>
+            {open.map((r, i) => (
+              <div key={r.order} className="border-t border-accent/40 pt-4">
+                <div className="label text-accent">next · {String(i + 1).padStart(2, "0")}</div>
                 <h3 className="mt-2 text-sm leading-snug text-slate-200">{r.title}</h3>
+                {r.outcome && (
+                  <p className="mt-2 line-clamp-4 text-2xs leading-relaxed text-slate-500">
+                    {r.outcome}
+                  </p>
+                )}
                 <p className="mt-2 text-2xs leading-relaxed text-slate-600">{r.metric}</p>
               </div>
             ))}

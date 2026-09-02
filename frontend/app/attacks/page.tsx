@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useCallback, useEffect, useState } from "react";
 import clsx from "clsx";
 import { motion } from "framer-motion";
@@ -129,25 +131,51 @@ export default function AttackGalleryPage() {
                 {/* The thumbnail is the evidence, so it keeps its frame - this is
                     the image itself, not a box drawn around a group of text. */}
                 <div className="mt-4 grid gap-x-5 gap-y-6 sm:grid-cols-2 wide:grid-cols-3 xl:grid-cols-4">
-                  {g.samples.map((s: any) => (
-                    <div key={s.submission_id} className="group">
-                      {s.thumb_url ? (
-                        <img src={s.thumb_url} alt="" className="h-32 w-full rounded object-cover" />
-                      ) : (
-                        <div className="flex h-32 items-center justify-center rounded bg-ink-900 text-xs text-slate-600">
-                          no preview
+                  {g.samples.map((s: any) => {
+                    /* A REVIEW verdict means the policy sent this case to a
+                       person, so it is sitting in the review queue right now and
+                       there is somewhere to go. A REJECT was decided without a
+                       human and has no queue entry, so it stays inert rather
+                       than offering a link that lands on the wrong case. */
+                    const inReview = s.verdict === "REVIEW";
+                    const body = (
+                      <>
+                        {s.thumb_url ? (
+                          <img src={s.thumb_url} alt="" className="h-32 w-full rounded object-cover" />
+                        ) : (
+                          <div className="flex h-32 items-center justify-center rounded bg-ink-900 text-xs text-slate-600">
+                            no preview
+                          </div>
+                        )}
+                        <div className="mt-2 space-y-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <VerdictBadge verdict={s.verdict} size="sm" />
+                            <span className="num text-xs text-slate-300">{s.score.toFixed(2)}</span>
+                          </div>
+                          <div className="line-clamp-3 text-xs leading-relaxed text-slate-500">{s.top_reason}</div>
+                          <div className="num text-2xs text-slate-600">{s.merchant_id}</div>
+                          {inReview && (
+                            <div className="flex items-center gap-1 text-2xs text-accent opacity-0 transition-opacity group-hover:opacity-100">
+                              Open in review queue
+                              <span aria-hidden>→</span>
+                            </div>
+                          )}
                         </div>
-                      )}
-                      <div className="mt-2 space-y-1.5">
-                        <div className="flex items-center justify-between gap-2">
-                          <VerdictBadge verdict={s.verdict} size="sm" />
-                          <span className="num text-xs text-slate-300">{s.score.toFixed(2)}</span>
-                        </div>
-                        <div className="line-clamp-3 text-xs leading-relaxed text-slate-500">{s.top_reason}</div>
-                        <div className="num text-2xs text-slate-600">{s.merchant_id}</div>
-                      </div>
-                    </div>
-                  ))}
+                      </>
+                    );
+                    return inReview ? (
+                      <Link
+                        key={s.submission_id}
+                        href={`/review?case=${encodeURIComponent(s.submission_id)}`}
+                        className="group rounded outline-none ring-accent/60 transition-opacity hover:opacity-90 focus-visible:ring-1"
+                        aria-label={`Open ${s.attack_type ?? "this case"} in the review queue`}
+                      >
+                        {body}
+                      </Link>
+                    ) : (
+                      <div key={s.submission_id} className="group">{body}</div>
+                    );
+                  })}
                 </div>
               </section>
             ))}
