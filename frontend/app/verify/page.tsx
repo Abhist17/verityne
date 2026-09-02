@@ -106,6 +106,41 @@ function WhatRuns() {
   );
 }
 
+/**
+ * One heatmap tile, which may have no image behind it.
+ *
+ * A deployment can hold the verdict without holding the picture: the read-only
+ * build ships the database and leaves the overlays behind. A broken <img> then
+ * renders as the browser's torn-page icon with the alt text spilling out of it,
+ * which reads as a bug rather than an absence.
+ *
+ * The placeholder is swapped in by state, not by the `hidden` attribute. That
+ * was the first attempt and it silently did nothing: `hidden` sets
+ * `display: none` at the lowest precedence, and any Tailwind display utility on
+ * the same element - `grid`, here - simply wins. Every tile showed "overlay not
+ * deployed" underneath a heatmap that had loaded perfectly.
+ */
+function Overlay({ src, label }: { src: string; label: string }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <figure>
+      {failed ? (
+        <div className="grid aspect-[4/3] w-full place-items-center rounded border border-edge bg-ink-900 text-2xs text-slate-600">
+          overlay not deployed
+        </div>
+      ) : (
+        <img
+          src={src}
+          alt={`${label} heatmap`}
+          className="aspect-[4/3] w-full rounded object-cover"
+          onError={() => setFailed(true)}
+        />
+      )}
+      <figcaption className="mt-1.5 text-2xs text-slate-700">{label}</figcaption>
+    </figure>
+  );
+}
+
 export default function LiveVerifyPage() {
   const [selfie, setSelfie] = useState<File | null>(null);
   const [video, setVideo] = useState<File | null>(null);
@@ -463,34 +498,7 @@ export default function LiveVerifyPage() {
                   <SectionLabel>Where the model looked</SectionLabel>
                   <div className="grid gap-3 sm:grid-cols-3">
                     {Object.entries(result.heatmaps).map(([k, url]) => (
-                      <figure key={k}>
-                        {/* A deployment can hold the verdict without holding the
-                            picture: the read-only build ships the database and
-                            leaves 166 MB of overlays behind. A broken <img> then
-                            renders as the browser's torn-page icon with the alt
-                            text spilling out of it, which looks like a bug
-                            rather than an absence. Swap in a plain frame. */}
-                        <img
-                          src={url}
-                          alt={`${k.replace(/_/g, " ")} heatmap`}
-                          className="aspect-[4/3] w-full rounded object-cover"
-                          onError={(e) => {
-                            const img = e.currentTarget;
-                            img.style.display = "none";
-                            const ph = img.nextElementSibling as HTMLElement | null;
-                            if (ph) ph.hidden = false;
-                          }}
-                        />
-                        <div
-                          hidden
-                          className="grid aspect-[4/3] w-full place-items-center rounded border border-edge bg-ink-900 text-2xs text-slate-600"
-                        >
-                          overlay not deployed
-                        </div>
-                        <figcaption className="mt-1.5 text-2xs text-slate-700">
-                          {k.replace(/_/g, " ")}
-                        </figcaption>
-                      </figure>
+                      <Overlay key={k} src={url as string} label={k.replace(/_/g, " ")} />
                     ))}
                   </div>
                 </div>
