@@ -143,9 +143,9 @@ export default function GauntletPage() {
       )}
 
       {live && (
-        <div className="h-0.5 w-full overflow-hidden rounded-full bg-ink-800">
+        <div className="h-0.5 w-full overflow-hidden bg-ink-800">
           <motion.div
-            className="h-full rounded-full bg-accent"
+            className="h-full bg-accent"
             animate={{ width: `${progress * 100}%` }}
             transition={{ duration: 0.25 }}
           />

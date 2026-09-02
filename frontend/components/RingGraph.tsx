@@ -1,34 +1,55 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import clsx from "clsx";
 import type { ThreatEdge, ThreatGraph, ThreatNode, Verdict } from "@/lib/api";
-import { AXIS_STROKE, INK, REJECT, VERDICT_HEX } from "@/lib/palette";
+import { ACCENT, EDGE, TEXT, VERDICT_HEX } from "@/lib/palette";
 
 /**
- * Fraud rings as a node-link diagram.
+ * Fraud rings as a node-link diagram, drawn as a schematic rather than a scene.
  *
  * **The panel is about the rings, and it has to look like it.** The first
  * version laid every submission out in one force cloud, which meant that on a
  * window with two rings and twenty-one unlinked applicants, the twenty-one
  * carried nine tenths of the ink and the answer was two faint pairs somewhere
  * inside the confetti. Unlinked submissions are the *absence* of the finding, so
- * they are now separated out: rings own the canvas, laid out one cluster per
- * ring with a hull drawn behind them, and everything unlinked is a quiet band
- * along the bottom that says how many there are and otherwise gets out of the
- * way.
+ * they are separated out: rings own the canvas, and everything unlinked is a
+ * quiet band along the bottom that says how many there are and otherwise gets
+ * out of the way.
+ *
+ * **Nothing here glows.** The version before this one drew every node with a
+ * Gaussian bloom, wrapped each cluster in a radial-gradient halo, breathed the
+ * proven ones in and out and ran a lit particle down each proven edge. Each of
+ * those was defensible on its own and together they were a screensaver: the
+ * blur put a soft ramp around every hard fact, the halos made cluster
+ * *boundaries* — the one thing a linkage graph has to state precisely — into
+ * gradients with no edge at all, and the four simultaneous animations meant the
+ * eye never settled anywhere long enough to read a label. A forensic claim
+ * should be drawn the way a plan is drawn: hard edges, one weight of line, and
+ * every mark on a lattice.
+ *
+ * So: every coordinate snaps to a 4px grid, every node is a square with
+ * `crispEdges` on it, every edge is a straight 1px line, and the canvas carries
+ * a faint dot lattice underneath so the snapping reads as *registration* rather
+ * than as a rounding error. There is no animation at all, which also retires
+ * the reduced-motion special case this file used to need — SMIL cannot see a
+ * media query, so the preference had to be read in JS and the elements simply
+ * not rendered.
  *
  * **Edge style is the evidence type, and that is the point of the panel.** A
  * ring built on byte-identical files and one built on face similarity look the
  * same in a plain graph and are not the same claim: a shared SHA-256 is a fact,
  * while a face match is a similarity search whose false-accept rate compounds
  * with database size (see linkage.SAME_PERSON). Exact matches are drawn solid
- * and pull tighter; similarity links are dashed. A ring resting on at least one
- * exact match is outlined; an inferred one is not.
+ * in the accent and pull tighter; similarity links are dotted and grey. A ring
+ * resting on at least one exact match gets accent corner brackets; an inferred
+ * one gets grey.
  *
  * Verdict is carried on the node fill — a *status* encoding, which is a reserved
  * role, so it never doubles as a series colour, and it is never colour-alone:
  * every node names its verdict on hover and the legend spells the states out.
+ * The accent cannot be confused with any of the three despite sitting between
+ * ochre and red-earth on the wheel, because it is the only saturated thing on
+ * the canvas.
  */
 
 const VERDICT_FILL: Record<Verdict, string> = {
@@ -44,32 +65,29 @@ interface Sim extends ThreatNode {
   vy: number;
 }
 
-/** Node radius from risk score. Area-proportional within a readable band, so a
- *  0.9 does not swamp a 0.3 the way a linear radius would. */
-const radiusOf = (score: number) => 5 + Math.sqrt(Math.max(0, Math.min(1, score))) * 7;
+/** The drawing lattice, in screen pixels. Every mark lands on it. */
+const LATTICE = 4;
+const snap = (v: number) => Math.round(v / LATTICE) * LATTICE;
 
-/** Ring hull padding, in layout units. */
-const HULL_PAD = 26;
-
-/** Whether this viewer has asked for less motion.
+/**
+ * Node side from risk score, in lattice units.
  *
- *  SVG animation elements do not honour `prefers-reduced-motion` the way a CSS
- *  animation does — there is no media query that reaches inside SMIL — so the
- *  preference has to be read and the elements simply not rendered. The graph is
- *  built to be fully legible without any of it: the pulses and the breathing
- *  halo are emphasis, never the encoding. */
-function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setReduced(mq.matches);
-    sync();
-    mq.addEventListener?.("change", sync);
-    return () => mq.removeEventListener?.("change", sync);
-  }, []);
-  return reduced;
-}
+ * Area-proportional within a readable band, so a 0.9 does not swamp a 0.3 the
+ * way a linear side would, then quantised: a square whose side is 13.7px has a
+ * soft edge on a fractional device pixel, which is the exact thing this drawing
+ * is not allowed to have. The result is five discrete sizes, 8px to 24px, which
+ * is also a more honest read of a score than a continuous ramp nobody can
+ * measure by eye.
+ */
+const sideOf = (score: number, k = 1) => {
+  const r = 5 + Math.sqrt(Math.max(0, Math.min(1, score))) * 7;
+  return Math.max(8, snap(r * 2 * Math.min(1.25, k)));
+};
+
+/** Padding between the outermost node and its ring's bracket, in screen px. */
+const BOX_PAD = 22;
+/** Arm length of a corner bracket. */
+const BRACKET = 11;
 
 export function RingGraph({
   graph,
@@ -85,7 +103,6 @@ export function RingGraph({
   const wrapRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(760);
   const [hover, setHover] = useState<{ node: Sim; x: number; y: number } | null>(null);
-  const stillness = useReducedMotion();
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -129,7 +146,6 @@ export function RingGraph({
     const n = linked.length;
     if (!n) return [];
 
-    const order = new Map(ringIds.map((r, i) => [r, i]));
     const anchors = new Map<number, { x: number; y: number }>();
     // Anchors start at angle 0, not -90 degrees. Panels are wider than they are
     // tall, and two rings placed at -90/+90 stack vertically — which wasted the
@@ -195,7 +211,7 @@ export function RingGraph({
         const dy = b.y - a.y;
         const d = Math.hypot(dx, dy) || 1;
         // A proven cluster should read tighter than an inferred one, reinforcing
-        // the solid/dashed distinction with spacing as well as stroke.
+        // the solid/dotted distinction with spacing as well as stroke.
         const rest = l.kind === "asset_exact" ? 44 : 70;
         const k = (d - rest) * 0.05 * alpha;
         a.vx += (dx / d) * k;
@@ -222,10 +238,10 @@ export function RingGraph({
 
   const view = useMemo(() => {
     if (!nodes.length) return { tx: width / 2, ty: graphH / 2, k: 1 };
-    // Padding covers the hull drawn around a cluster and the label above it,
+    // Padding covers the bracket drawn around a cluster and the label above it,
     // both of which extend past the outermost node centre. Fitting to centres
     // alone clipped the top label off the canvas.
-    const pad = HULL_PAD + 34;
+    const pad = BOX_PAD + 34;
     const xs = nodes.map((n) => n.x);
     const ys = nodes.map((n) => n.y);
     const minX = Math.min(...xs);
@@ -242,8 +258,11 @@ export function RingGraph({
     return { tx: width / 2 - ((minX + maxX) / 2) * k, ty: graphH / 2 - ((minY + maxY) / 2) * k, k };
   }, [nodes, width, graphH]);
 
+  /** Layout space → screen, then onto the lattice. Everything downstream — node
+   *  corners, edge endpoints, bracket boxes — derives from this, so one snap
+   *  here is what keeps the whole drawing registered. */
   const pos = useCallback(
-    (n: Sim) => ({ x: n.x * view.k + view.tx, y: n.y * view.k + view.ty }),
+    (n: Sim) => ({ x: snap(n.x * view.k + view.tx), y: snap(n.y * view.k + view.ty) }),
     [view]
   );
 
@@ -253,20 +272,42 @@ export function RingGraph({
     return m;
   }, [nodes, pos]);
 
-  /** One hull per ring: centre, radius, and whether the ring is proven. */
-  const hulls = useMemo(() => {
+  /**
+   * One box per ring: an axis-aligned bounding rectangle over its members.
+   *
+   * A rectangle rather than the circular hull this used to draw. A circle around
+   * a cluster of four is mostly empty canvas — it claims a lot of area to
+   * enclose very little, and two neighbouring rings' circles overlap long before
+   * their members do. A bounding box claims exactly what the ring occupies, it
+   * sits square on the lattice, and its corners are the natural place to hang a
+   * bracket.
+   */
+  const boxes = useMemo(() => {
     return ringIds.map((r) => {
       const members = nodes.filter((n) => n.ring === r);
-      const px = members.map((m) => pos(m));
-      const cx = px.reduce((s, p) => s + p.x, 0) / px.length;
-      const cy = px.reduce((s, p) => s + p.y, 0) / px.length;
-      const rad =
-        Math.max(...px.map((p, i) => Math.hypot(p.x - cx, p.y - cy) + radiusOf(members[i].score))) +
-        HULL_PAD;
+      const px = members.map((m) => {
+        const p = pos(m);
+        const half = sideOf(m.score, view.k) / 2;
+        return { ...p, half };
+      });
+      const x0 = snap(Math.min(...px.map((p) => p.x - p.half)) - BOX_PAD);
+      const x1 = snap(Math.max(...px.map((p) => p.x + p.half)) + BOX_PAD);
+      const y0 = snap(Math.min(...px.map((p) => p.y - p.half)) - BOX_PAD);
+      const y1 = snap(Math.max(...px.map((p) => p.y + p.half)) + BOX_PAD);
       const meta = graph.rings.find((x) => x.id === r);
-      return { r, cx, cy, rad, meta, size: members.length };
+      // The label is monospace, so its width is arithmetic — 10px at Departure
+      // Mono's advance plus 0.1em of tracking is a shade under 8px a character.
+      // The estimate is deliberately generous: it is only used to decide whether
+      // the label still fits left-aligned to its box, and over-estimating flips
+      // it to the right-hand edge a little early, which is correct-looking.
+      // Under-estimating would run it off the canvas, which is not.
+      const label =
+        `RING ${r + 1} / ${members.length}` +
+        (meta && meta.merchants.length > 1 ? ` / ${meta.merchants.length} MERCHANTS` : "") +
+        (meta?.has_exact_asset_reuse ? " / PROVEN" : "");
+      return { r, x0, y0, x1, y1, meta, size: members.length, labelW: label.length * 7.8 };
     });
-  }, [ringIds, nodes, pos, graph.rings]);
+  }, [ringIds, nodes, pos, view.k, graph.rings]);
 
   /** Unlinked nodes, evenly spaced along the band. */
   const bandNodes = useMemo(() => {
@@ -274,10 +315,10 @@ export function RingGraph({
     const inset = 18;
     const usable = Math.max(1, width - inset * 2);
     const step = isolated.length > 1 ? usable / (isolated.length - 1) : 0;
-    const y = graphH + bandH / 2 + 4;
+    const y = snap(graphH + bandH / 2 + 4);
     return isolated.map((n, i) => ({
       node: n,
-      x: isolated.length > 1 ? inset + i * step : width / 2,
+      x: snap(isolated.length > 1 ? inset + i * step : width / 2),
       y,
     }));
   }, [isolated, width, graphH, bandH]);
@@ -305,153 +346,121 @@ export function RingGraph({
           `submissions, ${isolated.length} unlinked`
         }
         className="block touch-none select-none"
+        shapeRendering="crispEdges"
         onMouseLeave={() => setHover(null)}
       >
-        {/* Bloom, hull gradients and a vignette.
-            The glow is a real filter rather than a stack of translucent circles:
-            one blur pass merged under the source keeps the node edge crisp while
-            the light falls off around it, which is what makes a dark network
-            read as lit rather than as flat dots on a background. */}
+        {/* The plotting surface: one pixel every 8, in the same hairline colour
+            as the page grid behind it. It is barely visible and it is the reason
+            the snapping reads as deliberate — without it, squares that happen to
+            align look like a coincidence rather than a register. */}
         <defs>
-          <filter id="rg-glow" x="-120%" y="-120%" width="340%" height="340%">
-            <feGaussianBlur stdDeviation="4.5" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <filter id="rg-glow-soft" x="-160%" y="-160%" width="420%" height="420%">
-            <feGaussianBlur stdDeviation="9" />
-          </filter>
-          <radialGradient id="rg-hull-proven">
-            <stop offset="0%" stopColor={REJECT} stopOpacity="0.20" />
-            <stop offset="70%" stopColor={REJECT} stopOpacity="0.06" />
-            <stop offset="100%" stopColor={REJECT} stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="rg-hull-inferred">
-            <stop offset="0%" stopColor="#8a8f9e" stopOpacity="0.13" />
-            <stop offset="70%" stopColor="#8a8f9e" stopOpacity="0.04" />
-            <stop offset="100%" stopColor="#8a8f9e" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="rg-vignette">
-            <stop offset="0%" stopColor="#20212a" stopOpacity="0.55" />
-            <stop offset="100%" stopColor="#20212a" stopOpacity="0" />
-          </radialGradient>
+          <pattern id="rg-lattice" width="8" height="8" patternUnits="userSpaceOnUse">
+            <rect x="0" y="0" width="1" height="1" fill={EDGE} />
+          </pattern>
         </defs>
+        <rect x={0} y={0} width={width} height={graphH} fill="url(#rg-lattice)" />
 
-        <rect x={0} y={0} width={width} height={graphH} fill="url(#rg-vignette)" />
-
-        {/* ---- ring hulls, behind everything --------------------------- */}
+        {/* ---- ring boxes, behind everything ---------------------------
+             A hairline rectangle for the extent, and four corner brackets for
+             the claim. The brackets are the encoding: accent means at least one
+             byte-identical file holds this cluster together, grey means the
+             whole thing rests on similarity. */}
         <g>
-          {hulls.map((h) => {
-            const proven = h.meta?.has_exact_asset_reuse;
-            const faded = selected != null && !nodes.some((n) => n.ring === h.r && n.id === selected);
+          {boxes.map((b) => {
+            const proven = b.meta?.has_exact_asset_reuse;
+            const faded = selected != null && !nodes.some((n) => n.ring === b.r && n.id === selected);
+            const tone = proven ? ACCENT : TEXT[600];
+            const overflows = b.x0 + b.labelW > width - 2;
+            const corners: [number, number, number, number][] = [
+              // x, y, dx, dy — the direction each arm runs from the corner.
+              [b.x0, b.y0, 1, 1],
+              [b.x1, b.y0, -1, 1],
+              [b.x0, b.y1, 1, -1],
+              [b.x1, b.y1, -1, -1],
+            ];
             return (
-              <g key={h.r} opacity={faded ? 0.35 : 1}>
-                <circle
-                  cx={h.cx}
-                  cy={h.cy}
-                  r={h.rad}
-                  fill={proven ? "url(#rg-hull-proven)" : "url(#rg-hull-inferred)"}
-                />
-                <circle
-                  cx={h.cx}
-                  cy={h.cy}
-                  r={h.rad}
+              <g key={b.r} opacity={faded ? 0.3 : 1}>
+                <rect
+                  x={b.x0}
+                  y={b.y0}
+                  width={b.x1 - b.x0}
+                  height={b.y1 - b.y0}
                   fill="none"
-                  stroke={proven ? REJECT : AXIS_STROKE}
-                  strokeOpacity={proven ? 0.55 : 0.28}
-                  strokeWidth={proven ? 1.4 : 1}
-                  // A proven ring is outlined solid; an inferred one is dashed,
-                  // the same grammar the edges use. The dash creeps slowly so an
-                  // inferred cluster reads as unsettled rather than merely thin.
-                  strokeDasharray={proven ? undefined : "5 6"}
-                >
-                  {!proven && !stillness && (
-                    <animate attributeName="stroke-dashoffset" from="0" to="-22"
-                             dur="3.4s" repeatCount="indefinite" />
-                  )}
-                </circle>
-                {/* A proven ring breathes: the only motion reserved for a claim
-                    that rests on a byte-identical file rather than a similarity. */}
-                {proven && !stillness && (
-                  <circle cx={h.cx} cy={h.cy} r={h.rad} fill="none" stroke={REJECT}
-                          strokeWidth={1} opacity={0}>
-                    <animate attributeName="r" values={`${h.rad};${h.rad + 16};${h.rad}`}
-                             dur="4.2s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0.34;0;0.34"
-                             dur="4.2s" repeatCount="indefinite" />
-                  </circle>
-                )}
+                  stroke={EDGE}
+                  strokeWidth={1}
+                />
+                {corners.map(([x, y, dx, dy], i) => (
+                  <path
+                    key={i}
+                    d={`M ${x + dx * BRACKET} ${y} L ${x} ${y} L ${x} ${y + dy * BRACKET}`}
+                    fill="none"
+                    stroke={tone}
+                    strokeWidth={proven ? 1.5 : 1}
+                    strokeOpacity={proven ? 1 : 0.8}
+                  />
+                ))}
+                {/* The label sits on the top rule, left-aligned to the box, the
+                    way a callout sits on a drawing — until it would not fit,
+                    at which point it anchors to the right-hand edge of the
+                    canvas instead of being slid leftward by a guess.
+
+                    Sliding is what the first attempt did, against a constant
+                    190px inset. That was right for "RING 5 / 2" and wrong for
+                    "RING 1 / 3 / 3 MERCHANTS / PROVEN" at 33 characters, so the
+                    longest label — on the ring carrying the most evidence — was
+                    the one that ran off the edge. Switching the anchor cannot
+                    clip whatever the estimate says, because the end anchor is
+                    measured by the renderer rather than by us. */}
                 <text
-                  // Kept inside the canvas on both sides; a cluster near an edge
-                  // would otherwise have half its label cut off.
-                  x={Math.min(Math.max(h.rad * 0.35 + 46, h.cx), width - 46)}
-                  // Above the hull, but never off the top edge — a cluster that
-                  // settles high would otherwise lose its label entirely.
-                  y={Math.max(12, h.cy - h.rad - 9)}
-                  textAnchor="middle"
+                  x={overflows ? width - 2 : Math.max(2, b.x0)}
+                  textAnchor={overflows ? "end" : "start"}
+                  y={Math.max(11, b.y0 - 8)}
                   className="fill-slate-500"
-                  style={{ fontSize: 10, fontFamily: "var(--font-mono)", letterSpacing: "0.08em" }}
+                  style={{
+                    fontSize: 10,
+                    fontFamily: "var(--font-display), var(--font-mono), monospace",
+                    letterSpacing: "0.1em",
+                  }}
                 >
-                  {`RING ${h.r + 1} · ${h.size}`}
-                  {h.meta && h.meta.merchants.length > 1 ? ` · ${h.meta.merchants.length} merchants` : ""}
-                  {proven ? " · PROVEN" : ""}
+                  <tspan fill={proven ? ACCENT : TEXT[500]}>{`RING ${b.r + 1}`}</tspan>
+                  <tspan>{` / ${b.size}`}</tspan>
+                  {b.meta && b.meta.merchants.length > 1 && (
+                    <tspan>{` / ${b.meta.merchants.length} MERCHANTS`}</tspan>
+                  )}
+                  {proven && <tspan fill={ACCENT}>{" / PROVEN"}</tspan>}
                 </text>
               </g>
             );
           })}
         </g>
 
-        {/* ---- edges ---------------------------------------------------- */}
-        <g>
+        {/* ---- edges ----------------------------------------------------
+             Straight, one pixel, no arc. The bowed chords the previous version
+             drew were there to separate parallel edges between the same pair —
+             a real problem, solved by a curve that made every link look like a
+             flight path. Parallel edges are rare enough here that the honest
+             fix is to draw them straight and let the pair overlap; what matters
+             is which *kind* of evidence connects two nodes, and that is carried
+             by the stroke. */}
+        <g shapeRendering="auto">
           {graph.edges.map((e, i) => {
             const a = posById.get(e.source);
             const b = posById.get(e.target);
             if (!a || !b) return null;
             const exact = e.kind === "asset_exact";
             const faded = selected != null && e.source !== selected && e.target !== selected;
-            // A gentle arc rather than a straight chord. In a dense cluster two
-            // straight edges between the same pair of neighbours overlap into one
-            // line; curving them apart keeps the count of links legible.
-            const mx = (a.x + b.x) / 2;
-            const my = (a.y + b.y) / 2;
-            const nx = -(b.y - a.y);
-            const ny = b.x - a.x;
-            const len = Math.hypot(nx, ny) || 1;
-            const bow = Math.min(26, len * 0.16) * (i % 2 === 0 ? 1 : -1);
-            const d = `M ${a.x} ${a.y} Q ${mx + (nx / len) * bow} ${my + (ny / len) * bow} ${b.x} ${b.y}`;
             return (
-              <g key={i} opacity={faded ? 0.14 : 1}>
-                {exact && (
-                  <path d={d} fill="none" stroke={REJECT} strokeWidth={5}
-                        strokeOpacity={0.28} filter="url(#rg-glow-soft)" />
-                )}
-                <path
-                  d={d}
-                  fill="none"
-                  stroke={exact ? REJECT : AXIS_STROKE}
-                  strokeWidth={exact ? 1.9 : 1.2}
-                  strokeDasharray={exact ? undefined : "3 4"}
-                  strokeOpacity={exact ? 0.95 : 0.55}
-                >
-                  {!exact && !stillness && (
-                    <animate attributeName="stroke-dashoffset" from="0" to="-14"
-                             dur="1.6s" repeatCount="indefinite" />
-                  )}
-                </path>
-                {/* Evidence travelling down a proven link. Motion is spent only
-                    where the claim is a fact, so the eye is drawn to the rings
-                    that are not an inference. */}
-                {exact && !faded && !stillness && (
-                  <circle r={2.2} fill={REJECT} filter="url(#rg-glow)">
-                    <animateMotion dur="2.6s" repeatCount="indefinite" path={d} />
-                    <animate attributeName="opacity" values="0;1;1;0"
-                             dur="2.6s" repeatCount="indefinite" />
-                  </circle>
-                )}
-              </g>
+              <line
+                key={i}
+                x1={a.x}
+                y1={a.y}
+                x2={b.x}
+                y2={b.y}
+                stroke={exact ? ACCENT : TEXT[600]}
+                strokeWidth={1}
+                strokeDasharray={exact ? undefined : "1 3"}
+                strokeOpacity={faded ? 0.12 : exact ? 0.85 : 0.7}
+              />
             );
           })}
         </g>
@@ -460,27 +469,51 @@ export function RingGraph({
         <g>
           {nodes.map((n) => {
             const p = pos(n);
-            const r = radiusOf(n.score) * Math.min(1.25, view.k);
+            const s = sideOf(n.score, view.k);
             const faded = dim(n.id);
+            const isSel = selected === n.id;
+            const isHot = hover?.node.id === n.id;
+            // The marker on a selected node, lifted straight from the way a
+            // survey drawing calls out a station: a square outline standing off
+            // the mark, with a tick on each side. It reads as "this one" at a
+            // glance and it adds no colour the palette does not already own.
+            const halo = s / 2 + 6;
             return (
               <g key={n.id}>
-                {!faded && (
-                  <circle cx={p.x} cy={p.y} r={r * 1.9} fill={VERDICT_FILL[n.verdict]}
-                          opacity={0.16} filter="url(#rg-glow-soft)" />
-                )}
-                <circle
-                  cx={p.x}
-                  cy={p.y}
-                  r={r}
+                <rect
+                  x={p.x - s / 2}
+                  y={p.y - s / 2}
+                  width={s}
+                  height={s}
                   fill={VERDICT_FILL[n.verdict]}
-                  fillOpacity={faded ? 0.15 : 0.95}
-                  stroke={selected === n.id ? "#f1f5f9" : INK[900]}
-                  strokeWidth={2}
-                  filter={faded ? undefined : "url(#rg-glow)"}
+                  fillOpacity={faded ? 0.18 : 1}
+                  stroke={isHot ? "#ffffff" : "none"}
+                  strokeWidth={1}
                   className="cursor-pointer"
                   onMouseEnter={() => setHover({ node: n, x: p.x, y: p.y })}
-                  onClick={() => onSelect?.(selected === n.id ? null : n.id)}
+                  onClick={() => onSelect?.(isSel ? null : n.id)}
                 />
+                {isSel && (
+                  <g pointerEvents="none">
+                    <rect
+                      x={p.x - halo}
+                      y={p.y - halo}
+                      width={halo * 2}
+                      height={halo * 2}
+                      fill="none"
+                      stroke={ACCENT}
+                      strokeWidth={1}
+                    />
+                    {[
+                      [p.x, p.y - halo - 5, p.x, p.y - halo],
+                      [p.x, p.y + halo, p.x, p.y + halo + 5],
+                      [p.x - halo - 5, p.y, p.x - halo, p.y],
+                      [p.x + halo, p.y, p.x + halo + 5, p.y],
+                    ].map(([x1, y1, x2, y2], i) => (
+                      <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={ACCENT} strokeWidth={1} />
+                    ))}
+                  </g>
+                )}
               </g>
             );
           })}
@@ -497,25 +530,30 @@ export function RingGraph({
               y1={graphH + 6}
               x2={width}
               y2={graphH + 6}
-              stroke={AXIS_STROKE}
-              strokeOpacity={0.25}
+              stroke={EDGE}
+              strokeWidth={1}
             />
             <text
               x={0}
               y={graphH + 24}
               className="fill-slate-600"
-              style={{ fontSize: 10, fontFamily: "var(--font-mono)", letterSpacing: "0.11em" }}
+              style={{
+                fontSize: 10,
+                fontFamily: "var(--font-display), var(--font-mono), monospace",
+                letterSpacing: "0.12em",
+              }}
             >
               {`${isolated.length} UNLINKED`}
             </text>
             {bandNodes.map(({ node, x, y }) => (
-              <circle
+              <rect
                 key={node.id}
-                cx={x}
-                cy={y}
-                r={3.5}
+                x={x - 3}
+                y={y - 3}
+                width={6}
+                height={6}
                 fill={VERDICT_FILL[node.verdict]}
-                fillOpacity={selected != null && selected !== node.id ? 0.18 : 0.45}
+                fillOpacity={selected != null && selected !== node.id ? 0.2 : 0.55}
                 className="cursor-pointer"
                 onMouseEnter={() =>
                   setHover({ node: { ...node, x: 0, y: 0, vx: 0, vy: 0 }, x, y })
@@ -533,6 +571,7 @@ export function RingGraph({
             textAnchor="middle"
             className="fill-slate-600"
             style={{ fontSize: 12 }}
+            shapeRendering="auto"
           >
             No linked submissions in this window — nothing shares a face or a file.
           </text>
@@ -541,7 +580,7 @@ export function RingGraph({
 
       {hover && (
         <div
-          className="pointer-events-none absolute z-10 w-56 rounded border border-edge-strong bg-ink-950/95 p-2 shadow-lg backdrop-blur-sm"
+          className="pointer-events-none absolute z-10 w-56 border border-edge-strong bg-ink-950/95 p-2 backdrop-blur-sm"
           style={{
             left: Math.min(Math.max(0, hover.x + 12), Math.max(0, width - 232)),
             top: Math.max(0, hover.y - 8),
@@ -570,31 +609,39 @@ export function RingGraph({
 }
 
 /** Spelled out in words, because the graph encodes two different things in
- *  colour and stroke and neither is guessable. */
+ *  colour and stroke and neither is guessable. The swatches are squares and the
+ *  rules are hairlines, so the key is drawn in the same hand as the drawing. */
 export function RingGraphLegend({ threshold }: { threshold: ThreatGraph["threshold"] }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-2xs text-slate-500">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-2xs text-slate-500">
       {(["PASS", "REVIEW", "REJECT"] as Verdict[]).map((v) => (
         <span key={v} className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full" style={{ background: VERDICT_FILL[v] }} />
+          <span className="h-2 w-2" style={{ background: VERDICT_FILL[v] }} />
           {v.toLowerCase()}
         </span>
       ))}
       <span className="flex items-center gap-1.5">
         <svg width="18" height="6" aria-hidden>
-          <line x1="0" y1="3" x2="18" y2="3" stroke={REJECT} strokeWidth="2" />
+          <line x1="0" y1="3" x2="18" y2="3" stroke={ACCENT} strokeWidth="1" />
         </svg>
         byte-identical file — a fact
       </span>
       <span className="flex items-center gap-1.5">
         <svg width="18" height="6" aria-hidden>
-          <line x1="0" y1="3" x2="18" y2="3" stroke="#4b5565" strokeWidth="1.25" strokeDasharray="3 3" />
+          <line x1="0" y1="3" x2="18" y2="3" stroke={TEXT[600]} strokeWidth="1" strokeDasharray="1 3" />
         </svg>
         similarity — an inference
       </span>
-      <span className={clsx("ml-auto num")}>
-        edges at cos ≥ {threshold.same_person.toFixed(4)}
+      <span className="flex items-center gap-1.5">
+        <svg width="12" height="12" aria-hidden shapeRendering="crispEdges">
+          <path d="M 5 0 L 0 0 L 0 5" fill="none" stroke={ACCENT} strokeWidth="1.5" />
+          <path d="M 7 0 L 12 0 L 12 5" fill="none" stroke={ACCENT} strokeWidth="1.5" />
+          <path d="M 5 12 L 0 12 L 0 7" fill="none" stroke={ACCENT} strokeWidth="1.5" />
+          <path d="M 7 12 L 12 12 L 12 7" fill="none" stroke={ACCENT} strokeWidth="1.5" />
+        </svg>
+        ring holds on a fact
       </span>
+      <span className="num ml-auto">edges at cos ≥ {threshold.same_person.toFixed(4)}</span>
     </div>
   );
 }

@@ -147,9 +147,9 @@ export function LiveFaceMatch({ reference }: { reference: File | null }) {
               </div>
             </div>
             {/* Where this score sits relative to the line, at a glance. */}
-            <div className="relative mt-2 h-1 rounded-full bg-ink-800">
+            <div className="relative mt-2 h-1 bg-ink-800">
               <div
-                className="absolute inset-y-0 left-0 rounded-full bg-current opacity-70"
+                className="absolute inset-y-0 left-0 bg-current opacity-70"
                 style={{ width: `${Math.max(0, Math.min(1, (sim + 1) / 2)) * 100}%` }}
               />
               <div

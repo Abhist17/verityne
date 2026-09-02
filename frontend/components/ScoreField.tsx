@@ -75,11 +75,11 @@ export function ScoreField({
       </svg>
       <figcaption className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-2xs text-slate-600">
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-[1px]" style={{ background: PASS }} />
+          <span className="h-2 w-2" style={{ background: PASS }} />
           genuine merchant
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-[1px]" style={{ background: REJECT }} />
+          <span className="h-2 w-2" style={{ background: REJECT }} />
           fraudulent
         </span>
         <span>left to right, low risk to high · brightness is the score</span>

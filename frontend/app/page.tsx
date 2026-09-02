@@ -26,8 +26,8 @@ const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
 function Rule({ n, label }: { n: string; label: string }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="num text-2xs text-slate-700">{n}</span>
-      <span className="label">{label}</span>
+      <span className="num text-2xs text-accent">{n}</span>
+      <span className="label text-slate-400">{label}</span>
       <span className="h-px flex-1 bg-edge" />
     </div>
   );
@@ -42,35 +42,42 @@ export default function LandingPage() {
   return (
     <div className="pb-8">
       {/* ---------------------------------------------------------------- hero
-          Full-bleed true black behind the fold. The app's surface is #0a0a0c,
-          which is right for something you read for an hour; a hero wants the
-          screen to vanish behind the type instead. */}
-      {/* Full-bleed. `-mx-6` only cancels the container padding — the page is
-          capped at 1180px with auto margins, so the black stopped short and the
-          hero read as a card floating on the app ground. This breaks out to the
-          viewport and re-centres its own content. */}
-      <section className="relative left-1/2 w-screen -translate-x-1/2 bg-ink-1000">
+          Full-bleed, and closed by a full-bleed accent hairline.
+
+          The bleed used to be here to carry a darker ground than the app's — the
+          app sat at #0a0a0c and the hero dropped to black. The whole interface
+          is black now, so there is no value step left to make; what the bleed
+          still buys is the rule at the bottom, which has to run edge to edge or
+          it reads as the underline of a column rather than the end of a band.
+
+          `-mx-6` would only cancel the container padding — the page is capped at
+          1180px with auto margins, so the band would stop short and float. This
+          breaks out to the viewport and re-centres its own content. */}
+      <section className="relative left-1/2 w-screen -translate-x-1/2 border-b border-accent/60">
         <div className="mx-auto w-full max-w-[1180px] px-6 pb-16 pt-10 wide:pt-14">
-        {/* Eyebrow. Not an announcement banner for its own sake — it is the one
-            sentence that says what kind of thing this is before the headline
-            makes a claim. */}
+        {/* The line above the headline. The corrections count that used to sit
+            here is now the announcement strip at the top of every page, which is
+            where it belongs — it was the site's one standing claim and it was
+            only visible on the home page. This says instead what is behind the
+            headline, so a reader arrives at the claim already knowing there is a
+            report under it. */}
         <Link
-          href="/corrections"
-          className="group inline-flex items-center gap-2.5 text-xs text-slate-500 transition-colors hover:text-slate-300"
+          href="/metrics"
+          className="group inline-flex items-center gap-2 text-xs text-slate-500 transition-colors hover:text-slate-300"
         >
-          <span className="border border-edge-strong px-1.5 py-0.5 text-2xs uppercase tracking-[0.12em] text-slate-400">
-            Audit
+          <span>
+            Held-out report now live: ROC, per-attack recall, the ablation, and a cost curve you
+            can drag
           </span>
-          {h.corrections && (
-            <span>
-              {h.corrections.n} things this project believed and measured wrong ·{" "}
-              {h.corrections.open} still open
-            </span>
-          )}
-          <span className="transition-transform group-hover:translate-x-0.5">→</span>
+          <span className="text-accent transition-transform group-hover:translate-x-0.5">→</span>
         </Link>
 
-        <h1 className="num mt-7 max-w-[17ch] text-3xl font-normal leading-[1.04] tracking-tight text-slate-50 wide:text-display">
+        {/* 19ch, not 17. The measure is in `ch`, which is the advance of "0" in
+            the *current* font — and the current font is now a monospace with a
+            wider advance than the one this was set against, so "Every vendor
+            shows" no longer fit the line the explicit <br /> promises it. The
+            break is authored, so the box has to be wide enough to honour it. */}
+        <h1 className="mt-7 max-w-[19ch] font-display text-3xl font-normal leading-[1.04] tracking-tight text-slate-50 wide:text-display">
           Every vendor shows
           <br />
           you a ROC curve.
@@ -87,7 +94,7 @@ export default function LandingPage() {
         <div className="mt-8 flex flex-wrap items-stretch">
           <Link
             href="/verify"
-            className="bg-accent px-5 py-2.5 text-sm font-medium text-ink-1000 transition-opacity hover:opacity-90"
+            className="bg-accent px-5 py-2.5 text-sm font-medium text-ink-1000 transition-colors hover:bg-accent-soft"
           >
             Score a packet
           </Link>
@@ -196,9 +203,9 @@ export default function LandingPage() {
           contains fails the build.
         </p>
 
-        <div className="mt-8 overflow-hidden rounded border border-edge">
+        <div className="mt-8 overflow-hidden border border-edge">
           <table className="w-full text-left text-xs">
-            <thead className="bg-ink-900 text-2xs uppercase tracking-[0.11em] text-slate-600">
+            <thead className="bg-ink-900 font-display text-2xs uppercase tracking-[0.11em] text-slate-500">
               <tr>
                 <th className="w-10 px-4 py-2.5 font-medium">#</th>
                 <th className="px-4 py-2.5 font-medium">What measuring it showed</th>
@@ -315,7 +322,7 @@ export default function LandingPage() {
 
       {/* ------------------------------------------------------------- close */}
       <section className="mt-24 border-t border-edge pt-10">
-        <h2 className="max-w-[26ch] text-xl font-medium leading-snug tracking-tight text-slate-100">
+        <h2 className="max-w-[26ch] font-display text-2xl font-normal leading-snug tracking-tight text-slate-100">
           {h.fusionAuc?.toFixed(3)} is what the detectors earn.
           <span className="block text-slate-500">
             Where to cut it is an operator&rsquo;s decision, not ours.
@@ -330,13 +337,13 @@ export default function LandingPage() {
         <div className="mt-7 flex flex-wrap gap-3">
           <Link
             href="/verify"
-            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-ink-950 transition-opacity hover:opacity-90"
+            className="bg-accent px-4 py-2 text-sm font-medium text-ink-1000 transition-colors hover:bg-accent-soft"
           >
             Score a packet
           </Link>
           <Link
             href="/gauntlet"
-            className="rounded-md px-4 py-2 text-sm text-slate-300 ring-1 ring-inset ring-edge-strong transition-colors hover:bg-ink-850 hover:text-slate-100"
+            className="px-4 py-2 text-sm text-slate-300 ring-1 ring-inset ring-edge-strong transition-colors hover:bg-ink-850 hover:text-slate-100"
           >
             Run the gauntlet
           </Link>

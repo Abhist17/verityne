@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { Mark } from "@/components/Mark";
 
 const LINKS = [
   { href: "/verify", label: "Verify" },
@@ -28,21 +29,18 @@ export function Nav() {
   const device = health?.device;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-edge bg-ink-950/85 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-[1180px] items-center gap-6 px-6 py-4">
-        <Link href="/" className="group flex items-center gap-2" aria-label="Verityne home">
-          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] text-accent" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 3l7 3v6c0 4.2-2.9 7.7-7 9-4.1-1.3-7-4.8-7-9V6l7-3z" strokeLinejoin="round" />
-            <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="text-base font-semibold tracking-tight text-slate-100">Verityne</span>
+    <header className="sticky top-0 z-40 border-b border-edge bg-ink-950/90 backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-[1180px] items-center gap-6 px-6 py-3">
+        <Link href="/" className="group flex shrink-0 items-center gap-2" aria-label="Verityne home">
+          <Mark className="h-[17px] w-[20px] text-accent" />
+          <span className="font-display text-base tracking-tight text-slate-50">Verityne</span>
         </Link>
 
-        {/* The active tab is marked by an underline flush with the header's own
-            border, so the panel below reads as belonging to that tab.
-            The rule is drawn on the header and the marker on the link, and the
-            link's `-bottom-4` is the `py-4` on the row — the two have to stay in
-            step or the marker floats above the border it is meant to sit in. */}
+        {/* The active tab is marked by an accent underline flush with the
+            header's own border, so the panel below reads as belonging to that
+            tab. The rule is drawn on the header and the marker on the link, and
+            the link's `-bottom-3` is the `py-3` on the row — the two have to
+            stay in step or the marker floats above the border it sits in. */}
         {/* Scrolls rather than overflows. Seven tabs do not fit a 390px
             viewport, and a flex row that cannot shrink pushed the document
             233px wide — which put a horizontal scrollbar under every page on a
@@ -56,14 +54,14 @@ export function Nav() {
                 href={l.href}
                 aria-current={active ? "page" : undefined}
                 className={clsx(
-                  "relative text-sm transition-colors duration-150",
-                  active ? "text-slate-100" : "text-slate-600 hover:text-slate-400"
+                  "relative whitespace-nowrap text-sm transition-colors duration-150",
+                  active ? "text-slate-100" : "text-slate-500 hover:text-slate-200"
                 )}
               >
                 {l.label}
                 {active && (
                   <span
-                    className="absolute inset-x-0 -bottom-4 h-px bg-accent"
+                    className="absolute inset-x-0 -bottom-3 h-px bg-accent"
                     aria-hidden
                   />
                 )}
@@ -72,11 +70,11 @@ export function Nav() {
           })}
         </nav>
 
-        <div className="ml-auto flex shrink-0 items-center gap-2.5 text-2xs">
+        <div className="ml-auto flex shrink-0 items-center gap-3">
           {/* One dot. If it is green the system is up; that is the whole status
               bar's job, and the device string was chrome nobody read. */}
           <span
-            className={clsx("h-1.5 w-1.5 rounded-full", up ? "bg-pass" : "bg-reject")}
+            className={clsx("h-1.5 w-1.5", up ? "bg-pass" : "bg-reject")}
             title={up ? `online · ${device ?? ""}` : "offline"}
             aria-hidden
           />
@@ -86,6 +84,13 @@ export function Nav() {
           <span role="status" className="sr-only">
             {up ? `API online${device ? `, running on ${device}` : ""}` : "API offline"}
           </span>
+          {/* The header's one action. A dashboard whose nav is seven equal tabs
+              never tells a first-time visitor which door to open; this is the
+              door. Hidden on narrow viewports, where the tab strip already owns
+              every pixel of the row. */}
+          <Link href="/verify" className="btn-accent hidden py-1 text-xs wide:inline-flex">
+            Score a packet
+          </Link>
         </div>
       </div>
     </header>

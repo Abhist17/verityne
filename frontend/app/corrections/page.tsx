@@ -76,7 +76,7 @@ function Series({ c }: { c: Correction }) {
             <span className="relative h-3">
               <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-ink-750" />
               <span
-                className={clsx("absolute top-1/2 h-[3px] -translate-y-1/2 rounded-full",
+                className={clsx("absolute top-1/2 h-[3px] -translate-y-1/2",
                   c.status === "open" ? "bg-reject/70" : "bg-slate-600")}
                 style={{ width: `${Math.max(1, (s.value / max) * 100)}%` }}
               />

@@ -240,9 +240,15 @@ export default function ThreatIntelPage() {
                       </span>
                       <span className="num shrink-0 text-xs text-slate-400">{g.n}</span>
                     </div>
-                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-ink-800">
+                    {/* Thin and square, not a 6px rounded capsule. At the old
+                        weight a full-width saturated bar read as a progress
+                        indicator — something in flight — rather than as a count,
+                        and four of them stacked put more accent on the page than
+                        every other surface combined. A hairline is enough to
+                        compare four categories, which is all this is for. */}
+                    <div className="mt-1.5 h-[3px] w-full bg-ink-800">
                       <div
-                        className="h-full rounded-full bg-accent transition-all duration-500"
+                        className="h-full bg-accent transition-all duration-500"
                         style={{ width: `${(g.n / generators.max) * 100}%` }}
                       />
                     </div>

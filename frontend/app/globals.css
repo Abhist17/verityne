@@ -12,14 +12,19 @@ body {
 
 @layer base {
   /* --- the page grid ------------------------------------------------------
-     Faint vertical rules running the height of the document, on the same
-     1180px measure the content uses. They do almost nothing individually and a
-     great deal together: they give a dark page a sense of structure behind the
-     text, so a section that is mostly whitespace still reads as *placed* rather
-     than as an empty screen with words on it.
+     A faint square lattice running the whole document, on the same 1180px
+     measure the content uses. It does almost nothing per line and a great deal
+     together: it gives a black page a sense of structure behind the text, so a
+     section that is mostly whitespace still reads as *placed* rather than as an
+     empty screen with words on it.
 
-     Painted on `body` with a repeating gradient rather than as elements, so it
-     costs one paint and nothing in the DOM, and it sits under everything
+     It used to be vertical rules only, which drew columns. Adding the
+     horizontal pitch turns those columns into cells, and a cell is what makes
+     the ground read as graph paper — a surface something was plotted on — which
+     is the register the whole interface is in.
+
+     Painted on `body` with two repeating gradients rather than as elements, so
+     it costs one paint and nothing in the DOM, and it sits under everything
      because the app's own surfaces all carry their own background. */
   body::before {
     content: "";
@@ -27,40 +32,66 @@ body {
     inset: 0;
     pointer-events: none;
     z-index: 0;
-    background-image: repeating-linear-gradient(
-      to right,
-      theme("colors.edge.DEFAULT") 0 1px,
-      transparent 1px 168px
-    );
-    background-position: center top;
-    background-size: 1180px 100%;
-    background-repeat: repeat-y;
-    opacity: 0.5;
+    background-image:
+      repeating-linear-gradient(
+        to right,
+        theme("colors.edge.DEFAULT") 0 1px,
+        transparent 1px 168px
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        theme("colors.edge.DEFAULT") 0 1px,
+        transparent 1px 168px
+      );
+    /* The vertical rules are locked to the centred 1180px measure so they line
+       up with the content columns; the horizontal ones just tile from the top,
+       since there is no vertical measure to agree with. */
+    background-position: center top, left top;
+    background-size: 1180px 100%, 100% 100%;
+    background-repeat: repeat-y, repeat;
+    opacity: 0.55;
   }
   body > * {
     position: relative;
     z-index: 1;
   }
+
+  /* Selection in the accent, because on a black ground the browser default is a
+     blue rectangle that belongs to a different design. */
+  ::selection {
+    background: theme("colors.accent.DEFAULT");
+    color: #000;
+  }
 }
 
 @layer components {
   /* --- a page title --------------------------------------------------------
-     Monospace, large, with a rule under it. The rule is doing real work: a big
-     heading on a dark page has no baseline to sit on, so it floats, and a
-     single hairline underneath anchors the whole column that follows. */
+     The display face at title size, with a rule under it. The rule is doing
+     real work: a big heading on a black page has no baseline to sit on, so it
+     floats, and a single hairline underneath anchors the whole column that
+     follows. The rule carries the accent at full strength on the left and
+     decays into the page grid on the right — an underline that starts as a
+     statement and ends as structure. */
   .page-title {
-    @apply num text-2xl font-normal tracking-tight text-slate-50 wide:text-3xl;
+    @apply font-display text-3xl font-normal tracking-tight text-slate-50;
   }
   .title-rule {
-    @apply mt-4 h-px w-full bg-gradient-to-r from-accent/60 via-edge-strong to-transparent;
+    @apply mt-4 h-px w-full;
+    background: linear-gradient(
+      90deg,
+      theme("colors.accent.DEFAULT") 0%,
+      theme("colors.accent.DEFAULT") 34%,
+      theme("colors.edge.strong") 72%,
+      transparent 100%
+    );
   }
 
   /* --- a callout -----------------------------------------------------------
      For the one sentence on a page that is the argument rather than a detail.
-     A thick left border and a raised ground; no icon, because an icon would be
-     decoration and the sentence is the point. */
+     A thick accent left border and a raised ground; no icon, because an icon
+     would be decoration and the sentence is the point. */
   .callout {
-    @apply relative rounded-r border-l-2 border-accent bg-ink-900 py-4 pl-5 pr-5;
+    @apply relative rounded-r-md border-l-2 border-accent bg-ink-900 py-4 pl-5 pr-5;
   }
   /* --- structure -----------------------------------------------------------
      There is no card. Sections are separated by space, and by a hairline only
@@ -77,7 +108,7 @@ body {
   }
   /* The rare genuinely-raised surface: tooltips, the graph canvas, a popover. */
   .surface {
-    @apply rounded-lg border border-edge bg-ink-900;
+    @apply rounded-md border border-edge bg-ink-900;
   }
 
   /* --- the card, reintroduced deliberately -------------------------------
@@ -87,12 +118,14 @@ body {
      land on and the whole column greys out. A set of peers gets a box; a
      sequence of rows still does not.
 
-     The elevation is one value step (950 → 900) plus a hairline, which is the
+     The elevation is one value step (black → 900) plus a hairline, which is the
      least that reads as raised on this ground. Anything more and the box starts
      competing with the verdict colours for attention, which is the one thing
-     the palette is not allowed to do. */
+     the palette is not allowed to do. The corner radius came down from `xl`:
+     against a square grid, a 12px round is the one soft thing on the page and
+     it reads as a component library rather than as a decision. */
   .card {
-    @apply relative rounded-xl border border-edge bg-ink-900 p-5 transition-colors duration-200;
+    @apply relative rounded-md border border-edge bg-ink-900 p-5 transition-colors duration-200;
   }
   .card-hover {
     @apply hover:border-edge-strong hover:bg-ink-850;
@@ -107,25 +140,24 @@ body {
     @apply num select-none text-2xs font-medium tabular-nums text-ink-600 transition-colors duration-200;
   }
   .card-hover:hover .ordinal {
-    @apply text-slate-600;
+    @apply text-accent;
   }
 
-  /* The page title. Large and very tight — this is the one place the interface
-     is allowed to be typographic rather than instrumental, and at 34px the
-     -0.025em from the scale is what stops it reading as a bare <h1>. */
-  .page-title {
-    @apply text-3xl font-medium text-slate-100;
-  }
   /* Sits above the title. Same micro-label role as `.label`, but it is the
      first thing on the page, so it carries the accent's brightness rather than
-     the slate ramp's quiet. */
+     the neutral ramp's quiet. */
   .eyebrow {
-    @apply text-2xs font-medium uppercase tracking-[0.16em] text-slate-500;
+    @apply font-display text-2xs font-normal uppercase tracking-[0.16em] text-accent;
   }
 
-  /* --- type ---------------------------------------------------------------- */
+  /* --- type ----------------------------------------------------------------
+     The micro-label is set in the display face, not the text face. At 10.5px a
+     bitmap monospace is on its design size — the glyphs land on whole pixels,
+     which is why these read as *stamped* on the page rather than typeset on it,
+     and it is the single cheapest thing that makes the whole interface look of
+     a piece with the titles. */
   .label {
-    @apply text-2xs font-medium uppercase tracking-[0.14em] text-slate-600;
+    @apply font-display text-2xs font-normal uppercase tracking-[0.14em] text-slate-500;
   }
   /* The hero numeral. Light weight at large size reads as precision rather than
      as shouting — a bold 58px number looks like an advert, not an instrument. */
@@ -138,40 +170,59 @@ body {
   .stat {
     @apply font-mono text-3xl font-light tabular-nums text-slate-100;
   }
-
   /* --- controls ------------------------------------------------------------
-     Quiet at rest, legible on hover. Nothing has a resting border except the
-     things you must be able to find without hunting. */
+     Square. Everything on this page is plotted on a grid, and a rounded button
+     is the one element that refuses to sit on it. Quiet at rest, legible on
+     hover; nothing has a resting border except the things you must be able to
+     find without hunting. */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm
+    @apply inline-flex items-center justify-center gap-2 border border-transparent px-3.5 py-1.5 text-sm
            font-medium text-slate-400 transition-colors duration-150
-           hover:bg-ink-800 hover:text-slate-100
+           hover:border-edge-strong hover:bg-ink-850 hover:text-slate-100
            focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent
-           disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent;
+           disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-transparent disabled:hover:bg-transparent;
   }
+  /* The quiet solid: white on black. HydraDB's "Talk to us" role — the second
+     action, which must still read as a button and must not read as the first. */
   .btn-primary {
-    @apply btn bg-ink-800 text-slate-100 hover:bg-ink-700;
+    @apply btn border-edge-strong bg-ink-850 text-slate-100 hover:bg-ink-800;
   }
+  /* The one action on a page that is *the* action. Accent fill, black label —
+     the only place a saturated colour is allowed to be a background, which is
+     what keeps it meaning "do this" everywhere it appears. */
   .btn-accent {
-    @apply btn text-accent hover:bg-accent/10 hover:text-accent;
+    @apply btn border-accent bg-accent font-medium text-ink-1000
+           hover:border-accent-soft hover:bg-accent-soft hover:text-ink-1000;
+  }
+  /* Accent as text rather than as fill, for a tertiary action in a row of them. */
+  .btn-ghost-accent {
+    @apply btn text-accent hover:border-accent/40 hover:bg-accent/10 hover:text-accent-soft;
   }
   .input {
-    @apply w-full rounded-md border-0 bg-ink-900 px-3 py-2 text-sm text-slate-200
+    @apply w-full border-0 bg-ink-900 px-3 py-2 text-sm text-slate-200
            ring-1 ring-inset ring-edge placeholder:text-slate-600
-           focus:outline-none focus:ring-1 focus:ring-accent/60;
+           focus:outline-none focus:ring-1 focus:ring-accent;
   }
   .segment {
-    @apply inline-flex gap-0.5 rounded-md bg-ink-900 p-0.5;
+    @apply inline-flex gap-px border border-edge bg-ink-900 p-px;
   }
   .segment > button {
-    @apply rounded px-2.5 py-1 text-xs text-slate-500 transition-colors duration-150 hover:text-slate-300;
+    @apply px-2.5 py-1 text-xs text-slate-500 transition-colors duration-150 hover:text-slate-300;
   }
   .segment > button[data-active="true"] {
     @apply bg-ink-750 text-slate-100;
   }
 
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium;
+  }
+  /* The announcement tag and the eyebrow badge: a hard accent rectangle with
+     black type in it, at micro-label size. Sharp, filled, tiny — the one piece
+     of chrome in the interface that is allowed to be loud, because it is one
+     word long. */
+  .tag {
+    @apply font-display text-[9.5px] font-normal uppercase leading-none tracking-[0.14em]
+           bg-accent px-1.5 py-1 text-ink-1000;
   }
   .scroll-x {
     /* `min-w-0` is what actually makes this scroll. `overflow-x: auto` only
@@ -183,7 +234,7 @@ body {
   }
   /* A row in a borderless list: separated by a hairline, lit on hover. */
   .row {
-    @apply flex items-center gap-4 border-t border-edge/60 py-2.5 transition-colors duration-150;
+    @apply flex items-center gap-4 border-t border-edge py-2.5 transition-colors duration-150;
   }
 }
 
@@ -199,12 +250,11 @@ table {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1c212b;
-  border: 3px solid #0a0a0c;
-  border-radius: 6px;
+  background: #262626;
+  border: 3px solid #000000;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2f3644;
+  background: #3d3d3d;
 }
 
 @media (prefers-reduced-motion: reduce) {

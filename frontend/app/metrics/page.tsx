@@ -27,7 +27,7 @@ const tooltipStyle = {
     fontSize: 11,
     boxShadow: "0 8px 24px rgb(0 0 0 / 0.5)",
   },
-  labelStyle: { color: "#94a3b8", marginBottom: 2 },
+  labelStyle: { color: "#9c9c9c", marginBottom: 2 },
   itemStyle: { padding: "1px 0" },
 };
 
@@ -452,7 +452,7 @@ export default function MetricsPage() {
                 dataKey="fpr" type="number" domain={[0, 1]} tick={AXIS}
                 tickFormatter={(v) => v.toFixed(1)}
                 label={{ value: "false positive rate", position: "insideBottom", offset: -4,
-                         fill: "#64748b", fontSize: 10 }}
+                         fill: "#7a7a7a", fontSize: 10 }}
               />
               <YAxis type="number" domain={[0, 1]} tick={AXIS} tickFormatter={(v) => v.toFixed(1)} />
               <Tooltip {...tooltipStyle}
@@ -461,9 +461,9 @@ export default function MetricsPage() {
                   labelled, it is the line every curve is being judged against. */}
               <ReferenceLine
                 segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]}
-                stroke="#3a3f4d" strokeDasharray="4 4"
+                stroke="#2e2e2e" strokeDasharray="4 4"
                 label={{ value: "chance", position: "insideBottomRight",
-                         fill: "#5b6172", fontSize: 10 }}
+                         fill: "#585858", fontSize: 10 }}
               />
               {rocSeries.detectors.map((d) => (
                 <Line
@@ -597,9 +597,9 @@ export default function MetricsPage() {
                       </td>
                       <td className="py-2 pl-6">
                         <div className="flex items-center gap-2">
-                          <div className="h-1.5 w-32 overflow-hidden rounded-full bg-ink-800">
+                          <div className="h-[3px] w-32 overflow-hidden bg-ink-800">
                             <div
-                              className={clsx("h-full rounded-full", helps ? "bg-accent" : "bg-reject")}
+                              className={clsx("h-full", helps ? "bg-accent" : "bg-reject")}
                               style={{ width: `${Math.min(100, Math.abs(share) * 100)}%` }}
                             />
                           </div>
@@ -695,13 +695,13 @@ export default function MetricsPage() {
                 <LabelList
                   dataKey="recall" position="right" offset={10}
                   formatter={(v: any) => `${(Number(v) * 100).toFixed(0)}%`}
-                  fill="#cbd5e1"
+                  fill="#c2c2c2"
                   style={{ fontSize: 11, fontFamily: "var(--font-mono)" }}
                 />
                 <LabelList
                   dataKey="n" position="right" offset={56}
                   formatter={(v: any) => `n=${v}`}
-                  fill="#5b6172"
+                  fill="#585858"
                   style={{ fontSize: 10, fontFamily: "var(--font-mono)" }}
                 />
               </Bar>
@@ -774,7 +774,7 @@ export default function MetricsPage() {
                 // scale, not a table.
                 interval={4} minTickGap={18}
                 label={{ value: "reject threshold", position: "insideBottom", offset: -2,
-                         fill: "#64748b", fontSize: 10 }}
+                         fill: "#7a7a7a", fontSize: 10 }}
               />
               <YAxis tick={AXIS} tickFormatter={(v) => fmtInr(v)} width={62} />
               <Tooltip {...tooltipStyle} formatter={(v: any, n: any) => [fmtInr(Number(v)), n]}
@@ -782,8 +782,8 @@ export default function MetricsPage() {
               <Legend iconType="plainline" iconSize={8} wrapperStyle={{ fontSize: 10, paddingTop: 6 }} />
               {/* Break-even. Above it the system pays for itself; below it the
                   friction costs more than the fraud it stops. */}
-              <ReferenceLine y={0} stroke="#4a4d5a" strokeWidth={1}
-                label={{ value: "break-even", position: "insideLeft", fill: "#5b6172", fontSize: 10 }} />
+              <ReferenceLine y={0} stroke="#4a4a4a" strokeWidth={1}
+                label={{ value: "break-even", position: "insideLeft", fill: "#585858", fontSize: 10 }} />
               <Line type="monotone" dataKey="net_benefit_inr" name="net benefit"
                     stroke={ACCENT} strokeWidth={2.5} dot={false} />
               <Line type="monotone" dataKey="fraud_prevented_inr" name="fraud prevented"
@@ -882,7 +882,7 @@ export default function MetricsPage() {
               <BarChart data={latencyData} margin={{ top: 4, right: 8, bottom: 4, left: -20 }}>
                 <CartesianGrid stroke={GRID} strokeDasharray="3 3" />
                 <XAxis dataKey="bucket" tick={{ ...AXIS, fontSize: 10 }}
-                  label={{ value: "ms", position: "insideBottom", offset: -2, fill: "#64748b", fontSize: 10 }} />
+                  label={{ value: "ms", position: "insideBottom", offset: -2, fill: "#7a7a7a", fontSize: 10 }} />
                 <YAxis tick={AXIS} allowDecimals={false} />
                 <Tooltip {...tooltipStyle} />
                 <Bar dataKey="count" fill={ACCENT} radius={[3, 3, 0, 0]} />

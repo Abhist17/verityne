@@ -62,12 +62,12 @@ export function DropZone({
       aria-label={file ? `${label}: ${file.name}. Click to replace.` : `Add ${label}`}
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && inputRef.current?.click()}
       className={clsx(
-        // rounded-xl and a resting hairline, to match `.card`. An empty slot with
+        // The same corner and a resting hairline as `.card`. An empty slot with
         // no edge is a slightly lighter rectangle on a dark ground, which reads
         // as a gap in the layout rather than as something you can drop a file
         // on — and it left the input column looking unfinished beside the
         // carded column next to it. The border is the affordance.
-        "group relative cursor-pointer overflow-hidden rounded-xl border transition-colors duration-200",
+        "group relative cursor-pointer overflow-hidden rounded-md border transition-colors duration-200",
         "focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent",
         file
           ? "border-edge bg-ink-900"

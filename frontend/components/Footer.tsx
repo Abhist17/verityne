@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Mark } from "@/components/Mark";
 
 /**
  * The close. Pages used to stop dead at their last row, which reads as a page
@@ -26,12 +27,8 @@ export function Footer() {
       <div className="mx-auto grid w-full max-w-[1180px] gap-10 px-6 py-10 wide:grid-cols-[minmax(0,1fr)_auto]">
         <div className="max-w-[46ch]">
           <div className="flex items-center gap-2">
-            <svg viewBox="0 0 24 24" className="h-[15px] w-[15px] text-accent" fill="none"
-                 stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path d="M12 3l7 3v6c0 4.2-2.9 7.7-7 9-4.1-1.3-7-4.8-7-9V6l7-3z" strokeLinejoin="round" />
-              <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="text-sm font-medium text-slate-300">Verityne</span>
+            <Mark className="h-[14px] w-[17px] text-accent" />
+            <span className="font-display text-sm text-slate-200">Verityne</span>
           </div>
           {/* No counts here on purpose. The number of corrections changes every
               time one is found, and a hard-coded "nine" in a footer is exactly

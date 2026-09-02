@@ -233,9 +233,14 @@ export default function LiveVerifyPage() {
             onClick={run}
             disabled={running || !hasInput}
             className={clsx(
-              "w-full rounded-md py-2.5 text-sm font-medium transition-colors duration-150",
+              "w-full py-2.5 text-sm font-medium transition-colors duration-150",
+              // Accent when it is armed. This used to go white-on-black when
+              // ready, which was the brightest thing on the page and therefore
+              // read as the primary action — correct — but by a different rule
+              // than every other primary action in the app. One rule: the thing
+              // you are here to do is the accent, and nothing else is.
               hasInput && !running
-                ? "bg-slate-100 text-ink-950 hover:bg-white"
+                ? "bg-accent text-ink-1000 hover:bg-accent-soft"
                 : "bg-ink-800 text-slate-600"
             )}
           >

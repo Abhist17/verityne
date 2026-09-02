@@ -66,7 +66,7 @@ function Measure({ name, band }: { name: string; band: Band }) {
         <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-ink-750" />
         {/* the range a human occupies */}
         <span
-          className="absolute top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-ink-700"
+          className="absolute top-1/2 h-[3px] -translate-y-1/2 bg-ink-700"
           style={{ left: `${bandL * 100}%`, right: `${(1 - bandR) * 100}%` }}
         />
         {/* this submission */}

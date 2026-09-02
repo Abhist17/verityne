@@ -211,9 +211,9 @@ export function ScoreMeter({
         <VerdictBadge verdict={verdict} size="lg" />
       </div>
 
-      <div className="relative mt-5 h-[3px] w-full rounded-full bg-ink-800">
+      <div className="relative mt-5 h-[3px] w-full bg-ink-800">
         <div
-          className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
+          className="absolute inset-y-0 left-0 transition-all duration-700"
           style={{ width: `${pct}%`, background: color }}
         />
         {[reviewAt, rejectAt].map((t) => (
