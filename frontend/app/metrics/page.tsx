@@ -525,25 +525,49 @@ export default function MetricsPage() {
                 </tr>
               </thead>
               <tbody className="font-mono">
-                {Object.entries(ev.per_detector).map(([k, d]: any) => (
+                {Object.entries(ev.per_detector).map(([k, d]: any) => {
+                  /* Same rule the ROC chart already applies, applied here.
+                   *
+                   * A detector at zero coverage scored nothing on this corpus,
+                   * so its 0.500 is the absence of a measurement, not a
+                   * measurement of chance. Printing it as a number — in reject
+                   * red, in a column beside detectors that genuinely
+                   * underperform — is the table asserting "measured, and bad"
+                   * about a detector that never ran.
+                   *
+                   * Behavioral is the case that matters: this corpus carries no
+                   * form-fill telemetry, so it abstains on every packet, while
+                   * on its own corpus it holds out at 1.000. A reader who meets
+                   * the red 0.500 first has no way to tell those apart. */
+                  const ran = (d.coverage ?? 1) > 0;
+                  return (
                   <tr key={k} className="border-t border-edge/60">
                     <td className="py-2 pr-3 font-sans text-slate-300">{d.label}</td>
-                    <td className={clsx("py-2 text-right ",
-                      d.auc_all_rows >= 0.7 ? "text-pass" : d.auc_all_rows >= 0.55 ? "text-review" : "text-reject")}>
-                      {d.auc_all_rows?.toFixed(3) ?? "—"}
+                    <td className={clsx("py-2 text-right ", !ran ? "text-slate-600"
+                      : d.auc_all_rows >= 0.7 ? "text-pass" : d.auc_all_rows >= 0.55 ? "text-review" : "text-reject")}>
+                      {ran ? (d.auc_all_rows?.toFixed(3) ?? "—") : "—"}
                     </td>
-                    <td className={clsx("py-2 text-right ",
-                      d.auc_on_target_attacks >= 0.7 ? "text-pass" : d.auc_on_target_attacks >= 0.55 ? "text-review" : "text-slate-500")}>
-                      {d.auc_on_target_attacks?.toFixed(3) ?? "—"}
+                    <td className={clsx("py-2 text-right ", !ran ? "text-slate-600"
+                      : d.auc_on_target_attacks >= 0.7 ? "text-pass" : d.auc_on_target_attacks >= 0.55 ? "text-review" : "text-slate-500")}>
+                      {ran ? (d.auc_on_target_attacks?.toFixed(3) ?? "—") : "—"}
                     </td>
-                    <td className="py-2 text-right text-slate-400">{d.mean_genuine?.toFixed(2) ?? "—"}</td>
-                    <td className="py-2 text-right text-slate-400">{d.mean_fraud?.toFixed(2) ?? "—"}</td>
-                    <td className="py-2 text-right text-slate-500">{fmtPct(d.coverage, 0)}</td>
+                    <td className="py-2 text-right text-slate-400">{ran ? (d.mean_genuine?.toFixed(2) ?? "—") : "—"}</td>
+                    <td className="py-2 text-right text-slate-400">{ran ? (d.mean_fraud?.toFixed(2) ?? "—") : "—"}</td>
+                    <td className={clsx("py-2 text-right", ran ? "text-slate-500" : "text-slate-600")}>{fmtPct(d.coverage, 0)}</td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
+          {Object.values(ev.per_detector).some((d: any) => (d.coverage ?? 1) <= 0) && (
+            <p className="mt-2.5 text-2xs leading-relaxed text-slate-600">
+              A dash means the detector never ran on this corpus, so there is nothing to score —
+              not that it scored at chance. Behavioral abstains on all 105 packets because none
+              carry form-fill telemetry; it is measured instead on 17,040 real keystroke sessions,
+              where it holds out at 1.000.
+            </p>
+          )}
           {data.fusion_weights && Object.keys(data.fusion_weights).length > 0 && (
             <div className="mt-4 border-t border-edge pt-3">
               <div className="label">Fusion weights (positive raises risk)</div>
