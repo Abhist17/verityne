@@ -140,9 +140,13 @@ def test_the_leaked_ablation_section_matches_its_preserved_evidence():
 def test_the_test_count_in_the_docs_is_current():
     """Two places quote it; both must agree with what the suite actually holds."""
     import subprocess
+    import sys
 
+    # `sys.executable`, not "python": the bare name is absent on any system that
+    # ships only python3 (Debian without python-is-python3, most CI images), and
+    # the crash there looked like a stale doc count rather than a missing binary.
     out = subprocess.run(
-        ["python", "-m", "pytest", str(REPO / "backend/tests"), "--collect-only", "-q"],
+        [sys.executable, "-m", "pytest", str(REPO / "backend/tests"), "--collect-only", "-q"],
         capture_output=True, text=True, cwd=REPO,
     ).stdout
     m = re.search(r"(\d+) tests? collected", out)
