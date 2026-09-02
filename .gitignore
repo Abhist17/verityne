@@ -77,5 +77,12 @@ eval/scores.json
 # archive of the demo payload. The recipe is tracked; the output is not.
 deploy/.build/
 
-# Build output of deploy/build-render.sh, not source.
-seed/
+# The Render deploy payload: the seeded database, the fitted models, and the
+# evidence images downscaled to 640px. Committed on purpose, unlike everything
+# else under storage/.
+#
+# Render builds from this repository, so the Dockerfile's COPY has to find it
+# here - a gitignored payload means a build that fails at COPY, on their
+# builder, ten minutes in. 46 MB is under GitHub's 50 MB warning, and Git LFS
+# was the alternative but Render's builder does not reliably fetch LFS objects.
+# Regenerate with deploy/build-render.sh.
