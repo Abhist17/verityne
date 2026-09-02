@@ -112,6 +112,12 @@ export default function LiveVerifyPage() {
   const [idDoc, setIdDoc] = useState<File | null>(null);
   const [claimedName, setClaimedName] = useState("");
   const [merchantId, setMerchantId] = useState("default");
+  /* Whether this deployment can score at all, and whether what is on screen was
+     scored just now or read back from the database. A read-only build ships
+     without the models so it can run in 71 MiB; it still holds every verdict it
+     ever computed. `null` means we have not heard from /health yet. */
+  const [canScore, setCanScore] = useState<boolean | null>(null);
+  const [stored, setStored] = useState(false);
 
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -181,20 +187,41 @@ export default function LiveVerifyPage() {
     }
   }, [selfie, video, idDoc, claimedName, merchantId]);
 
+  useEffect(() => {
+    api.health()
+      .then((h) => setCanScore(h?.scoring_available !== false))
+      .catch(() => setCanScore(null));
+  }, []);
+
+  /* A fixture, either scored live or read back.
+   *
+   * Where the models are present this rescores, because watching the pipeline
+   * actually run is the point of the page. Where they are not, the stored
+   * verdict is the same evidence - same score, same reasons, same detector
+   * breakdown, same heatmaps - and the panel says so rather than passing a
+   * database read off as a fresh computation. */
   const runSample = useCallback(async (id: string) => {
     setError(null);
     setResult(null);
+    setStored(false);
     setRunning(true);
     startTimer();
     try {
-      setResult(await api.rescore(id));
+      if (canScore === false) {
+        const v = await api.storedVerdict(id);
+        if (!v) throw new Error("This fixture has no stored verdict to show.");
+        setResult(v);
+        setStored(true);
+      } else {
+        setResult(await api.rescore(id));
+      }
     } catch (e: any) {
       setError(e.message ?? String(e));
     } finally {
       setRunning(false);
       stopTimer();
     }
-  }, []);
+  }, [canScore]);
 
   const reviewAt = result?.policy?.min_risk_for_review ?? 0.4;
   const rejectAt = result?.policy?.min_risk_for_reject ?? 0.75;
@@ -273,7 +300,7 @@ export default function LiveVerifyPage() {
 
           <button
             onClick={run}
-            disabled={running || !hasInput}
+            disabled={running || !hasInput || canScore === false}
             className={clsx(
               "w-full py-2.5 text-sm font-medium transition-colors duration-150",
               // Accent when it is armed. This used to go white-on-black when
@@ -281,13 +308,22 @@ export default function LiveVerifyPage() {
               // read as the primary action - correct - but by a different rule
               // than every other primary action in the app. One rule: the thing
               // you are here to do is the accent, and nothing else is.
-              hasInput && !running
+              hasInput && !running && canScore !== false
                 ? "bg-accent text-ink-1000 hover:bg-accent-soft"
                 : "bg-ink-800 text-slate-600"
             )}
           >
             {running ? <Spinner label="Verifying" /> : "Verify"}
           </button>
+
+          {canScore === false && (
+            <p className="border border-edge bg-ink-900 px-2.5 py-2 text-2xs leading-relaxed text-slate-500">
+              <span className="text-slate-300">This deployment reads, it does not score.</span>{" "}
+              It runs without the detector models, which is what lets it fit a free tier - so a new
+              packet cannot be scored here. The fixtures below still open their full stored verdict:
+              same score, same reasons, same per-detector breakdown. Run it locally for live scoring.
+            </p>
+          )}
 
           <p className="text-2xs leading-relaxed text-slate-700">
             Typing and pointer <em>timing</em> is recorded for behavioural analysis. Which keys you press is
@@ -357,7 +393,14 @@ export default function LiveVerifyPage() {
                   {result.explanation}
                 </p>
                 <div className="num mt-4 flex flex-wrap gap-x-5 gap-y-1 text-2xs tracking-normal text-slate-700">
-                  <span>{result.latency_ms.toFixed(0)} ms</span>
+                  {/* Never let a database read wear the costume of a fresh run:
+                      the latency below belongs to whenever this was actually
+                      scored, and saying so is the whole point of the page. */}
+                  {stored ? (
+                    <span className="text-accent">stored verdict, not re-scored</span>
+                  ) : (
+                    <span>{result.latency_ms.toFixed(0)} ms</span>
+                  )}
                   <span>{result.fusion_model}</span>
                   {result.abstained && <span className="text-accent">abstained → human</span>}
                   {result.attack_pattern && result.attack_pattern !== "clean" && (
@@ -421,7 +464,29 @@ export default function LiveVerifyPage() {
                   <div className="grid gap-3 sm:grid-cols-3">
                     {Object.entries(result.heatmaps).map(([k, url]) => (
                       <figure key={k}>
-                        <img src={url} alt={`${k} heatmap`} className="w-full rounded" />
+                        {/* A deployment can hold the verdict without holding the
+                            picture: the read-only build ships the database and
+                            leaves 166 MB of overlays behind. A broken <img> then
+                            renders as the browser's torn-page icon with the alt
+                            text spilling out of it, which looks like a bug
+                            rather than an absence. Swap in a plain frame. */}
+                        <img
+                          src={url}
+                          alt={`${k.replace(/_/g, " ")} heatmap`}
+                          className="aspect-[4/3] w-full rounded object-cover"
+                          onError={(e) => {
+                            const img = e.currentTarget;
+                            img.style.display = "none";
+                            const ph = img.nextElementSibling as HTMLElement | null;
+                            if (ph) ph.hidden = false;
+                          }}
+                        />
+                        <div
+                          hidden
+                          className="grid aspect-[4/3] w-full place-items-center rounded border border-edge bg-ink-900 text-2xs text-slate-600"
+                        >
+                          overlay not deployed
+                        </div>
                         <figcaption className="mt-1.5 text-2xs text-slate-700">
                           {k.replace(/_/g, " ")}
                         </figcaption>

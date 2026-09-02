@@ -13,8 +13,8 @@ So this build drops the scoring stack instead, which is possible only because
 
 |                     | full        | slim   |
 |---------------------|-------------|--------|
-| image               | 4.36 GB     | 791 MB |
-| RAM at rest         | ~1.4 GB     | 71 MiB |
+| image               | 4.36 GB     | 791 MB, or 1.3 GB with images |
+| RAM at rest         | ~1.4 GB     | 71-75 MiB |
 | boot to serving     | ~12 s       | ~1 s   |
 | payload shipped     | 163 MB      | 3.6 MB |
 | read endpoints (16) | all         | all    |
@@ -37,10 +37,19 @@ amount of packaging avoids that. Thumbnails and heatmap overlays are also gone,
 since the images are what the payload dropped - the evidence cards render with
 their text and scores but no picture.
 
+## The images are optional, and cheaper than they look
+
+`--with-images` ships the 166 MB of uploads and heatmaps as well. What a free
+tier caps is RAM, and these are static files: measured, the container serves
+them at 74.9 MiB against 71.5 MiB without, so the only real cost is a larger
+one-time push. Without them the evidence cards keep every score and reason and
+render "overlay not deployed" where the picture belongs.
+
 ## Build it
 
 ```bash
-./deploy/build-slim.sh          # writes deploy/.build/slim
+./deploy/build-slim.sh                 # writes deploy/.build/slim
+./deploy/build-slim.sh --with-images   # ... with the heatmaps and thumbnails
 cd deploy/.build/slim
 docker build -t verityne-api:slim .
 docker run -p 8080:8080 verityne-api:slim

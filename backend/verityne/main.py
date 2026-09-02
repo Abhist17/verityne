@@ -4,6 +4,8 @@
 """
 from __future__ import annotations
 
+import functools
+import importlib
 import logging
 import os
 import time
@@ -95,6 +97,31 @@ app.mount("/static/heatmaps", StaticFiles(directory=str(HEATMAP_DIR)), name="hea
 app.mount("/static/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 
+@functools.lru_cache(maxsize=1)
+def scoring_available() -> bool:
+    """Can this deployment score a packet, or only read what it already scored?
+
+    A read-only build ships without torch and the detector stack, which is what
+    lets it run in 71 MiB instead of 1.4 GB. The app itself starts either way,
+    because `verityne.main` imports its detectors lazily - so "did warmup run"
+    cannot answer this: a full build with VERITYNE_WARMUP=0 reports the same
+    skipped status and can still score perfectly well.
+
+    Importing `verityne.detectors.models` is NOT the test, which is the mistake
+    this replaced: that module defers its own heavy imports too, so it loads
+    happily in an image with no torch in it and reported True from a build that
+    cannot score a thing. The dependency has to be probed directly.
+
+    Cached because the answer cannot change while the process lives.
+    """
+    for mod in ("torch", "transformers"):
+        try:
+            importlib.import_module(mod)
+        except Exception:
+            return False
+    return True
+
+
 @app.get("/health", tags=["ops"])
 def health():
     return {
@@ -102,6 +129,10 @@ def health():
         "uptime_s": round(time.time() - START_TIME, 1),
         "device": resolve_device(),
         "models": getattr(app.state, "model_status", {}),
+        # The dashboard reads this to decide whether to offer live scoring or
+        # fall back to the stored verdict. Without it the only signal was a
+        # failed POST, which is a bad way to learn what a deployment can do.
+        "scoring_available": scoring_available(),
         "default_policy": get_policy().model_dump(),
     }
 

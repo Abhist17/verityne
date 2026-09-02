@@ -334,6 +334,26 @@ export const api = {
 
   submission: (id: string) => request<any>(`/submissions/${id}`),
 
+  /** The stored verdict for a submission, shaped like a fresh /verify response.
+   *
+   *  A read-only deployment has no models and cannot rescore, but every verdict
+   *  it ever computed is in the database with its reasons, detector breakdown
+   *  and heatmap paths intact. The record keeps the policy under
+   *  `policy_snapshot` and holds the ids on the parent row, so the two shapes
+   *  are the same evidence addressed differently - this is the translation, not
+   *  a reconstruction. Returns null when the row has no verdict yet. */
+  storedVerdict: async (id: string): Promise<VerifyResponse | null> => {
+    const row = await request<any>(`/submissions/${id}`);
+    const v = row?.verdict;
+    if (!v) return null;
+    return {
+      ...v,
+      policy: v.policy_snapshot,
+      submission_id: row.submission_id,
+      merchant_id: row.merchant_id,
+    } as VerifyResponse;
+  },
+
   /** Re-run the pipeline over an already-stored packet, and return a full verdict. */
   rescore: (id: string) =>
     request<VerifyResponse>(`/submissions/${id}/rescore`, { method: "POST" }),
