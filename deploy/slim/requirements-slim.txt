@@ -1,0 +1,40 @@
+# The read-only API: everything the dashboard reads, none of the scoring.
+#
+# Derived by blocking packages at import and asking which endpoints still
+# answer, rather than by guessing. With the list below, all sixteen read
+# endpoints return 200 - /metrics and its six sub-reports, /gauntlet,
+# /review-queue, /review/agreement, /attacks, /threat/graph, /submissions,
+# /policy and /audit - because every one of them reads eval/*.json or the
+# SQLite database, not a model.
+#
+# What is deliberately absent, and what it costs:
+#
+#   torch, torchvision, transformers, facenet-pytorch, timm  - 2.3 GB of the
+#     4.36 GB image. Without them POST /verify, /face-match/live and
+#     /gauntlet/run cannot score anything. Everything already scored is in the
+#     database and reads back fine.
+#   scikit-learn, joblib, xgboost - the fusion layer and the fitted heads.
+#     `verityne.fusion` logs "fusion model unreadable" and carries on; no read
+#     endpoint depends on it.
+#   diffusers, accelerate, easyocr - corpus generation and OCR. Pipeline-time
+#     tools that a serving container never calls.
+#   matplotlib, pandas, pyarrow - analysis and notebook helpers.
+#
+# Kept because the import chain genuinely reaches them: routes_behavioral
+# imports the detector package, which imports face_match, which imports
+# utils.hashing, which imports imagehash - so ImageHash, Pillow, numpy and
+# opencv have to be present for the app to import at all, model or no model.
+
+fastapi==0.141.1
+uvicorn==0.52.4
+pydantic==2.13.5
+SQLAlchemy==2.0.52
+PyYAML==6.0.3
+python-multipart==0.0.32
+httpx==0.28.1
+numpy==2.5.2
+scipy==1.18.1
+pillow==12.3.0
+ImageHash==4.3.2
+opencv-python-headless==4.11.0.86
+piexif==1.1.3
