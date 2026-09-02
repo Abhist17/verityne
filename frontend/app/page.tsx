@@ -62,16 +62,14 @@ export default function LandingPage() {
             only visible on the home page. This says instead what is behind the
             headline, so a reader arrives at the claim already knowing there is a
             report under it. */}
-        <Link
-          href="/metrics"
-          className="group inline-flex items-center gap-2 text-xs text-slate-500 transition-colors hover:text-slate-300"
-        >
-          <span>
-            Held-out report now live: ROC, per-attack recall, the ablation, and a cost curve you
-            can drag
-          </span>
-          <span className="text-accent transition-transform group-hover:translate-x-0.5">→</span>
-        </Link>
+        {/* Plain, and first. A reviewer read this page and asked what a vendor
+            was and what a ROC curve was - which means the old opening line, a
+            jargon inventory of the metrics report, had spent the first five
+            seconds of the page on words that only land if you already know the
+            answer. This says what the thing is. The clever line can follow. */}
+        <div className="text-xs uppercase tracking-[0.14em] text-accent">
+          Fraud detection for merchant onboarding
+        </div>
 
         {/* 19ch, not 17. The measure is in `ch`, which is the advance of "0" in
             the *current* font - and the current font is now a monospace with a
@@ -85,10 +83,19 @@ export default function LandingPage() {
           <span className="mt-2 block text-slate-600">We show you where it fails.</span>
         </h1>
 
-        <p className="mt-8 max-w-[54ch] text-sm leading-relaxed text-slate-400">
-          Six independent detectors, a calibrated fusion layer, and a human-readable explanation
-          behind every verdict - built on the assumption that the attacker has Stable Diffusion and
-          DeepFaceLab on their laptop.
+        {/* Two sentences, in this order on purpose. The first says what happens,
+            in words that need no background. The second defines ROC in passing -
+            because the headline above uses it, and a headline that has to be
+            looked up is a headline that failed. */}
+        <p className="mt-8 max-w-[56ch] text-base leading-relaxed text-slate-300">
+          When a business signs up to accept payments, it uploads a selfie and an ID document.
+          We check whether that is a real person using their own documents - or an AI-generated
+          fake.
+        </p>
+        <p className="mt-4 max-w-[56ch] text-sm leading-relaxed text-slate-500">
+          A ROC curve is the single number detectors like this are usually judged on. It hides
+          where they break. So this publishes both: six detectors with the evidence behind every
+          verdict, and a list of everything we measured and got wrong.
         </p>
 
         {/* Sharp corners, sitting flush. */}
@@ -166,37 +173,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ------------------------------------------------------------- 02 detectors */}
-      <section className="mt-24">
-        <Rule n="02" label="Six detectors, run in parallel" />
-        <div className="mt-6">
-          {[
-            ["Selfie deepfake", "A pretrained transformer and a fitted frequency head, voting. Grad-CAM shows which pixels drove the call."],
-            ["ID forensics", "OCR with confusion repair, then structural validation - a PAN's 4th character is a holder-type code, Aadhaar carries a Verhoeff digit."],
-            ["Liveness video", "Identity drift between frames, head-pose jitter, and optical-flow discontinuity at splice boundaries."],
-            ["Face match", "512-d FaceNet embeddings, selfie against the portrait on the card. The threshold is fitted on LFW's 6,000 real pairs."],
-            ["Metadata / EXIF", "Generator tags, editor software, capture-to-submission age, and whether a file carries the detail its resolution claims."],
-            ["Behavioral biometrics", "Not an artifact at all - how the form was filled. Keystroke rhythm, pointer path, device coherence."],
-          ].map(([name, what], i) => (
-            <div key={name} className="flex gap-5 border-t border-edge/60 py-3.5 wide:gap-8">
-              <span className="num w-6 shrink-0 pt-0.5 text-2xs text-slate-700">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <span className="w-40 shrink-0 text-sm text-slate-200">{name}</span>
-              <span className="max-w-[62ch] text-xs leading-relaxed text-slate-500">{what}</span>
-            </div>
-          ))}
-        </div>
-        <p className="mt-5 max-w-[68ch] text-xs leading-relaxed text-slate-500">
-          The first five read the files. The sixth reads the person - and it is the only one whose
-          adversary is not on a release cycle. Detectors 1-5 degrade every time a better
-          generator ships; defeating Detector 6 needs a rig that reproduces human motor timing.
-        </p>
-      </section>
-
       {/* ------------------------------------------------------------- 03 the audit */}
       <section className="mt-24">
-        <Rule n="03" label="What we got wrong" />
+        <Rule n="02" label="What we got wrong" />
         <p className="mt-6 max-w-[66ch] text-sm leading-relaxed text-slate-400">
           Any vendor can show you a curve. The question a fraud team actually needs answered is
           where it fails and how you would know. So this project keeps a published list, generated
@@ -280,7 +259,7 @@ export default function LandingPage() {
           field so the plan cannot drift from the evidence that motivated it. */}
       {open.length > 0 && (
         <section className="mt-24">
-          <Rule n="04" label="Roadmap" />
+          <Rule n="03" label="Roadmap" />
           <p className="mt-6 max-w-[64ch] text-sm leading-relaxed text-slate-400">
             What the measurements say to build next. Each of these came out of the audit above,
             which is the point of running one - the work queue is derived from evidence rather
@@ -302,35 +281,6 @@ export default function LandingPage() {
           </div>
         </section>
       )}
-
-      {/* ------------------------------------------------------------- 05 the dashboard */}
-      <section className="mt-24">
-        <Rule n="05" label="Six surfaces" />
-        <div className="mt-6 grid gap-x-10 gap-y-7 sm:grid-cols-2 wide:grid-cols-3">
-          {[
-            ["/verify", "Verify", "Drag in a packet. Verdict, three reasons, heatmaps, and the per-detector breakdown."],
-            ["/gauntlet", "Gauntlet", "Twenty fixtures scored live through the full API path - the only place linkage runs end to end."],
-            ["/metrics", "Metrics", "The held-out report: ROC, per-attack recall, the ablation, and a cost curve you can drag."],
-            ["/corrections", "Corrections", "The audit trail, with the evidence file and path behind every number."],
-            ["/threat", "Threat Intelligence", "Fraud rings as a graph. Proven clusters and inferred ones are drawn differently."],
-            ["/review", "Review Queue", "Everything the system declined to decide, with the evidence already surfaced."],
-          ].map(([href, name, what]) => (
-            <Link
-              key={href}
-              href={href}
-              className="group border-t border-edge pt-4 transition-colors hover:border-edge-strong"
-            >
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-sm text-slate-200 transition-colors group-hover:text-accent">
-                  {name}
-                </span>
-                <span className="text-slate-700 transition-colors group-hover:text-slate-500">→</span>
-              </div>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-500">{what}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
 
       {/* ------------------------------------------------------------- close */}
       <section className="mt-24 border-t border-edge pt-10">
