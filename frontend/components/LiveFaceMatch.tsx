@@ -11,7 +11,14 @@ import { api, FaceMatchResult } from "@/lib/api";
  * on disk either. What the user sees is the similarity score moving in real time
  * against a threshold that was fitted on LFW rather than picked by hand.
  */
-export function LiveFaceMatch({ reference }: { reference: File | null }) {
+export function LiveFaceMatch({
+  reference,
+  onCapture,
+}: {
+  reference: File | null;
+  /** Hand the current frame back as a file, to be used as the selfie. */
+  onCapture?: (f: File) => void;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -22,6 +29,7 @@ export function LiveFaceMatch({ reference }: { reference: File | null }) {
   const [result, setResult] = useState<FaceMatchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [band, setBand] = useState<{ low: number; high: number; fitted_on: string } | null>(null);
+  const [captured, setCaptured] = useState(false);
 
   useEffect(() => {
     api.faceMatchThreshold().then(setBand).catch(() => {});
@@ -77,7 +85,10 @@ export function LiveFaceMatch({ reference }: { reference: File | null }) {
     busyRef.current = true;
     try {
       const frame = await grabFrame();
-      if (!frame) return;
+      if (!frame) {
+        setError("The camera has not produced a frame yet. Give it a moment and try again.");
+        return;
+      }
       const fd = new FormData();
       fd.append("selfie", frame, "frame.jpg");
       fd.append("reference", reference, reference.name);
@@ -106,6 +117,23 @@ export function LiveFaceMatch({ reference }: { reference: File | null }) {
       clearTimeout(timer);
     };
   }, [live, on, reference, matchOnce]);
+
+  /* Take the current frame and hand it up as the selfie.
+   *
+   * Without this the panel was a similarity read-out and nothing more: it
+   * scored the webcam against the ID and then threw the frame away, so a live
+   * capture could never become the packet that gets verified. The file is
+   * named and typed like an upload because that is exactly what it becomes. */
+  const useAsSelfie = useCallback(async () => {
+    const frame = await grabFrame();
+    if (!frame) {
+      setError("The camera has not produced a frame yet. Give it a moment and try again.");
+      return;
+    }
+    onCapture?.(new File([frame], `live-selfie-${Date.now()}.jpg`, { type: "image/jpeg" }));
+    setCaptured(true);
+    setTimeout(() => setCaptured(false), 2500);
+  }, [grabFrame, onCapture]);
 
   const sim = result?.similarity ?? null;
   const thr = result?.threshold ?? band?.low ?? 0.5;
@@ -171,6 +199,11 @@ export function LiveFaceMatch({ reference }: { reference: File | null }) {
           </button>
         ) : (
           <>
+            {onCapture && (
+              <button onClick={useAsSelfie} className="btn-accent">
+                {captured ? "Selfie set ✓" : "Use as selfie"}
+              </button>
+            )}
             <button
               onClick={() => setLive((v) => !v)}
               disabled={!reference}

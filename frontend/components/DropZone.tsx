@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 
 const KB = 1024;
@@ -30,16 +30,24 @@ export function DropZone({
   const [preview, setPreview] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const take = useCallback(
-    (f: File | null) => {
-      onFile(f);
-      setPreview((old) => {
-        if (old) URL.revokeObjectURL(old);
-        return f && (f.type.startsWith("image/") || f.type.startsWith("video/")) ? URL.createObjectURL(f) : null;
-      });
-    },
-    [onFile]
-  );
+  /* The preview follows the `file` prop, not the click that produced it.
+   *
+   * It used to be set inside `take`, which meant this tile could only ever
+   * show a file the user had dropped on it personally. A selfie captured from
+   * the webcam is set by the parent, so the prop changed, the tile stayed
+   * empty, and the frame looked like it had not been taken. Deriving it here
+   * covers both paths and revokes the previous object URL either way. */
+  useEffect(() => {
+    if (!file || !(file.type.startsWith("image/") || file.type.startsWith("video/"))) {
+      setPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const take = useCallback((f: File | null) => onFile(f), [onFile]);
 
   const isVideo = !!file?.type.startsWith("video/");
 

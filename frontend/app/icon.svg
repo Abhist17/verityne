@@ -1,7 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
-  <rect width="24" height="24" rx="5" fill="#0e0e12"/>
-  <g stroke="#5b83a8" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round">
-    <path d="M12 4.2l5.6 2.4v4.8c0 3.36-2.32 6.16-5.6 7.2-3.28-1.04-5.6-3.84-5.6-7.2V6.6L12 4.2z"/>
-    <path d="M9.6 11.9l1.6 1.6 3.2-3.2"/>
+<!--
+  The wordmark's glyph, as the tab icon.
+
+  This was still the shield-and-tick that components/Mark.tsx replaced, drawn in
+  the blue-black palette from before the ground went true black - so the tab and
+  the page it opened were two different products. Same 6x5 lattice as the mark,
+  same accent, on the same ground.
+
+  The arms sit at 0.65 rather than the mark's 0.55: a favicon is read at 16px,
+  and at that size the lighter value dropped out entirely and left the vertex
+  floating as two loose squares.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shape-rendering="crispEdges">
+  <rect width="24" height="24" rx="5" fill="#000000"/>
+  <g fill="#ff4d17">
+    <g opacity="0.65">
+      <rect x="3"  y="4"  width="3" height="3"/>
+      <rect x="18" y="4"  width="3" height="3"/>
+      <rect x="3"  y="7"  width="3" height="3"/>
+      <rect x="18" y="7"  width="3" height="3"/>
+      <rect x="6"  y="10" width="3" height="3"/>
+      <rect x="15" y="10" width="3" height="3"/>
+    </g>
+    <rect x="9"  y="13" width="3" height="3"/>
+    <rect x="12" y="13" width="3" height="3"/>
   </g>
 </svg>

@@ -326,7 +326,7 @@ export default function LiveVerifyPage() {
             </button>
             {camera && (
               <div className="mt-3">
-                <LiveFaceMatch reference={idDoc} />
+                <LiveFaceMatch reference={idDoc} onCapture={setSelfie} />
               </div>
             )}
           </div>
