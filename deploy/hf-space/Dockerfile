@@ -66,8 +66,15 @@ RUN mkdir -p /app/storage/uploads /app/storage/heatmaps /app/datasets \
     && chown -R user:user /app
 
 USER user
+
+# The port is taken from the environment, defaulting to the 7860 a Hugging Face
+# Space routes to. Cloud Run injects its own PORT and will not route to a
+# container that ignores it, so hardcoding 7860 in the CMD made this image
+# deployable to exactly one host. `exec` so uvicorn is PID 1 and receives the
+# platform's shutdown signal rather than leaving the shell to swallow it.
+ENV PORT=7860
 EXPOSE 7860
 HEALTHCHECK --interval=30s --timeout=5s --start-period=120s \
-  CMD curl -fsS http://localhost:7860/health || exit 1
+  CMD curl -fsS "http://localhost:${PORT}/health" || exit 1
 
-CMD ["uvicorn", "verityne.main:app", "--host", "0.0.0.0", "--port", "7860", "--app-dir", "/app/backend"]
+CMD exec uvicorn verityne.main:app --host 0.0.0.0 --port "${PORT}" --app-dir /app/backend

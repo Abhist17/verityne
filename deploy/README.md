@@ -1,23 +1,52 @@
 # Deploying Verityne
 
-Two hosts, because the two halves want different things. The API is a ~2 GB
+Two hosts, because the two halves want different things. The API is a 4.4 GB
 PyTorch image that needs 2-4 GB of RAM and does not need to be fast to start.
 The dashboard is a Next.js app that wants a CDN and near-instant loads.
 
-    browser ──► Vercel (dashboard) ──► Hugging Face Space (API)
+    browser ──► Vercel (dashboard) ──► Cloud Run (API)
                     │
                     └── /api/* and /static/* are rewritten server-side, so the
                         browser only ever talks to the Vercel origin. There is
                         no CORS configuration to get wrong, and the API origin
                         is never visible to the page.
 
-Both tiers are free. The Space sleeps after inactivity and cold-starts on the
-next request; for a link you are sending someone to review at their leisure,
-that is the right trade.
+**Hugging Face Spaces is no longer an option for this image.** Docker and
+Gradio Spaces require a PRO subscription; only Static Spaces are free, and a
+Static Space serves HTML and never runs a Dockerfile. The Space recipe below
+still works if you have PRO - `deploy/hf-space/` and `build-space.sh` are
+unchanged - but the free path is Cloud Run.
+
+Cloud Run scales to zero, so an idle demo costs nothing and the free tier
+(2M requests, 360k GiB-seconds/month) covers a review link comfortably. It
+does require a billing account on the project. The trade is a cold start of
+roughly a minute after a quiet period, because the image is large.
 
 ---
 
-## 1. The API, on a Hugging Face Space
+## 1. The API, on Cloud Run
+
+```bash
+./deploy/build-space.sh                  # assembles deploy/.build/space
+cd deploy/.build/space
+gcloud auth login
+gcloud config set project <PROJECT_ID>
+gcloud services enable run.googleapis.com artifactregistry.googleapis.com
+gcloud artifacts repositories create verityne --repository-format=docker --location=asia-south1
+gcloud auth configure-docker asia-south1-docker.pkg.dev
+
+IMG=asia-south1-docker.pkg.dev/<PROJECT_ID>/verityne/api:latest
+docker build -t "$IMG" . && docker push "$IMG"
+
+gcloud run deploy verityne-api --image "$IMG" --region asia-south1 \
+  --allow-unauthenticated --memory 4Gi --cpu 2 --timeout 300 \
+  --min-instances 0 --max-instances 2
+```
+
+The container reads `$PORT`, which Cloud Run injects, so no port flag is
+needed. `--min-instances 0` is what keeps it free.
+
+## Appendix: the same image on a Hugging Face Space (needs PRO)
 
 **Assemble the Space.** The image needs three things this repo does not track -
 the fitted models, the seeded database, and the 164 MB of uploads and heatmaps
@@ -36,7 +65,7 @@ source. This packs them out of your working tree:
 | Space name | `verityne-api` |
 | License | `mit` |
 | SDK | **Docker** → Blank |
-| Hardware | CPU basic (free, 16 GB) |
+| Hardware | CPU basic (**requires PRO**) |
 | Visibility | Public |
 
 **Push it.** Needs `git-lfs` (`sudo apt install git-lfs`), because the demo
@@ -73,7 +102,7 @@ Import the GitHub repo at <https://vercel.com/new>, then set:
 |---|---|
 | Root Directory | `frontend` |
 | Framework | Next.js (auto-detected) |
-| Environment variable | `NEXT_PUBLIC_API_URL` = `https://<username>-verityne-api.hf.space` |
+| Environment variable | `NEXT_PUBLIC_API_URL` = your Cloud Run URL, e.g. `https://verityne-api-xxxx.a.run.app` |
 
 **That variable is read at build time, not at runtime.** `next build` resolves
 `rewrites()` and writes the API origin into `routes-manifest.json`; `next start`
@@ -93,27 +122,27 @@ the link to send.
 curl -s https://<project>.vercel.app/api/health | head -c 200      # via the proxy
 ```
 
-If that returns the same JSON as calling the Space directly, the rewrite is
+If that returns the same JSON as calling the API directly, the rewrite is
 working and every page will load. Then open the site and check the three pages
 that depend on the seeded database - **Attacks**, **Threat**, **Review**. If
 they are populated with thumbnails, the demo payload made it into the image.
 
 ## What reviewers will notice
 
-- **The first load after a quiet period is slow.** The Space has to wake up.
-  Once warm it stays warm for a while.
+- **The first load after a quiet period is slow.** Cloud Run scaled to zero
+  and has to pull a 4.4 GB image back. Once warm it stays warm for a while.
 - **Verdicts take a few seconds, not ~2.5s.** The metrics page reports latency
-  from a CUDA machine; a free Space is CPU-only. The verdicts are identical,
+  from a CUDA machine; Cloud Run is CPU-only. The verdicts are identical,
   only slower.
 - **The API is open.** `NEXT_PUBLIC_API_KEY` defaults to `verityne-demo-key`,
   and anything prefixed `NEXT_PUBLIC_` is visible in the browser bundle by
   definition. That is fine for a review link and wrong for anything else: the
-  Space is public and accepts uploads. Take it down when you are finished
+  service is public and accepts uploads. Delete it when you are finished
   collecting feedback, or set a real key on both sides.
 
 ## Redeploying
 
 - **Dashboard**: push to `main`; Vercel rebuilds automatically.
-- **API**: re-run `./deploy/build-space.sh`, then commit and push inside
-  `deploy/.build/space` again. Only re-run it when the backend or the demo data
-  actually changed - it is a 161 MB upload each time.
+- **API**: re-run `./deploy/build-space.sh`, then rebuild and `docker push` the
+  image and `gcloud run deploy` again. Only re-run it when the backend or the
+  demo data actually changed - it is a 4.4 GB push each time.
