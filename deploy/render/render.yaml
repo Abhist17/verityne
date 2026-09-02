@@ -1,0 +1,16 @@
+# Render blueprint. Point Render at this repo and it reads this file.
+#
+# One service, because the dashboard proxies the API in-process. Free tier caps
+# RAM at 512 MB; measured, this runs in about 200 MB (uvicorn ~75, next ~120).
+services:
+  - type: web
+    name: verityne
+    runtime: docker
+    plan: free
+    dockerfilePath: ./deploy/render/Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      # Render injects PORT; the dashboard takes it and the API stays internal.
+      - key: VERITYNE_API_KEY
+        value: verityne-demo-key

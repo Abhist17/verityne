@@ -129,9 +129,19 @@ function ReviewQueue() {
                   <span className="num text-sm text-review">{it.score.toFixed(2)}</span>
                 </div>
                 <div className="mt-1.5"><ScoreBar score={it.score} /></div>
-                <div className="mt-1.5 flex items-center gap-2 text-2xs text-slate-500">
+                <div className="mt-1.5 flex flex-wrap items-center gap-2 text-2xs text-slate-500">
                   <span>{it.pattern_label ?? it.attack_pattern ?? "unclassified"}</span>
                   {it.abstained && <span className="chip bg-accent/10 px-1.5 py-0 text-accent">abstained</span>}
+                  {/* Several of these cards carry the same photograph under
+                      different names, which is the fraud rather than a glitch in
+                      the data. Unlabelled, a reviewer reads it as the queue
+                      being broken; labelled, it is the strongest thing on the
+                      card. */}
+                  {it.linkage?.shared_selfie_with > 0 && (
+                    <span className="chip bg-reject/15 px-1.5 py-0 text-reject">
+                      same face as {it.linkage.shared_selfie_with}
+                    </span>
+                  )}
                 </div>
               </button>
             ))}

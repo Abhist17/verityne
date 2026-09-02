@@ -76,3 +76,6 @@ eval/scores.json
 # `deploy/build-space.sh` assembles a pushable Space here, including a 161 MB
 # archive of the demo payload. The recipe is tracked; the output is not.
 deploy/.build/
+
+# Build output of deploy/build-render.sh, not source.
+seed/

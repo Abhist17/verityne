@@ -31,9 +31,27 @@ def save_thumbnail(src: str | Path, submission_id: str, tag: str, size: int = 32
 
 
 def upload_url(path: str | Path) -> str | None:
+    """Address a stored upload, wherever the row that recorded it was written.
+
+    `selfie_path` is an absolute path, captured on whichever machine did the
+    scoring. Resolving it against the *current* UPLOAD_DIR therefore works only
+    while those are the same machine: ship the database into a container and
+    every asset silently becomes null, so the dashboard renders a review case
+    with its heatmaps and no photographs and nothing anywhere says why.
+
+    So fall back to the layout instead of the prefix. Uploads are always
+    `<root>/uploads/<submission_id>/<file>`, and that tail is what the URL is
+    built from - it is stable across machines because it is how the directory is
+    written, not where it happens to live.
+    """
     p = Path(path)
     try:
-        rel = p.resolve().relative_to(UPLOAD_DIR.resolve())
+        return f"{UPLOAD_URL_PREFIX}/{p.resolve().relative_to(UPLOAD_DIR.resolve()).as_posix()}"
     except Exception:
-        return None
-    return f"{UPLOAD_URL_PREFIX}/{rel.as_posix()}"
+        pass
+    parts = p.parts
+    if "uploads" in parts:
+        tail = parts[len(parts) - 1 - parts[::-1].index("uploads") + 1:]
+        if tail:
+            return f"{UPLOAD_URL_PREFIX}/{'/'.join(tail)}"
+    return None

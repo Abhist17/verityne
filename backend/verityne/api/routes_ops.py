@@ -12,7 +12,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from ..config import DATASET_ROOT, get_policy, reload_policy
-from ..db import AuditEvent, Submission, Verdict, log_event
+from ..db import AssetHash, AuditEvent, Submission, Verdict, log_event
 from ..explain import PATTERN_LABELS
 from ..pipeline import run_pipeline, storage_dir
 from ..schemas import VerifyResponse
@@ -82,6 +82,31 @@ def review_queue(limit: int = 50, session: Session = Depends(db_session)):
         .order_by(desc(Verdict.final_score))
         .limit(limit * 2)
     ).all()
+    # Which submissions share a selfie file, and under how many names.
+    #
+    # Four of the seeded images are deliberately reused across two to five
+    # different claimed identities - that IS the fraud, and it is what the
+    # threat graph draws as a ring. But the queue listed them as unrelated
+    # cards showing the same face, so the repetition read as broken demo data
+    # rather than as the single strongest signal on the page. One pass over the
+    # hashes, so the list can say what the graph already knew.
+    ring: dict[str, dict] = {}
+    by_hash: dict[str, list] = {}
+    sid_to_hash: dict[str, str] = {}
+    for h in session.execute(select(AssetHash).where(AssetHash.kind == "selfie")).scalars().all():
+        by_hash.setdefault(h.content_hash, []).append(h.submission_id)
+        sid_to_hash[h.submission_id] = h.content_hash
+    names = {
+        sub.id: (sub.extra or {}).get("claimed_name")
+        for sub in session.execute(select(Submission)).scalars().all()
+    }
+    for sid, sha in sid_to_hash.items():
+        siblings = [o for o in by_hash.get(sha, []) if o != sid]
+        if not siblings:
+            continue
+        other_names = sorted({names.get(o) for o in siblings if names.get(o)})
+        ring[sid] = {"shared_selfie_with": len(siblings), "other_names": other_names}
+
     items = []
     for s, v in rows:
         if s.id in decided:
@@ -107,6 +132,8 @@ def review_queue(limit: int = 50, session: Session = Depends(db_session)):
                     k: {"score": round(d.get("score", 0), 3), "status": d.get("status"), "label": d.get("label")}
                     for k, d in (v.detector_breakdown or {}).items()
                 },
+                # None when this face appears once, which is most of the queue.
+                "linkage": ring.get(s.id),
             }
         )
         if len(items) >= limit:
