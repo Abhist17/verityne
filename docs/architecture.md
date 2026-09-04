@@ -45,7 +45,7 @@
                        │  fusion: logistic regression over    │
                        │  10 features → Platt calibration     │
                        │  then max() with the un-modelled     │
-                       │  evidence channels, each ceilinged   │
+                       │  evidence channels - see ceilings    │
                        └──────────────────┬───────────────────┘
                                           │
                        ┌──────────────────▼───────────────────┐
@@ -59,6 +59,42 @@
 Stage one runs on a `ThreadPoolExecutor`, not `asyncio.gather`: torch and OpenCV
 release the GIL inside their C extensions, so threads genuinely overlap. Async
 over CPU-bound work would have bought nothing.
+
+### What the final `max()` combines, and which terms are ceilinged
+
+`pipeline.run_pipeline` computes `max(base_score, link_score, behav_score)` and
+hands that one number to `fusion.decide`. The abstention band is applied to that
+final value, not to anything upstream of it.
+
+"Ceilinged" is not a property of a channel, it is a property of the *claim*. A
+measured claim - two files share a SHA-256, two keystrokes are 9 ms apart - may
+carry a rejection. A statistical claim - this face resembles that face, this
+typing looks fast - may not, and is capped at
+`fusion.uncorroborated_ceiling(policy)`: one abstention band below the reject
+line, `0.749999` on the default merchant.
+
+| Term in the `max()` | Ceiling | Can reach REJECT alone |
+| --- | --- | --- |
+| Logistic regression over 10 features (5 detectors × score+confidence), **including the 1:1 face match** | none | yes |
+| Cross-submission face linkage (`0.55 + 0.12·N`, cap 0.95) | 0.749999 | no |
+| Same-name face duplicate (`0.30`) | 0.749999 | no |
+| Byte-identical asset hash (`0.60 + 0.10·N`, cap 0.90) | none | yes |
+| Near-identical perceptual hash (`0.35`) | 0.749999 | no |
+| Behavioral, statistical rule hits | 0.749999 | no |
+| Behavioral, categorical rule hits (weight ≥ 0.90) | none | yes |
+
+Two things this table is here to stop people getting wrong:
+
+* **The 1:1 face match is not an evidence channel.** It is `face_match`, one of
+  the five detectors the regression is fitted on, entering as two of the ten
+  features. Nothing caps it. It contributes to rejections. The thing that *is*
+  capped is cross-submission linkage - this face against every face on file -
+  which is a different comparison against a different population.
+* **`exact` is one flag for the whole linkage signal**, and `score` is a shared
+  running max across the face and asset branches. So when a byte-identical asset
+  hit co-occurs with a face-ring hit, the ring score rides through uncapped. It
+  changes the number, never the verdict - the asset term alone already clears
+  the line in every case on record.
 
 ---
 

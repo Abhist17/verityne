@@ -188,7 +188,7 @@ flowchart TB
     D4 --> FUSE["Fusion<br/>logistic regression over 10 features<br/>→ Platt calibration"]
     ST1 -.->|"scores + confidences"| FUSE
 
-    XC --> CEIL["Evidence channels outside the model<br/>each ceilinged below the reject threshold"]
+    XC --> CEIL["Evidence channels outside the model<br/>statistical claims ceilinged below the reject line<br/>measured claims not"]
     D6 --> CEIL
 
     FUSE --> MAX["max()"]
@@ -203,9 +203,20 @@ capped below the reject threshold and lands in a human's queue instead - the
 uncapped version rejected a genuine applicant on four false matches
 ([§2b](docs/real-data.md#2b-the-linkage-threshold-was-answering-the-wrong-question)).
 **Detector 6** has no labelled corpus inside this repo, so feeding it to the
-trained model would be asking about a column it has never seen. A byte-identical
-file is exempt from the cap, because it is a fact rather than an inference: two
-files share a SHA-256 or they do not.
+trained model would be asking about a column it has never seen.
+
+The cap follows the kind of claim, not the channel. A byte-identical file is
+exempt, because it is a fact rather than an inference: two files share a SHA-256
+or they do not. So is a *categorical* behavioral hit - two keystrokes 9 ms
+apart, or a browser that sets `navigator.webdriver` - which has no innocent
+explanation. Everything statistical is capped at one abstention band below the
+reject line.
+
+Note which face comparison this is about. The **1:1 face match** (`face_match`,
+selfie vs the ID portrait) is one of the five detectors the regression is fitted
+on and is **not** capped; it contributes to rejections. The capped thing is
+**cross-submission linkage**, this face against every face on file, which is a
+search rather than a comparison. `docs/architecture.md` has the full table.
 
 ### Where a score becomes a decision
 
