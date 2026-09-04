@@ -1,0 +1,277 @@
+VERITYNE - PART 3 (LIVE DEMO), CUT TO 2:40
+=============================================================================
+Parts 1 + 2 are already recorded at 2:17. This part is written to land in
+2:38-2:45, so the finished video sits just under 5:00.
+
+Every number here is copied verbatim from v3 - nothing was re-derived, and
+nothing on screen has changed. What changed is what gets SAID.
+
+PACING CONTRACT
+
+  452 spoken words. At 165 words a minute - brisk, but the pace of
+  explaining something you know well to someone standing next to you -
+  that is 2:44 of speech, plus about 7s of tab switches. Too long.
+
+  So RECORD IT WITH [CUT-1] AND [CUT-3] ALREADY TAKEN. That is 420 words,
+  2:33 of speech, ~2:40 on the clock. Both cut lines are marked inline and
+  come out without breaking a sentence. Put them back only if a stopwatch
+  rehearsal says you are fast.
+
+  Checkpoints, with those two cuts taken:
+      end of BEAT 2 (fraud verdict)   ~0:47
+      end of BEAT 4 (/threat)         ~1:15
+      end of BEAT 5 (review queue)    ~1:45
+      end of BEAT 7 (corrections)     ~2:33 + switches
+  More than 8s past a checkpoint, take [CUT-2] - all of BEAT 4.
+
+  The numbers in each banner below are speech only. They do not include
+  the two ~4s live scores in BEATS 1 and 2, because you are talking
+  through both of those - that is what the first SPEAK block in each is
+  for. Do not wait in silence for a verdict.
+
+WHAT WAS DROPPED FROM v3, AND WHY
+
+  /attacks page          - the same claim /threat and /review already make,
+                           and it cost 35s plus two on-camera failure modes
+                           (the 24h window, the un-clickable REJECT card).
+  Cost-curve slider      - a nice interaction, but 12s to say "we picked
+                           0.80 from a curve", which /metrics implies.
+  The 0.95 face-match aside on REAL-01, the 171-day capture detail, and the
+  four-name 0.95 rung - all real, all cuttable. They are listed at the
+  bottom as ADD-BACKS if a rehearsal comes in early.
+
+  Nothing honest was cut. Both failure disclosures survive intact: the
+  99.99% false-link rate, and the whole of /corrections.
+
+TABS, IN ORDER (five now - /attacks is gone)
+    1. localhost:3000/verify
+    2. localhost:3000/threat
+    3. localhost:3000/review
+    4. localhost:3000/metrics
+    5. localhost:3000/corrections
+
+  Everything from v3's BEFORE YOU RECORD still applies: localhost not
+  Render, make preflight all green, warm the GPU with the rescore curl,
+  do not run the Gauntlet on camera.
+
+
+#############################################################################
+BEAT 1 - A GENUINE PACKET PASSES                          52 words  (~0:19)
+#############################################################################
+
+SCREEN> /verify
+DO    > Click fixture REAL-01. Start talking on the click - it takes ~4s.
+
+SPEAK >
+  A real one first - a detector that flags everybody isn't a detector.
+  Five detectors on the GPU, live.
+
+SCREEN> Verdict lands: RISK 0.35, PASS.
+
+SPEAK >
+  Passed. 0.35, against a reject line of 0.80 - and not because nothing
+  looked wrong. Three things did. None of them cleared the bar. The system
+  weighs evidence; it doesn't veto on it.
+
+DO    > Cursor across the WHY block as you say "three things did".
+
+NOTE  > Do not read the three reasons aloud. They are on screen; the cursor
+        does that work. Reading them is 15s you do not have.
+NOTE  > If you do name one, name the 171-day capture. Do NOT say REAL-01's
+        reasons are "natural sensor noise, no generative artefacts" - that
+        is FAKE-02's line.
+
+
+#############################################################################
+BEAT 2 - A FRAUDULENT PACKET, AND WHY                     83 words  (~0:30)
+#############################################################################
+
+DO    > Click fixture FAKE-02. Talk on the click.
+
+SPEAK >
+  Now a fraudulent one.
+
+SCREEN> Verdict lands: RISK 0.46, REVIEW.
+
+SPEAK >
+  0.46 - review. It declined to decide and pushed it to a human, and it
+  says why.
+
+  A near-identical image in eleven earlier submissions. A selfie claiming
+  960 pixels that only carries real detail to 570 - upscaled. And third,
+  natural sensor noise, no generative artefacts, which argues against fraud.
+
+  We surface both sides, because a reviewer who only sees the prosecution
+  case is rubber-stamping.
+
+DO    > Scroll to the heatmaps and detector list while you say the last line.
+
+SPEAK >
+  Below: where each model looked, and behavioral marked skipped rather than
+  quietly scored zero.                                              [CUT-3]
+
+RUNNING TOTAL: ~0:49
+
+
+#############################################################################
+BEAT 3 - THE SAME SCORE, A DIFFERENT ANSWER               46 words  (~0:17)
+#############################################################################
+
+SCREEN> Stay on FAKE-02's verdict. The 0.46 and the 0.80 line stay visible.
+DO    > Hover "Strict" in MERCHANT POLICY, top right. HOVER ONLY.
+
+SPEAK >
+  Same evidence, different business. Strict is a crypto exchange - it
+  rejects at 0.60, where the default rejects at 0.80.
+
+DO    > Hover "Lenient".
+
+SPEAK >
+  Lenient is a gig marketplace, where friction costs more than fraud does -
+  0.88. Same detectors, same score, different thresholds. A config file,
+  not a retrain.
+
+NOTE  > Hover, never click. Clicking the toggle and re-scoring does not move
+        a stored verdict - re-scoring uses the merchant the submission was
+        filed under.
+
+RUNNING TOTAL: ~1:06
+
+
+#############################################################################
+BEAT 4 - RINGS, NOT INCIDENTS                             29 words  (~0:11)
+#############################################################################
+
+SCREEN> /threat
+DO    > Cursor lands on the largest cluster as you say the last sentence.
+
+SPEAK >
+  One fake merchant is an incident; forty sharing a face is organised.
+  Thirty-seven submissions, twenty-one links, five rings - and this cluster
+  is five names at five different merchants.                        [CUT-2]
+
+NOTE  > Ten seconds. Do not narrate the graph; let it sit there while you
+        talk. If you are behind schedule, this whole beat is CUT-2.
+
+RUNNING TOTAL: ~1:17
+
+
+#############################################################################
+BEAT 5 - THE REVIEWER'S QUEUE                             81 words  (~0:30)
+#############################################################################
+
+SCREEN> /review
+DO    > Point at Vikram Sethi and Karan Malhotra.
+
+SPEAK >
+  Twenty-three cases waiting on a human. These two: different names,
+  different merchants, same photograph, same score - 0.84.
+
+  Risk scales with the ring - three names is 0.91, and that is a rejection.
+
+  But a face link on its own is capped. Linkage is a similarity search,
+  and against our five-thousand-record scan essentially every genuine
+  applicant picks up a false link. Ninety-nine point nine nine percent.
+  So it stops here. What actually rejects the 0.91s is the byte-identical
+  file underneath it.
+
+NOTE  > This pays off the promise you made at the end of PART 2. Do not cut
+        the 99.99% - it is the number you said you would show.
+NOTE  > Two queue cards have a blank name. Cosmetic. Point at Vikram/Karan.
+
+RUNNING TOTAL: ~1:47
+
+
+#############################################################################
+BEAT 6 - THE NUMBERS                                      71 words  (~0:26)
+#############################################################################
+
+SCREEN> /metrics
+DO    > Cursor to the ROC chart on "0.753".
+
+SPEAK >
+  Held-out ROC-AUC 0.753, a hundred and five identity-disjoint packets.
+
+  Not a great number, and it is the honest one. It used to be 0.913, until
+  an ablation showed our own corpus generator had conditioned EXIF on the
+  label - metadata was doing half the work. We fixed the corpus and lost
+  sixteen points.
+
+  Metadata alone is still 0.744 against the fused 0.753, and we draw that
+  gap rather than crop it.                                          [CUT-1]
+
+NOTE  > Do not drag the cost-curve slider. It is cut.
+
+RUNNING TOTAL: ~2:13
+
+
+#############################################################################
+BEAT 7 - CLOSE ON WHAT WE GOT WRONG                       90 words  (~0:33)
+#############################################################################
+
+SCREEN> /corrections
+
+SPEAK >
+  The page I would judge us on.
+
+  Nine things this project believed, measured, and lost - four fixed, three
+  open, two designed around.
+
+  Our selfie detector scored 0.997 on diffusion fakes. On four generator
+  families we did not create, it is at or below chance - StyleGAN 0.123,
+  and below 0.5 means inverted.
+
+  Our keystroke detector was a perfect 1.000, so we built the attack that
+  beats it: a real person's typing replayed through devtools. 0.4996.
+  Chance.
+
+  Every vendor shows you a ROC curve. We show you where it fails.
+
+NOTE  > Say all three of four / three / two. Four plus three leaves two of
+        the nine unaccounted for and the arithmetic fails on camera.
+NOTE  > Land "where it fails" and stop. Do not add a thank-you sentence -
+        that is the ending.
+
+RUNNING TOTAL: ~2:46
+
+
+#############################################################################
+CUTS, IN ORDER, IF YOU ARE RUNNING LONG
+#############################################################################
+
+  [CUT-1]  the 0.744-vs-0.753 line in BEAT 6           -7s   take by default
+  [CUT-3]  the heatmaps line in BEAT 2                 -5s   take by default
+  [CUT-2]  BEAT 4 (/threat) entirely                  -11s   only if behind
+
+  Base is 2:44 of speech. 1 and 3 taken is 2:33. All three is 2:22.
+  Never cut BEAT 2 or BEAT 7 - those two are the demo.
+
+
+#############################################################################
+ADD-BACKS, IF A REHEARSAL COMES IN UNDER 2:25
+#############################################################################
+
+  +6s  BEAT 1, after "Three things did":
+         "An ID captured a hundred and seventy-one days before the
+          application, when a live capture should be minutes old."
+
+  +5s  BEAT 1, only if you scroll to DETECTORS:
+         "And the selfie matches the ID portrait at 0.95 - a perfect match
+          would be worse, it would mean the selfie is a copy of the ID
+          photo."
+
+  +4s  BEAT 5, after "three names is 0.91":
+         "Four names is 0.95."
+
+
+#############################################################################
+IF SOMETHING GOES WRONG ON CAMERA
+#############################################################################
+
+  Verdict takes longer than ~8s   Cold model - you skipped the warm-up.
+                                  Keep talking; it lands.
+  A page shows an error box       Backend died. Check Terminal 1.
+  Heatmaps do not appear          You are on Render. Get on localhost.
+  A number does not match         Stop. Re-run make preflight and re-read
+                                  the v3 appendix. The database is a fixed
+                                  point as of 2026-09-03.
