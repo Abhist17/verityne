@@ -1,6 +1,6 @@
 {
   "generated_by": "backend/scripts/build_corrections.py",
-  "what_this_is": "Every belief this project held and then measured and lost. Generated from the evidence files each entry cites, so a correction cannot claim a number no report contains. Five of the eight are fixed; three are open and say why.",
+  "what_this_is": "Every belief this project held and then measured and lost. Generated from the evidence files each entry cites, so a correction cannot claim a number no report contains. Of the nine, four are fixed, three are open and say why, and two the system was redesigned around.",
   "how_found_legend": {
     "benchmark": "Benchmarked the obvious answer before building on it",
     "ablation": "Ablated the fusion layer one detector at a time",

@@ -98,6 +98,43 @@ def pct(x: float) -> float:
     return round(100 * float(x), 2)
 
 
+#: Spelled out because the sentence this builds is prose, and "9" mid-paragraph
+#: reads like a defect next to "nine". Falls back to digits past the range any
+#: plausible number of corrections occupies.
+_WORDS = {
+    1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six",
+    7: "seven", 8: "eight", 9: "nine", 10: "ten", 11: "eleven", 12: "twelve",
+}
+
+
+def _word(n: int) -> str:
+    return _WORDS.get(n, str(n))
+
+
+def _tally(counts: Dict[str, int]) -> str:
+    """Say what the counts say, in words, so the prose cannot contradict them.
+
+    Only mentions a status that actually has entries: "two the system was
+    redesigned around" is worth a clause when it is true and a lie when the
+    count is zero.
+    """
+    total = sum(counts.values())
+    clauses = []
+    if counts.get("fixed"):
+        clauses.append(f"{_word(counts['fixed'])} are fixed")
+    if counts.get("open"):
+        clauses.append(f"{_word(counts['open'])} are open and say why")
+    if counts.get("designed_around"):
+        clauses.append(f"{_word(counts['designed_around'])} the system was redesigned around")
+    if not clauses:
+        return f"There are {_word(total)}."
+    if len(clauses) == 1:
+        body = clauses[0]
+    else:
+        body = ", ".join(clauses[:-1]) + ", and " + clauses[-1]
+    return f"Of the {_word(total)}, {body}."
+
+
 # --------------------------------------------------------------------------- #
 # The corrections. Prose here, numbers from disk.
 # --------------------------------------------------------------------------- #
@@ -418,10 +455,15 @@ def main() -> None:
 
     payload = {
         "generated_by": "backend/scripts/build_corrections.py",
+        # Derived from `counts`, never written by hand. This sentence sits on the
+        # one page whose entire claim is that its numbers are checkable, and it
+        # had already drifted once - it read "Five of the eight are fixed" while
+        # the counts rendered beside it said nine. A wrong number there discredits
+        # the page more than the correction it describes.
         "what_this_is": (
             "Every belief this project held and then measured and lost. Generated from the "
             "evidence files each entry cites, so a correction cannot claim a number no report "
-            "contains. Five of the eight are fixed; three are open and say why."
+            f"contains. {_tally(counts)}"
         ),
         "how_found_legend": HOW,
         "counts": counts,
