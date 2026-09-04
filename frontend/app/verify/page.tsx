@@ -141,6 +141,102 @@ function Overlay({ src, label }: { src: string; label: string }) {
   );
 }
 
+/**
+ * One stored packet, as something that obviously wants to be clicked.
+ *
+ * These were ten monospace filenames at slate-600, wrapped inline with a
+ * coloured interpunct in front of each - the same value as the page grid behind
+ * them, which made the fastest route to seeing this system work the quietest
+ * thing in the column. Anyone arriving without files of their own scrolled
+ * straight past.
+ *
+ * A row carries the three things that decide whether you click it: what the
+ * packet is, whether it is genuine or fraudulent before you score it, and the
+ * fact that clicking scores it. The thumbnail is the strongest of the three and
+ * the least reliable - a read-only build ships the verdicts without the media -
+ * so it degrades to a tinted chip rather than to a torn-image icon.
+ */
+function FixtureRow({
+  item,
+  active,
+  busy,
+  onRun,
+}: {
+  item: any;
+  active: boolean;
+  busy: boolean;
+  onRun: () => void;
+}) {
+  const [noThumb, setNoThumb] = useState(false);
+  const fake = item.truth === "fake";
+  const kind = fake ? (item.attack_type ? item.attack_type.replace(/_/g, " ") : "fraudulent") : "genuine";
+
+  return (
+    <button
+      onClick={onRun}
+      disabled={busy}
+      aria-label={`Score fixture ${item.name} (${kind})`}
+      className={clsx(
+        "group flex w-full items-center gap-2.5 rounded-md border px-2 py-1.5 text-left transition-colors duration-150",
+        "focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent",
+        active
+          ? "border-accent/60 bg-accent/[0.07]"
+          : "border-edge bg-ink-900 hover:border-edge-strong hover:bg-ink-850",
+        busy && !active && "opacity-40"
+      )}
+    >
+      {item.thumb_url && !noThumb ? (
+        <img
+          src={item.thumb_url}
+          alt=""
+          onError={() => setNoThumb(true)}
+          className="h-8 w-8 shrink-0 rounded object-cover ring-1 ring-edge"
+        />
+      ) : (
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded bg-ink-850 ring-1 ring-edge">
+          <span className={clsx("h-1.5 w-1.5 rounded-full", fake ? "bg-reject" : "bg-pass")} />
+        </span>
+      )}
+
+      <span className="min-w-0 flex-1">
+        <span className="num block truncate text-xs tracking-normal text-slate-200">{item.name}</span>
+        <span className={clsx("block truncate text-2xs", fake ? "text-reject/90" : "text-pass/90")}>{kind}</span>
+      </span>
+
+      {active && busy ? (
+        <span
+          className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-[1.5px] border-accent/25 border-t-accent"
+          aria-hidden
+        />
+      ) : (
+        <span className="label shrink-0 text-slate-700 transition-colors duration-150 group-hover:text-accent">
+          score
+        </span>
+      )}
+    </button>
+  );
+}
+
+/** The disclosure header for the webcam panel. An outline camera, drawn rather
+ *  than imported, because this is the only icon in the column. */
+function CameraGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 8.5A1.5 1.5 0 014.5 7h2.2l1.1-1.8A1 1 0 019 4.7h6a1 1 0 01.85.5L17 7h2.5A1.5 1.5 0 0121 8.5v9a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 17.5v-9z" />
+      <circle cx="12" cy="12.7" r="3.1" />
+    </svg>
+  );
+}
+
 export default function LiveVerifyPage() {
   const [selfie, setSelfie] = useState<File | null>(null);
   const [video, setVideo] = useState<File | null>(null);
@@ -160,6 +256,9 @@ export default function LiveVerifyPage() {
   const [error, setError] = useState<string | null>(null);
   const [samples, setSamples] = useState<any[]>([]);
   const [camera, setCamera] = useState(false);
+  /** Which fixture the running pipeline belongs to, so the row you clicked is
+   *  the row that shows the spinner. */
+  const [activeSample, setActiveSample] = useState<string | null>(null);
   const timer = useRef<any>(null);
 
   // Detector 6 reads how this form was filled; created once so a remount does
@@ -190,6 +289,7 @@ export default function LiveVerifyPage() {
     if (!selfie && !idDoc && !video) return;
     setError(null);
     setResult(null);
+    setActiveSample(null);
     setRunning(true);
     startTimer();
     try {
@@ -239,6 +339,7 @@ export default function LiveVerifyPage() {
     setError(null);
     setResult(null);
     setStored(false);
+    setActiveSample(id);
     setRunning(true);
     startTimer();
     try {
@@ -262,6 +363,9 @@ export default function LiveVerifyPage() {
   const rejectAt = result?.policy?.min_risk_for_reject ?? 0.75;
   const linkage = result?.policy?.linkage;
   const hasInput = !!(selfie || idDoc || video);
+  const shownSamples = samples.slice(0, 10);
+  const fraudCount = shownSamples.filter((s) => s.truth === "fake").length;
+  const genuineCount = shownSamples.length - fraudCount;
 
   return (
     <div className="space-y-12">
@@ -365,38 +469,65 @@ export default function LiveVerifyPage() {
             never recorded or sent.
           </p>
 
-          {samples.length > 0 && (
+          {shownSamples.length > 0 && (
             <div>
-              <SectionLabel>Fixtures</SectionLabel>
-              <div className="flex flex-wrap gap-1">
-                {samples.slice(0, 10).map((s) => (
-                  <button
+              <SectionLabel right={`${genuineCount} genuine · ${fraudCount} fraud`}>
+                Stored packets
+              </SectionLabel>
+              <p className="mb-2.5 max-w-[42ch] text-2xs leading-relaxed text-slate-500">
+                {canScore === false
+                  ? "Nothing to upload? Click one and its full stored verdict opens on the right - same score, same reasons, same detector breakdown."
+                  : "Nothing to upload? Click one. It goes through the same six detectors, live, and the verdict lands on the right in about four seconds."}
+              </p>
+              <div className="space-y-1.5">
+                {shownSamples.map((s) => (
+                  <FixtureRow
                     key={s.submission_id}
-                    onClick={() => runSample(s.submission_id)}
-                    disabled={running}
-                    title={s.attack_type ?? "genuine"}
-                    className="num rounded px-1.5 py-1 text-2xs tracking-normal text-slate-600 transition-colors hover:bg-ink-800 hover:text-slate-300 disabled:opacity-30"
-                  >
-                    <span className={s.truth === "fake" ? "text-reject/70" : "text-pass/70"}>·</span>{" "}
-                    {s.name}
-                  </button>
+                    item={s}
+                    active={activeSample === s.submission_id}
+                    busy={running}
+                    onRun={() => runSample(s.submission_id)}
+                  />
                 ))}
               </div>
             </div>
           )}
 
           {/* Camera is opt-in and collapsed by default - it was a permanently
-              open panel for a check most sessions never run. */}
-          <div>
+              open panel for a check most sessions never run.
+             
+              Collapsed is not the same as hidden, and it had become the same
+              thing: a 12px uppercase micro-label with a plus after it, in the
+              same slate as the caption under the file slots, for the one part of
+              this page that runs a model against your own face in real time. It
+              is a panel now - an edge, a name at reading size, and a line saying
+              what it needs before it can do anything. */}
+          <div
+            className={clsx(
+              "rounded-md border bg-ink-900 transition-colors duration-200",
+              camera ? "border-edge-strong" : "border-edge"
+            )}
+          >
             <button
               onClick={() => setCamera((v) => !v)}
-              className="label transition-colors hover:text-slate-400"
               aria-expanded={camera}
+              className="flex w-full items-center gap-2.5 rounded-md px-3 py-2.5 text-left transition-colors duration-150 hover:bg-ink-850 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
-              Live face match {camera ? "−" : "+"}
+              <CameraGlyph
+                className={clsx("h-4 w-4 shrink-0 transition-colors", camera ? "text-accent" : "text-slate-500")}
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-medium text-slate-200">Live face match</span>
+                <span className="block truncate text-2xs text-slate-500">
+                  {idDoc
+                    ? "Webcam against that ID's portrait, live"
+                    : "Needs an ID document above"}
+                </span>
+              </span>
+              <span className="num shrink-0 text-sm leading-none text-slate-500">{camera ? "−" : "+"}</span>
             </button>
             {camera && (
-              <div className="mt-3">
+              <div className="border-t border-edge p-3">
                 <LiveFaceMatch reference={idDoc} onCapture={setSelfie} />
               </div>
             )}
@@ -478,7 +609,17 @@ export default function LiveVerifyPage() {
                         <span className="text-slate-700">face</span>
                         <span className="text-review">{(l.similarity * 100).toFixed(1)}%</span>
                         <span>{l.claimed_name ?? "unknown"}</span>
-                        {l.name_differs && <span className="text-review">different name</span>}
+                        {/* "no name" is a third state, not a quiet form of
+                            agreement: without a name on both sides nothing about
+                            the identities was compared, and the row should not
+                            read like a clean match. */}
+                        {l.name_differs ? (
+                          <span className="text-review">different name</span>
+                        ) : l.name_comparable ? (
+                          <span className="text-slate-600">same name</span>
+                        ) : (
+                          <span className="text-slate-600">name not compared</span>
+                        )}
                       </div>
                     ))}
                     {linkage.asset_links?.map((l: any) => (

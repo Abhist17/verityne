@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import clsx from "clsx";
 import { api, FaceMatchResult } from "@/lib/api";
 
 /**
@@ -30,6 +31,14 @@ export function LiveFaceMatch({
   const [error, setError] = useState<string | null>(null);
   const [band, setBand] = useState<{ low: number; high: number; fitted_on: string } | null>(null);
   const [captured, setCaptured] = useState(false);
+  /* How many frames have actually been scored this session.
+   *
+   * The panel had no way to say it was working. A live match against a moving
+   * face produces a number that barely moves - 0.612, 0.611, 0.613 - so a
+   * running loop and a frozen one look identical, and the first question anyone
+   * asked of this panel was whether it was doing anything at all. A count that
+   * ticks answers that without them having to trust the similarity. */
+  const [checks, setChecks] = useState(0);
 
   useEffect(() => {
     api.faceMatchThreshold().then(setBand).catch(() => {});
@@ -40,6 +49,8 @@ export function LiveFaceMatch({
     streamRef.current = null;
     setOn(false);
     setLive(false);
+    setChecks(0);
+    setResult(null);
   }, []);
 
   useEffect(() => stop, [stop]);
@@ -93,6 +104,7 @@ export function LiveFaceMatch({
       fd.append("selfie", frame, "frame.jpg");
       fd.append("reference", reference, reference.name);
       setResult(await api.faceMatchLive(fd));
+      setChecks((n) => n + 1);
       setError(null);
     } catch (e: any) {
       setError(e.message || String(e));
@@ -161,17 +173,55 @@ export function LiveFaceMatch({
           </div>
         )}
 
+        {/* Is it on, and is it working? Answered in the corner of the frame
+            rather than in a caption underneath it, because that is where the
+            eye already is once the camera opens. The dot pulses only while the
+            loop is actually polling - a still dot means the camera is open and
+            nothing is being scored, which is a real and previously invisible
+            state. */}
+        {on && (
+          <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded bg-ink-950/80 px-1.5 py-1 ring-1 ring-edge backdrop-blur-sm">
+            <span
+              className={clsx("h-1.5 w-1.5 shrink-0 rounded-full", live ? "animate-pulse bg-accent" : "bg-slate-500")}
+              aria-hidden
+            />
+            <span className="label text-slate-300">{live ? "matching" : "camera on"}</span>
+            {checks > 0 && <span className="num text-2xs text-slate-500">{checks}</span>}
+          </div>
+        )}
+
+        {on && sim === null && (
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-ink-950 via-ink-950/85 to-transparent px-3 pb-3 pt-8">
+            <p className="max-w-[42ch] text-2xs leading-snug text-slate-400">
+              {state === "noface"
+                ? "No face found in that frame - move into the light and centre your face, it will retry."
+                : !reference
+                ? "No ID document to match against yet. Add one in the slot above and the score appears here."
+                : live
+                ? "Scoring the first frame..."
+                : "Press Match live and the similarity appears here, updating about every second."}
+            </p>
+          </div>
+        )}
+
         {on && sim !== null && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-ink-950 to-transparent p-3">
-            <div className="flex items-end justify-between">
-              <div>
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-ink-950 via-ink-950/85 to-transparent px-3 pb-3 pt-8">
+            <div className="flex items-end justify-between gap-3">
+              <div className="min-w-0">
                 <div className={`num text-2xl font-medium ${tone}`}>{sim.toFixed(3)}</div>
                 <div className="num text-2xs text-slate-500">
                   threshold {thr.toFixed(3)} · {result?.confidence}
                 </div>
               </div>
-              <div className={`text-sm font-medium ${tone}`}>
-                {state === "match" ? "MATCH" : "NO MATCH"}
+              {/* The verdict was the same size and weight as the caption beside
+                  it. It is the answer; it gets a chip. */}
+              <div
+                className={clsx(
+                  "shrink-0 rounded px-2 py-1 text-xs font-medium uppercase tracking-[0.12em] ring-1",
+                  state === "match" ? "bg-pass/15 text-pass ring-pass/40" : "bg-reject/15 text-reject ring-reject/40"
+                )}
+              >
+                {state === "match" ? "match" : "no match"}
               </div>
             </div>
             {/* Where this score sits relative to the line, at a glance. */}
@@ -226,11 +276,22 @@ export function LiveFaceMatch({
             </button>
           </>
         )}
-        {result && <span className="num text-2xs text-slate-500">{result.latency_ms.toFixed(0)} ms</span>}
+        {checks > 0 && (
+          <span className="num text-2xs text-slate-500">
+            {checks} {checks === 1 ? "frame scored" : "frames scored"}
+            {result && ` · ${result.latency_ms.toFixed(0)} ms`}
+          </span>
+        )}
       </div>
 
+      {/* This is a precondition, not a footnote: without an ID there is nothing
+          to match a face against, and both matching buttons are disabled. In
+          slate-500 at 12px that read as a caption and people sat looking at a
+          dead panel. */}
       {!reference && (
-        <p className="text-2xs text-slate-500">Upload an ID document above to match against.</p>
+        <p className="rounded border border-review/30 bg-review/[0.07] px-2.5 py-1.5 text-2xs leading-relaxed text-review">
+          Add an ID document in the slot above - this scores your camera against the portrait on it.
+        </p>
       )}
       {result?.detail && <p className="text-xs leading-relaxed text-slate-400">{result.detail}</p>}
       {band && (
