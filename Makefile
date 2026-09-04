@@ -15,7 +15,8 @@ export PYTHONPATH := $(CURDIR)/backend
         ablate gauntlet redteam backend frontend dev demo test clean clean-data fresh \
         real data-real calibrate-face real-docs eval-real-docs eval-real-video \
         indian-faces calibrate-linkage thresholds corrections eval-real-faces \
-        behavioral behavioral-data behavioral-corpus behavioral-bots behavioral-train
+        behavioral behavioral-data behavioral-corpus behavioral-bots behavioral-train \
+        preflight
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
@@ -145,6 +146,9 @@ redteam: ## generate a held-out pool of unseen attacks for the live red-team but
 	$(PY) backend/scripts/redteam_generate.py --count 12
 
 # ---------------------------------------------------------------- running
+preflight: ## check the stack is ready to record a demo
+	@bash backend/scripts/preflight.sh
+
 backend: ## run the API on :8000
 	.venv/bin/uvicorn verityne.main:app --host 0.0.0.0 --port 8000 --app-dir backend
 
