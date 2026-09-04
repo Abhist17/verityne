@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Tuple
 
 from .config import DETECTOR_LABELS
+from .utils.text import plural
 from .schemas import DetectorOutput
 
 #: Ordered most-specific-first; the first pattern whose predicate fires wins.
@@ -137,7 +138,16 @@ def rank_reasons(breakdown: Dict[str, DetectorOutput], extra: Optional[List[Tupl
 
 
 def _confidence_phrase(d: DetectorOutput) -> str:
-    return f"{d.score:.0%} confidence"
+    """The detector's number, named for the quantity it actually is.
+
+    `score` is risk - 0 genuine, 1 fraudulent - while `confidence` is how much
+    weight that score deserves. This printed the score and called it confidence,
+    so any clause whose reason already carried its own figure came out as
+    "...synthetic-face artefacts at 82% confidence (71% confidence)": two
+    unrelated quantities under one word, leaving the reviewer to guess which
+    number the detector meant and why they disagreed.
+    """
+    return f"{d.score:.0%} risk"
 
 
 def narrate(
@@ -211,11 +221,11 @@ def narrate(
         n_exact = sum(1 for m in links if m.get("match") == "exact")
         n_near = len(links) - n_exact
         if n_face or links:
-            parts = [f"{n_face} face match(es)"]
+            parts = [plural(n_face, "face match", "face matches")]
             if n_exact:
-                parts.append(f"{n_exact} identical asset(s)")
+                parts.append(plural(n_exact, "identical asset"))
             if n_near:
-                parts.append(f"{n_near} near-identical asset(s)")
+                parts.append(plural(n_near, "near-identical asset"))
             extra += f" Cross-submission lookup found {', '.join(parts)} in prior submissions."
 
     caveat = ""

@@ -19,6 +19,7 @@ from typing import Dict, List, Optional
 import numpy as np
 
 from ..schemas import DetectorOutput
+from ..utils.text import plural
 from ..utils.artifacts import save_heatmap
 from ..utils.ela import tamper_score
 from ..utils.images import detect_faces, crop_face, load_rgb, overlay_heatmap
@@ -150,7 +151,7 @@ class IDForensicsDetector(Detector):
             biggest = ela["regions"][0]
             where = self._describe_region(biggest["bbox"], rgb.shape)
             reasons.append(
-                f"Compression analysis shows {len(ela['regions'])} localised edited region(s); the largest sits "
+                f"Compression analysis shows {plural(len(ela['regions']), 'localised edited region')}; the largest sits "
                 f"{where} and is {biggest['mean_z']:.0f} deviations above the document's baseline error level"
             )
 

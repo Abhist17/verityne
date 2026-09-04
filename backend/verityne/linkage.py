@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 from .config import MODEL_ROOT
 from .db import AssetHash, FaceEmbedding, Submission, Verdict
 from .utils.hashing import hamming
+from .utils.text import plural as _plural
 
 #: Above this cosine similarity two selfies are the same person.
 #:
@@ -131,13 +132,20 @@ def find_face_links(
         verdict = session.execute(
             select(Verdict).where(Verdict.submission_id == row.submission_id)
         ).scalars().first()
-        name_differs = bool(claimed_name and row.claimed_name and _normalise(claimed_name) != _normalise(row.claimed_name))
+        # `name_differs` comes back False for two unrelated reasons: two names
+        # were compared and agreed, or there was no pair of names to compare -
+        # a blank name field on either side looks exactly like agreement here.
+        # Only the first says anything about identity, so record which it was
+        # rather than leaving the caller to read agreement into a blank.
+        name_comparable = bool(claimed_name and row.claimed_name)
+        name_differs = name_comparable and _normalise(claimed_name) != _normalise(row.claimed_name)
         matches.append(
             {
                 "submission_id": row.submission_id,
                 "merchant_id": row.merchant_id,
                 "similarity": round(sim, 4),
                 "claimed_name": row.claimed_name,
+                "name_comparable": name_comparable,
                 "name_differs": name_differs,
                 "created_at": sub.created_at.isoformat() if sub and sub.created_at else None,
                 "verdict": verdict.verdict if verdict else None,
@@ -213,18 +221,55 @@ def linkage_signal(
     score = 0.0
     exact_match = False
 
-    distinct_names = {m["claimed_name"] for m in face_links if m.get("claimed_name")}
     conflicting = [m for m in face_links if m.get("name_differs")]
     if conflicting:
+        # Counted over `conflicting`, not over every face link. "Different names"
+        # has to mean names that differ from the one being claimed now; counting
+        # the whole match set folds this applicant's own name into the total and
+        # reports a two-name ring for what is one name plus one impostor.
+        distinct_names = {m["claimed_name"] for m in conflicting if m.get("claimed_name")}
         merchants = {m["merchant_id"] for m in conflicting}
         score = max(score, min(0.95, 0.55 + 0.12 * len(conflicting)))
-        reasons.append(
-            f"This face has already been submitted under {len(distinct_names)} different name(s) across "
-            f"{len(merchants)} merchant account(s) - strong indicator of an onboarding ring"
-        )
+        if len(distinct_names) >= 2:
+            reasons.append(
+                f"This face has already been submitted under {_plural(len(distinct_names), 'different name')} "
+                f"across {_plural(len(merchants), 'merchant account')} - strong indicator of an onboarding ring"
+            )
+        else:
+            # One other name is two identities sharing a face, which is worth a
+            # human but is not a ring. Spending the word "ring" on the weakest
+            # case it can describe is how a reviewer learns to discount it by the
+            # time a genuine four-name cluster arrives.
+            reasons.append(
+                "This face has already been submitted under one other name at "
+                f"{_plural(len(merchants), 'merchant account')} - two identities sharing one face"
+            )
     elif face_links:
         score = max(score, 0.30)
-        reasons.append(f"This face matches {len(face_links)} earlier submission(s) under the same name (possible duplicate application)")
+        # Reaching here means no match came back under a *differing* name, which
+        # is not the same as the names agreeing - it is also what an applicant
+        # who typed no name at all produces. Claiming "the same name" over a
+        # blank field asserts an identity nobody supplied, and the reviewer has
+        # no way to tell the invented claim from a measured one.
+        n = len(face_links)
+        compared = [m for m in face_links if m.get("name_comparable")]
+        if not compared:
+            reasons.append(
+                f"This face matches {_plural(n, 'earlier submission')} - facial similarity only, "
+                "with no claimed name on both sides to compare"
+            )
+        elif len(compared) == n:
+            reasons.append(
+                f"This face matches {_plural(n, 'earlier submission')} under the same name "
+                "(possible duplicate application)"
+            )
+        else:
+            reasons.append(
+                f"This face matches {_plural(n, 'earlier submission')}, "
+                + _plural(len(compared), "of which carries the same claimed name",
+                          "of which carry the same claimed name")
+                + " - the rest had no name to compare"
+            )
 
     exact = [m for m in asset_links if m.get("match") == "exact"]
     near = [m for m in asset_links if m.get("match") != "exact"]
@@ -234,7 +279,7 @@ def linkage_signal(
         exact_match = True
         score = max(score, min(0.9, 0.6 + 0.1 * len(exact)))
         reasons.append(
-            f"The exact same image file was used in {len(exact)} earlier submission(s) - "
+            f"The exact same image file was used in {_plural(len(exact), 'earlier submission')} - "
             "consistent with a purchased, pre-made KYC kit"
         )
     elif near:
@@ -242,7 +287,7 @@ def linkage_signal(
         # not worth overruling five detectors that all read the packet as clean.
         score = max(score, 0.35)
         reasons.append(
-            f"A visually near-identical image appeared in {len(near)} earlier submission(s) - "
+            f"A visually near-identical image appeared in {_plural(len(near), 'earlier submission')} - "
             "could be a reused asset, or two documents sharing a template"
         )
     return score, reasons, exact_match
